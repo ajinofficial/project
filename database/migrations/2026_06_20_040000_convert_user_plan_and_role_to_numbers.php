@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         if (Schema::hasColumn('users', 'plan')) {
             $planColumn = DB::selectOne(
                 'SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
@@ -45,6 +49,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         if (Schema::hasColumn('users', 'plan')) {
             DB::statement('ALTER TABLE users MODIFY plan VARCHAR(255) NOT NULL DEFAULT "starter"');
             DB::table('plans')->pluck('name', 'id')->each(function ($name, $id) {

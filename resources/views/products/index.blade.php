@@ -165,10 +165,10 @@
                                                 <input type="hidden" name="status" value="{{ $product->status === 'active' ? 'archived' : 'active' }}">
                                                 <button type="submit">{{ $product->status === 'active' ? 'Archive' : 'Activate' }}</button>
                                             </form>
-                                            <form method="POST" action="{{ route('products.destroy', $product) }}">
+                                            <form method="POST" action="{{ route('products.destroy', $product) }}" data-confirm data-confirm-title="Delete product" data-confirm-message="Delete {{ $product->name }}? This cannot be undone." data-confirm-button="Delete">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button class="danger-button" type="submit" onclick="return confirm('Delete this product?')">Delete</button>
+                                                <button class="danger-button" type="submit">Delete</button>
                                             </form>
                                         </div>
                                     </td>

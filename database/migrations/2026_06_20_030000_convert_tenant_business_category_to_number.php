@@ -12,6 +12,10 @@ return new class extends Migration
             return;
         }
 
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         $column = DB::selectOne(
             'SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
             ['tenants', 'business_category']
@@ -35,6 +39,10 @@ return new class extends Migration
     public function down(): void
     {
         if (! Schema::hasColumn('tenants', 'business_category')) {
+            return;
+        }
+
+        if (DB::getDriverName() !== 'mysql') {
             return;
         }
 

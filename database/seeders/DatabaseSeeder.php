@@ -41,10 +41,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $tenant->update(['tenant_type' => Tenant::TYPE_VENDOR]);
-        Tenant::where('id', '<>', $tenant->id)
-            ->where('tenant_type', Tenant::TYPE_VENDOR)
-            ->update(['tenant_type' => Tenant::TYPE_CLIENT]);
+        $this->ensureOnlyFirstTenantIsVendor();
 
         $user = User::firstOrCreate(
             ['email' => 'admin@stockpilot.test'],
@@ -116,5 +113,17 @@ class DatabaseSeeder extends Seeder
                 array_merge($product, ['tenant_id' => $tenant->id, 'user_id' => $user->id])
             );
         }
+    }
+
+    private function ensureOnlyFirstTenantIsVendor(): void
+    {
+        $vendorTenantId = Tenant::orderBy('id')->value('id');
+
+        if (! $vendorTenantId) {
+            return;
+        }
+
+        Tenant::where('id', $vendorTenantId)->update(['tenant_type' => Tenant::TYPE_VENDOR]);
+        Tenant::where('id', '<>', $vendorTenantId)->update(['tenant_type' => Tenant::TYPE_CLIENT]);
     }
 }

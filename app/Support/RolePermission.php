@@ -15,6 +15,7 @@ class RolePermission
         'customers' => ['label' => 'Customers', 'abbr' => 'CU', 'route' => 'customers.index', 'active' => 'customers.*'],
         'returns' => ['label' => 'Returns', 'abbr' => 'RT', 'route' => 'returns.index', 'active' => 'returns.*'],
         'reports' => ['label' => 'Reports', 'abbr' => 'RP', 'route' => 'reports.index', 'active' => 'reports.*'],
+        'users' => ['label' => 'Users', 'abbr' => 'US', 'route' => 'users.index', 'active' => 'users.*'],
         'setup' => ['label' => 'Store Setup', 'abbr' => 'ST', 'route' => 'setup.index', 'active' => 'setup.*'],
         'role_permissions' => ['label' => 'Role Permissions', 'abbr' => 'RP', 'route' => 'role-permissions.index', 'active' => 'role-permissions.*'],
     ];

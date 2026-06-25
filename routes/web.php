@@ -8,6 +8,7 @@ use App\Http\Controllers\OperationsController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\SetupController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -38,6 +39,10 @@ Route::middleware('auth')->group(function () {
     Route::put('/setup', [SetupController::class, 'update'])->middleware('menu:setup')->name('setup.update');
     Route::get('/role-permissions', [RolePermissionController::class, 'index'])->middleware('menu:role_permissions')->name('role-permissions.index');
     Route::put('/role-permissions', [RolePermissionController::class, 'update'])->middleware('menu:role_permissions')->name('role-permissions.update');
+    Route::get('/users', [UserController::class, 'index'])->middleware('menu:users')->name('users.index');
+    Route::post('/users', [UserController::class, 'store'])->middleware('menu:users')->name('users.store');
+    Route::post('/users/{user}/delete', [UserController::class, 'destroy'])->middleware('menu:users')->name('users.delete');
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])->middleware('menu:users')->name('users.destroy');
     Route::post('/products/{product}/stock', [ProductController::class, 'adjustStock'])->middleware('menu:inventory')->name('products.stock');
     Route::resource('products', ProductController::class)->except(['show'])->middleware('menu:inventory');
     Route::get('/suppliers', [OperationsController::class, 'suppliers'])->middleware('menu:suppliers')->name('suppliers.index');

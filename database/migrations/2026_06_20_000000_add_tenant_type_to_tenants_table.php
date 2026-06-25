@@ -14,9 +14,7 @@ return new class extends Migration
             $table->index('tenant_type');
         });
 
-        $vendorTenantId = DB::table('tenants')
-            ->where('email', 'admin@stockpilot.test')
-            ->value('id') ?: DB::table('tenants')->orderBy('id')->value('id');
+        $vendorTenantId = DB::table('tenants')->orderBy('id')->value('id');
 
         if ($vendorTenantId) {
             DB::table('tenants')->where('id', $vendorTenantId)->update(['tenant_type' => 1]);

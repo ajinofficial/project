@@ -10,7 +10,9 @@ use App\Support\RolePermission;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -26,44 +28,60 @@ class RegisterController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $gstNumber = str_replace(' ', '', (string) $request->input('gst_number'));
+
+        $request->merge([
+            'email' => Str::lower(trim((string) $request->input('email'))),
+            'gst_number' => $gstNumber === '' ? null : Str::upper($gstNumber),
+        ]);
+
         $data = $request->validate([
             'business_name' => ['required', 'string', 'max:255'],
             'owner_name' => ['required', 'string', 'max:255'],
-            'mobile' => ['required', 'string', 'max:30'],
+            'mobile' => ['required', 'string', 'max:30', 'regex:/^\+?[0-9\s\-()]{10,20}$/'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'gst_number' => ['nullable', 'string', 'max:30'],
+            'gst_number' => ['nullable', 'string', 'size:15', 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/'],
             'business_category' => ['required', 'integer', Rule::in(array_keys(Tenant::BUSINESS_CATEGORIES))],
             'store_address' => ['required', 'string', 'max:1000'],
             'plan' => ['required', 'integer', 'exists:plans,id'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'string', Password::min(8)->letters()->numbers(), 'confirmed'],
+            'terms_accepted' => ['accepted'],
+        ], [
+            'mobile.regex' => 'Enter a valid mobile number with 10 to 20 digits.',
+            'gst_number.regex' => 'Enter a valid 15-character GST number.',
+            'password.letters' => 'Password must include at least one letter.',
+            'password.numbers' => 'Password must include at least one number.',
+            'terms_accepted.accepted' => 'Confirm that you are authorized to create this workspace.',
         ]);
 
         $plan = Plan::findOrFail($data['plan']);
 
-        $tenant = Tenant::create([
-            'plan_id' => $plan->id,
-            'tenant_type' => Tenant::TYPE_CLIENT,
-            'business_name' => $data['business_name'],
-            'owner_name' => $data['owner_name'],
-            'mobile' => $data['mobile'],
-            'email' => $data['email'],
-            'gst_number' => $data['gst_number'] ?? null,
-            'business_category' => $data['business_category'],
-            'store_address' => $data['store_address'],
-            'role_permissions' => RolePermission::defaults(),
-        ]);
+        $user = DB::transaction(function () use ($data, $plan) {
+            $tenant = Tenant::create([
+                'plan_id' => $plan->id,
+                'tenant_type' => Tenant::TYPE_CLIENT,
+                'business_name' => $data['business_name'],
+                'owner_name' => $data['owner_name'],
+                'mobile' => $data['mobile'],
+                'email' => $data['email'],
+                'gst_number' => $data['gst_number'] ?? null,
+                'business_category' => $data['business_category'],
+                'store_address' => $data['store_address'],
+                'role_permissions' => RolePermission::defaults(),
+            ]);
 
-        $user = User::create([
-            'tenant_id' => $tenant->id,
-            'name' => $data['owner_name'],
-            'email' => $data['email'],
-            'company_name' => $data['business_name'],
-            'store_url' => Str::slug($data['business_name']).'-'.Str::lower(Str::random(5)),
-            'phone' => $data['mobile'],
-            'plan' => $plan->id,
-            'role' => User::ROLE_OWNER,
-            'password' => $data['password'],
-        ]);
+            return User::create([
+                'tenant_id' => $tenant->id,
+                'name' => $data['owner_name'],
+                'email' => $data['email'],
+                'company_name' => $data['business_name'],
+                'store_url' => Str::slug($data['business_name']).'-'.Str::lower(Str::random(5)),
+                'phone' => $data['mobile'],
+                'plan' => $plan->id,
+                'role' => User::ROLE_OWNER,
+                'password' => $data['password'],
+            ]);
+        });
 
         Auth::login($user);
 
