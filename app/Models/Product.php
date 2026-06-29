@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -13,6 +14,7 @@ class Product extends Model
     protected $fillable = [
         'tenant_id',
         'user_id',
+        'supplier_id',
         'name',
         'sku',
         'barcode',
@@ -29,6 +31,7 @@ class Product extends Model
         'damaged_stock',
         'returned_stock',
         'status',
+        'deleted_status',
         'image_url',
         'description',
     ];
@@ -43,7 +46,15 @@ class Product extends Model
         'reserved_stock' => 'integer',
         'damaged_stock' => 'integer',
         'returned_stock' => 'integer',
+        'deleted_status' => 'integer',
     ];
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope('not_deleted', function (Builder $builder) {
+            $builder->where('deleted_status', 0);
+        });
+    }
 
     public function user(): BelongsTo
     {
@@ -53,6 +64,11 @@ class Product extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function supplierRecord(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
     }
 
     public function getAvailableStockAttribute(): int

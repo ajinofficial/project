@@ -53,32 +53,39 @@
 
 <label>
     <span>Supplier</span>
-    <input type="text" name="supplier" value="{{ old('supplier', $product->supplier) }}" placeholder="Supplier name">
-    @error('supplier') <small>{{ $message }}</small> @enderror
+    <select name="supplier_id">
+        <option value="">No supplier selected</option>
+        @foreach (($suppliers ?? collect()) as $supplier)
+            <option value="{{ $supplier->id }}" @selected((string) old('supplier_id', $product->supplier_id) === (string) $supplier->id)>
+                {{ $supplier->name }}
+            </option>
+        @endforeach
+    </select>
+    @error('supplier_id') <small>{{ $message }}</small> @enderror
 </label>
 
 <div class="field-grid">
     <label>
         <span>Purchase price</span>
-        <input type="number" name="purchase_price" value="{{ old('purchase_price', $product->purchase_price ?? 0) }}" min="0" step="0.01" required>
+        <input type="number" name="purchase_price" value="{{ old('purchase_price', $product->purchase_price ?? 0) }}" min="0" step="0.01" required data-replace-on-focus>
         @error('purchase_price') <small>{{ $message }}</small> @enderror
     </label>
 
     <label>
         <span>Selling price</span>
-        <input type="number" name="price" value="{{ old('price', $product->price) }}" min="0" step="0.01" required>
+        <input type="number" name="price" value="{{ old('price', $product->price) }}" min="0" step="0.01" required data-replace-on-focus>
         @error('price') <small>{{ $message }}</small> @enderror
     </label>
 
     <label>
         <span>Compare at price</span>
-        <input type="number" name="compare_at_price" value="{{ old('compare_at_price', $product->compare_at_price) }}" min="0" step="0.01">
+        <input type="number" name="compare_at_price" value="{{ old('compare_at_price', $product->compare_at_price) }}" min="0" step="0.01" data-replace-on-focus>
         @error('compare_at_price') <small>{{ $message }}</small> @enderror
     </label>
 
     <label>
         <span>Stock on hand</span>
-        <input type="number" name="inventory" value="{{ old('inventory', $product->inventory) }}" min="0" step="1" required>
+        <input type="number" name="inventory" value="{{ old('inventory', $product->inventory) }}" min="0" step="1" required data-replace-on-focus>
         @error('inventory') <small>{{ $message }}</small> @enderror
     </label>
 </div>
@@ -86,13 +93,13 @@
 <div class="field-grid">
     <label>
         <span>Tax percentage</span>
-        <input type="number" name="tax_percentage" value="{{ old('tax_percentage', $product->tax_percentage ?? auth()->user()->tenant->default_tax_percentage) }}" min="0" max="99.99" step="0.01" required>
+        <input type="number" name="tax_percentage" value="{{ old('tax_percentage', $product->tax_percentage ?? auth()->user()->tenant->default_tax_percentage) }}" min="0" max="99.99" step="0.01" required data-replace-on-focus>
         @error('tax_percentage') <small>{{ $message }}</small> @enderror
     </label>
 
     <label>
         <span>Minimum stock level</span>
-        <input type="number" name="minimum_stock_level" value="{{ old('minimum_stock_level', $product->minimum_stock_level ?? auth()->user()->tenant->low_stock_threshold) }}" min="0" step="1" required>
+        <input type="number" name="minimum_stock_level" value="{{ old('minimum_stock_level', $product->minimum_stock_level ?? auth()->user()->tenant->low_stock_threshold) }}" min="0" step="1" required data-replace-on-focus>
         @error('minimum_stock_level') <small>{{ $message }}</small> @enderror
     </label>
 </div>
@@ -100,15 +107,15 @@
 <div class="field-grid stock-buckets">
     <label>
         <span>Reserved stock</span>
-        <input type="number" name="reserved_stock" value="{{ old('reserved_stock', $product->reserved_stock ?? 0) }}" min="0" step="1">
+        <input type="number" name="reserved_stock" value="{{ old('reserved_stock', $product->reserved_stock ?? 0) }}" min="0" step="1" data-replace-on-focus>
     </label>
     <label>
         <span>Damaged stock</span>
-        <input type="number" name="damaged_stock" value="{{ old('damaged_stock', $product->damaged_stock ?? 0) }}" min="0" step="1">
+        <input type="number" name="damaged_stock" value="{{ old('damaged_stock', $product->damaged_stock ?? 0) }}" min="0" step="1" data-replace-on-focus>
     </label>
     <label>
         <span>Returned stock</span>
-        <input type="number" name="returned_stock" value="{{ old('returned_stock', $product->returned_stock ?? 0) }}" min="0" step="1">
+        <input type="number" name="returned_stock" value="{{ old('returned_stock', $product->returned_stock ?? 0) }}" min="0" step="1" data-replace-on-focus>
     </label>
 </div>
 
@@ -138,13 +145,8 @@
     </div>
 
     <input type="hidden" name="cropped_image" value="" data-product-cropped-image>
-
-    <label>
-        <span>Image URL fallback</span>
-        <input type="url" name="image_url" value="{{ old('image_url', $product->image_url) }}" placeholder="https://example.com/product.jpg">
-        @error('image_url') <small>{{ $message }}</small> @enderror
-        @error('cropped_image') <small>{{ $message }}</small> @enderror
-    </label>
+    <input type="hidden" name="image_url" value="{{ old('image_url', $product->image_url) }}">
+    @error('cropped_image') <small>{{ $message }}</small> @enderror
 </section>
 
 <label>
@@ -156,6 +158,112 @@
 @once
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[data-replace-on-focus]').forEach(function (field) {
+                field.addEventListener('focus', function () {
+                    field.select();
+                    field.dataset.valueSelected = 'true';
+                });
+
+                field.addEventListener('mouseup', function (event) {
+                    if (field.dataset.valueSelected !== 'true') {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    delete field.dataset.valueSelected;
+                });
+            });
+
+            document.querySelectorAll('[data-product-save-form]').forEach(function (form) {
+                form.noValidate = true;
+
+                function fieldLabel(field) {
+                    var label = field.closest('label');
+                    var labelText = label ? label.querySelector('span') : null;
+
+                    return labelText ? labelText.textContent.trim() : 'This field';
+                }
+
+                function existingErrorElement(field) {
+                    if (field.nextElementSibling && field.nextElementSibling.matches('[data-validation-error]')) {
+                        return field.nextElementSibling;
+                    }
+
+                    return null;
+                }
+
+                function errorElement(field) {
+                    var existingError = existingErrorElement(field);
+
+                    if (existingError) {
+                        return existingError;
+                    }
+
+                    var error = document.createElement('small');
+                    error.setAttribute('data-validation-error', '');
+                    error.setAttribute('role', 'alert');
+                    field.insertAdjacentElement('afterend', error);
+
+                    return error;
+                }
+
+                function validateField(field) {
+                    var error = existingErrorElement(field);
+
+                    if (!field.willValidate) {
+                        return true;
+                    }
+
+                    if (field.checkValidity()) {
+                        if (error) {
+                            error.textContent = '';
+                            error.hidden = true;
+                        }
+
+                        field.removeAttribute('aria-invalid');
+
+                        return true;
+                    }
+
+                    error = errorElement(field);
+                    error.textContent = field.validity.valueMissing
+                        ? fieldLabel(field) + ' is required.'
+                        : field.validationMessage;
+                    error.hidden = false;
+                    field.setAttribute('aria-invalid', 'true');
+
+                    return false;
+                }
+
+                form.querySelectorAll('input, select, textarea').forEach(function (field) {
+                    field.addEventListener('input', function () {
+                        validateField(field);
+                    });
+
+                    field.addEventListener('change', function () {
+                        validateField(field);
+                    });
+                });
+
+                form.addEventListener('submit', function (event) {
+                    var firstInvalid = null;
+
+                    form.querySelectorAll('input, select, textarea').forEach(function (field) {
+                        if (!validateField(field) && !firstInvalid) {
+                            firstInvalid = field;
+                        }
+                    });
+
+                    if (!firstInvalid) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    firstInvalid.focus();
+                });
+            });
+
             document.querySelectorAll('[data-product-image-uploader]').forEach(function (uploader) {
                 var fileInput = uploader.querySelector('[data-product-image-input]');
                 var preview = uploader.querySelector('[data-product-image-preview]');

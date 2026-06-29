@@ -14,14 +14,22 @@
             <a href="{{ route('products.index') }}">Back to inventory</a>
         </div>
 
-        <form class="product-form" method="POST" action="{{ route('products.update', $product) }}" enctype="multipart/form-data">
+        <form class="product-form" method="POST" action="{{ route('products.update', $product) }}" enctype="multipart/form-data" data-product-save-form>
             @csrf
             @method('PUT')
             @include('products.partials.form')
             <div class="form-actions">
                 <a class="ghost-button" href="{{ route('products.index') }}">Cancel</a>
-                <button type="submit">Update item</button>
+                <button class="product-save-button" type="submit" data-product-save-button>
+                    <span class="product-save-button__idle">Update item</span>
+                    <span class="product-save-button__loading" aria-hidden="true">
+                        <i></i>
+                        Updating
+                    </span>
+                </button>
             </div>
         </form>
     </section>
+
+    @include('products.partials.save-loader-script')
 @endsection

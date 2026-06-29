@@ -694,6 +694,46 @@ button.ghost-button {
     max-width: 980px;
 }
 
+.product-save-button {
+    min-width: 118px;
+    position: relative;
+}
+
+.product-save-button:disabled {
+    cursor: wait;
+    opacity: 0.82;
+}
+
+.product-save-button__loading {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.product-save-button__loading i {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.46);
+    border-top-color: #ffffff;
+    border-radius: 999px;
+    animation: product-save-spin 0.75s linear infinite;
+}
+
+.product-save-button.is-loading .product-save-button__idle {
+    display: none;
+}
+
+.product-save-button.is-loading .product-save-button__loading {
+    display: inline-flex;
+}
+
+@keyframes product-save-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .danger-button {
     min-height: 42px;
     padding: 10px 12px;
@@ -959,7 +999,7 @@ button.ghost-button {
     --v-muted: #858a80;
     --v-text: #171a13;
     --v-line: #eceee8;
-    --v-lime: #e9fb4f;
+    --v-lime: #9be7b0;
     --v-red: #ff666f;
 }
 
@@ -1020,7 +1060,7 @@ button.ghost-button {
 
 .profile-avatar {
     border: 2px solid #f1d049;
-    background: linear-gradient(135deg, #ebff62, #f8b94d);
+    background: linear-gradient(135deg, #9be7b0, #5cc884);
 }
 
 .v-kpi,
@@ -1075,7 +1115,7 @@ button.ghost-button {
 }
 
 .profit-list div:nth-child(3) i {
-    background: #e9fb4f;
+    background: #9be7b0;
 }
 
 .profit-list div:nth-child(4) i {
@@ -3440,46 +3480,64 @@ button.ghost-button {
 }
 
 .product-management-panel {
+    position: relative;
     padding: 18px;
+}
+
+.product-management-panel.is-loading .table-wrap,
+.product-management-panel.is-loading .product-pagination,
+.product-management-panel.is-loading .product-empty {
+    opacity: 0.38;
+    pointer-events: none;
+}
+
+.product-listing-loader {
+    position: absolute;
+    inset: 66px 18px 18px;
+    z-index: 4;
+    display: none;
+    place-items: center;
+    align-content: center;
+    gap: 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(2px);
+}
+
+.product-management-panel.is-loading .product-listing-loader {
+    display: grid;
+}
+
+.product-listing-loader span {
+    width: 34px;
+    height: 34px;
+    border: 4px solid #eef0e8;
+    border-top-color: var(--v-lime);
+    border-radius: 999px;
+    animation: product-listing-spin 0.75s linear infinite;
+}
+
+.product-listing-loader strong {
+    color: #2f352b;
+    font-size: 13px;
+    font-weight: 900;
+}
+
+@keyframes product-listing-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .product-toolbar {
     display: grid;
-    grid-template-columns: minmax(360px, auto) minmax(0, 1fr);
-    gap: 14px;
-    align-items: center;
+    grid-template-columns: 1fr;
     margin-bottom: 16px;
-}
-
-.product-tabs {
-    display: flex;
-    gap: 6px;
-    padding: 5px;
-    border-radius: 10px;
-    background: #f5f6f2;
-}
-
-.product-tabs a {
-    min-height: 34px;
-    display: grid;
-    place-items: center;
-    border-radius: 8px;
-    padding: 0 14px;
-    color: #62685e;
-    font-size: 12px;
-    font-weight: 900;
-    text-decoration: none;
-}
-
-.product-tabs a.active,
-.product-tabs a:hover {
-    color: #050703;
-    background: var(--v-lime);
 }
 
 .product-filter-form {
     display: grid;
-    grid-template-columns: minmax(190px, 1fr) 118px 104px 112px 70px;
+    grid-template-columns: minmax(190px, 1fr) 118px 104px 112px 116px 70px;
     gap: 8px;
 }
 
@@ -3494,13 +3552,19 @@ button.ghost-button {
     font-size: 12px;
 }
 
-.product-filter-form button {
+.product-filter-form button,
+.product-clear-filter {
     min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 8px;
     padding: 8px 12px;
     color: #050703;
     background: var(--v-lime);
     font-size: 12px;
+    font-weight: 900;
+    text-decoration: none;
 }
 
 .inventory-table {
@@ -3637,12 +3701,73 @@ button.ghost-button {
 }
 
 .product-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     padding-top: 14px;
+    border-top: 1px solid var(--v-line);
+}
+
+.product-pagination p {
+    margin: 0;
+    color: #6e7469;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.product-page-links {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.product-page-link,
+.product-page-gap {
+    min-width: 34px;
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    padding: 7px 10px;
+    color: #2f352b;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.product-page-link {
+    border: 1px solid var(--v-line);
+    background: #ffffff;
+    text-decoration: none;
+}
+
+.product-page-link:hover,
+.product-page-link.is-active {
+    border-color: var(--v-lime);
+    color: #050703;
+    background: var(--v-lime);
+}
+
+.product-page-link.is-disabled {
+    color: #a4aa9f;
+    background: #f5f6f2;
+}
+
+.product-page-gap {
+    min-width: 22px;
+    color: #979d92;
+}
+
+.product-page-arrow {
+    font-size: 18px;
+    line-height: 1;
 }
 
 @media (max-width: 1180px) {
-    .product-stat-grid,
-    .product-toolbar {
+    .product-stat-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -3668,17 +3793,17 @@ button.ghost-button {
     }
 
     .product-stat-grid,
-    .product-toolbar,
     .product-filter-form {
         grid-template-columns: 1fr;
     }
 
-    .product-tabs {
-        overflow-x: auto;
+    .product-pagination {
+        align-items: stretch;
+        flex-direction: column;
     }
 
-    .product-tabs a {
-        white-space: nowrap;
+    .product-page-links {
+        justify-content: flex-start;
     }
 }
 
@@ -4216,7 +4341,7 @@ button.ghost-button {
     --v-muted: #8a8d86;
     --v-text: #171914;
     --v-line: #ecece7;
-    --v-lime: #e9ff57;
+    --v-lime: #9be7b0;
     --v-red: #ff6868;
     background: var(--v-bg);
 }

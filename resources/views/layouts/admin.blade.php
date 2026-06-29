@@ -215,10 +215,14 @@
             var cancelButtons = modal.querySelectorAll('[data-confirm-cancel]');
             var activeForm = null;
             var activeTrigger = null;
+            var isBlockedAction = false;
 
             function closeModal() {
                 modal.hidden = true;
                 document.body.classList.remove('confirm-modal-open');
+                cancelButtons.forEach(function (button) {
+                    button.hidden = false;
+                });
 
                 if (activeTrigger) {
                     activeTrigger.focus();
@@ -226,14 +230,19 @@
 
                 activeForm = null;
                 activeTrigger = null;
+                isBlockedAction = false;
             }
 
             function openModal(form, trigger) {
                 activeForm = form;
                 activeTrigger = trigger || document.activeElement;
+                isBlockedAction = form.dataset.confirmBlocked === 'true';
                 title.textContent = form.dataset.confirmTitle || 'Confirm action';
                 message.textContent = form.dataset.confirmMessage || 'Are you sure you want to continue?';
                 submitButton.textContent = form.dataset.confirmButton || 'Confirm';
+                cancelButtons.forEach(function (button) {
+                    button.hidden = isBlockedAction;
+                });
 
                 modal.hidden = false;
                 document.body.classList.add('confirm-modal-open');
@@ -253,19 +262,17 @@
             });
 
             submitButton.addEventListener('click', function () {
+                if (isBlockedAction) {
+                    closeModal();
+                    return;
+                }
+
                 if (! activeForm) {
                     return;
                 }
 
                 var form = activeForm;
-                form.removeAttribute('data-confirm');
                 closeModal();
-
-                if (typeof form.requestSubmit === 'function') {
-                    form.requestSubmit();
-                    return;
-                }
-
                 HTMLFormElement.prototype.submit.call(form);
             });
 

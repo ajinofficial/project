@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Supplier;
 use App\Support\StockNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,17 @@ class ProductController extends Controller
 {
     public function index(Request $request): View
     {
+        $perPageOptions = [10, 25, 50, 100];
+        $perPage = (int) $request->input('per_page', 10);
+
+        if (! in_array($perPage, $perPageOptions, true)) {
+            $perPage = 10;
+        }
+
+        $hasActiveFilters = $request->filled('search')
+            || $request->filled('status')
+            || $request->filled('stock');
+
         $baseQuery = Product::where('tenant_id', $request->user()->tenant_id);
 
         $stats = [
@@ -55,15 +67,18 @@ class ProductController extends Controller
                 };
             }, fn ($query) => $query->latest());
 
-        $products = $query->paginate(10)->withQueryString();
+        $products = $query
+            ->paginate($perPage)
+            ->appends(array_merge($request->except('page'), ['per_page' => $perPage]));
 
-        return view('products.index', compact('products', 'stats'));
+        return view('products.index', compact('products', 'stats', 'perPageOptions', 'perPage', 'hasActiveFilters'));
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
         return view('products.create', [
             'product' => new Product(['status' => 'draft', 'inventory' => 0, 'tax_percentage' => 18, 'minimum_stock_level' => 10]),
+            'suppliers' => Supplier::where('tenant_id', $request->user()->tenant_id)->orderBy('name')->get(),
         ]);
     }
 
@@ -87,7 +102,10 @@ class ProductController extends Controller
     {
         $this->authorizeProduct($request, $product);
 
-        return view('products.edit', compact('product'));
+        return view('products.edit', [
+            'product' => $product,
+            'suppliers' => Supplier::where('tenant_id', $request->user()->tenant_id)->orderBy('name')->get(),
+        ]);
     }
 
     public function update(Request $request, Product $product): RedirectResponse
@@ -140,7 +158,11 @@ class ProductController extends Controller
     {
         $this->authorizeProduct($request, $product);
 
-        $product->delete();
+        if ($product->status === 'active') {
+            return back()->with('status', 'Active products cannot be deleted. Archive the product first.');
+        }
+
+        $product->update(['deleted_status' => 1]);
 
         return redirect()
             ->route('products.index')
@@ -162,6 +184,10 @@ class ProductController extends Controller
             'barcode' => ['nullable', 'string', 'max:120'],
             'category' => ['nullable', 'string', 'max:120'],
             'brand' => ['nullable', 'string', 'max:120'],
+            'supplier_id' => [
+                'nullable',
+                Rule::exists('suppliers', 'id')->where('tenant_id', $request->user()->tenant_id),
+            ],
             'supplier' => ['nullable', 'string', 'max:255'],
             'purchase_price' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
             'price' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
