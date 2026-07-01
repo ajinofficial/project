@@ -3,8 +3,11 @@
 @section('content')
     @php
         $topSoldMax = max(1, $topProducts->max('sold') ?? 1);
-        $lowStockCount = $lowStock->count();
-        $movementCount = $movements->count();
+        $lowStockCount = $lowStockTotal ?? $lowStock->count();
+        $movementCount = $movementTotal ?? $movements->count();
+        $dateLabel = $startDate->isSameDay($endDate)
+            ? $startDate->format('d M Y')
+            : $startDate->format('d M Y').' - '.$endDate->format('d M Y');
     @endphp
 
     <section class="reports-page">
@@ -12,7 +15,7 @@
             <div>
                 <p class="eyebrow">Business reports</p>
                 <h1>Sales, margin, and stock health</h1>
-                <p>Track today's billing, current month revenue, fast movers, stale inventory, and recent stock movement.</p>
+                <p>Track revenue, purchase spend, profit, fast movers, stale inventory, and stock movement for {{ $dateLabel }}.</p>
             </div>
             <div class="reports-hero-actions">
                 <a class="primary-link" href="{{ route('sales.index') }}">Create invoice</a>
@@ -20,26 +23,43 @@
             </div>
         </header>
 
+        <section class="reports-filter-card">
+            <form class="reports-filter-form" method="GET" action="{{ route('reports.index') }}">
+                <label>
+                    <span>Start date</span>
+                    <input type="date" name="start_date" value="{{ $startDate->toDateString() }}">
+                </label>
+                <label>
+                    <span>End date</span>
+                    <input type="date" name="end_date" value="{{ $endDate->toDateString() }}">
+                </label>
+                <button class="filter-button" type="submit">Apply</button>
+                <a class="product-clear-filter" href="{{ route('reports.index') }}">Reset</a>
+            </form>
+            @error('end_date') <small>{{ $message }}</small> @enderror
+            @error('start_date') <small>{{ $message }}</small> @enderror
+        </section>
+
         <section class="reports-kpi-grid">
             <article class="reports-kpi is-blue">
-                <span>Today's sales</span>
-                <strong>&#8377;{{ number_format($todaySales, 0) }}</strong>
-                <small>Daily billing total</small>
+                <span>Sales revenue</span>
+                <strong>&#8377;{{ number_format($rangeRevenue, 0) }}</strong>
+                <small>{{ number_format($rangeOrders) }} invoices</small>
             </article>
             <article class="reports-kpi is-green">
-                <span>Monthly revenue</span>
-                <strong>&#8377;{{ number_format($monthlyRevenue, 0) }}</strong>
-                <small>Current month sales</small>
-            </article>
-            <article class="reports-kpi is-amber">
                 <span>Gross profit</span>
                 <strong>&#8377;{{ number_format($profit, 0) }}</strong>
                 <small>Sales minus purchase cost</small>
             </article>
+            <article class="reports-kpi is-amber">
+                <span>Purchase spend</span>
+                <strong>&#8377;{{ number_format($rangePurchases, 0) }}</strong>
+                <small>Stock received in range</small>
+            </article>
             <article class="reports-kpi is-red">
-                <span>Low stock</span>
-                <strong>{{ number_format($lowStockCount) }}</strong>
-                <small>Products needing action</small>
+                <span>Returns</span>
+                <strong>{{ number_format($rangeReturns) }}</strong>
+                <small>Return movements in range</small>
             </article>
         </section>
 
@@ -65,7 +85,7 @@
                             <i><span style="width: {{ $width }}%"></span></i>
                         </div>
                     @empty
-                        <div class="empty-state tight-empty">No sales yet.</div>
+                        <div class="empty-state tight-empty">No sales found for this date range.</div>
                     @endforelse
                 </div>
             </article>
@@ -88,7 +108,7 @@
                     </a>
                     <a href="{{ route('reports.index') }}">
                         <strong>{{ number_format($movementCount) }}</strong>
-                        <span>Movements</span>
+                        <span>Range movements</span>
                     </a>
                 </div>
             </article>
@@ -151,11 +171,14 @@
                             <div>
                                 <strong>{{ $movement->product->name ?? 'Product' }}</strong>
                                 <span>{{ ucfirst(str_replace('_', ' ', $movement->type)) }} {{ number_format($movement->quantity) }} units</span>
+                                @if ($movement->notes)
+                                    <small>{{ $movement->notes }}</small>
+                                @endif
                             </div>
                             <time>{{ $movement->created_at->format('d M') }}</time>
                         </div>
                     @empty
-                        <div class="empty-state tight-empty">No stock movements yet.</div>
+                        <div class="empty-state tight-empty">No stock movements found for this date range.</div>
                     @endforelse
                 </div>
             </article>

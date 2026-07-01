@@ -1,12 +1,13 @@
 @php
+    $itemLabel = $itemLabel ?? 'products';
     $currentPage = $paginator->currentPage();
     $lastPage = $paginator->lastPage();
     $startPage = max(1, $currentPage - 2);
     $endPage = min($lastPage, $currentPage + 2);
 @endphp
 
-<nav class="pagination-wrap product-pagination" aria-label="Product pagination">
-    <p>Showing {{ number_format($paginator->firstItem()) }}-{{ number_format($paginator->lastItem()) }} of {{ number_format($paginator->total()) }} products</p>
+<nav class="pagination-wrap product-pagination" aria-label="{{ ucfirst($itemLabel) }} pagination">
+    <p>Showing {{ number_format($paginator->firstItem()) }}-{{ number_format($paginator->lastItem()) }} of {{ number_format($paginator->total()) }} {{ $itemLabel }}</p>
 
     <div class="product-page-links">
         @if ($paginator->onFirstPage())

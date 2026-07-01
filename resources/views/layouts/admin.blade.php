@@ -6,7 +6,7 @@
     <title>{{ $title ?? 'Dashboard' }} - InApp Inventory</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/register.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/register.css') }}?v={{ filemtime(public_path('css/register.css')) }}">
 </head>
 <body class="admin-body inapp-body">
     <div @class(['inapp-shell', 'inapp-shell-full' => $hideSidebar ?? false])>
@@ -51,7 +51,15 @@
                 @endforeach
 
                 <small>Account</small>
-                <form method="POST" action="{{ route('logout') }}" class="inapp-nav-form">
+                <form
+                    method="POST"
+                    action="{{ route('logout') }}"
+                    class="inapp-nav-form"
+                    data-confirm
+                    data-confirm-title="Logout"
+                    data-confirm-message="Are you sure you want to logout from this account?"
+                    data-confirm-button="Logout"
+                >
                     @csrf
                     <button type="submit">
                         <span aria-hidden="true">
@@ -194,6 +202,10 @@
                         return;
                     }
 
+                    if (form.matches('[data-confirm]') && form.dataset.confirmed !== 'true') {
+                        return;
+                    }
+
                     showPageLoader();
                 });
             });
@@ -273,6 +285,7 @@
 
                 var form = activeForm;
                 closeModal();
+                showPageLoader();
                 HTMLFormElement.prototype.submit.call(form);
             });
 

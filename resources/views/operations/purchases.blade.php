@@ -4,28 +4,234 @@
     <section class="ops-grid">
         <article class="admin-section">
             <div class="section-title"><div><p class="eyebrow">Stock in</p><h2>Receive purchase</h2></div></div>
-            <form class="product-form" method="POST" action="{{ route('purchases.store') }}">
+            <form class="product-form" method="POST" action="{{ route('purchases.store') }}" data-purchase-form>
                 @csrf
-                <label><span>Supplier</span><select name="supplier_id"><option value="">No supplier</option>@foreach ($suppliers as $supplier)<option value="{{ $supplier->id }}">{{ $supplier->name }}</option>@endforeach</select></label>
-                <label><span>Product</span><select name="product_id" required>@foreach ($products as $product)<option value="{{ $product->id }}">{{ $product->name }} ({{ $product->sku ?: 'SKU-'.$product->id }})</option>@endforeach</select></label>
+
+                @if ($errors->any())
+                    <div class="error-summary" role="alert">
+                        <strong>Check the purchase details</strong>
+                        <span>{{ $errors->first() }}</span>
+                    </div>
+                @endif
+
+                <label>
+                    <span>Supplier</span>
+                    <select name="supplier_id">
+                        <option value="">No supplier</option>
+                        @foreach ($suppliers as $supplier)
+                            <option value="{{ $supplier->id }}" @selected((string) old('supplier_id') === (string) $supplier->id)>{{ $supplier->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('supplier_id') <small>{{ $message }}</small> @enderror
+                </label>
+
+                <label>
+                    <span>Product</span>
+                    <select name="product_id" required>
+                        <option value="">Select product</option>
+                        @foreach ($products as $product)
+                            <option value="{{ $product->id }}" @selected((string) old('product_id') === (string) $product->id)>{{ $product->name }} ({{ $product->sku ?: 'SKU-'.$product->id }})</option>
+                        @endforeach
+                    </select>
+                    @error('product_id') <small>{{ $message }}</small> @enderror
+                </label>
+
                 <div class="field-grid">
-                    <label><span>Quantity</span><input type="number" name="quantity" min="1" value="1" required></label>
-                    <label><span>Purchase price</span><input type="number" name="purchase_price" min="0" step="0.01" required></label>
+                    <label>
+                        <span>Quantity</span>
+                        <input type="number" name="quantity" min="1" value="{{ old('quantity', 1) }}" required data-replace-on-focus>
+                        @error('quantity') <small>{{ $message }}</small> @enderror
+                    </label>
+
+                    <label>
+                        <span>Purchase price</span>
+                        <input type="number" name="purchase_price" min="0" step="0.01" value="{{ old('purchase_price', 0) }}" required data-replace-on-focus>
+                        @error('purchase_price') <small>{{ $message }}</small> @enderror
+                    </label>
                 </div>
-                <label><span>Tax %</span><input type="number" name="tax_percentage" min="0" max="99.99" step="0.01" value="{{ auth()->user()->tenant->default_tax_percentage }}"></label>
-                <button type="submit">Receive stock</button>
+
+                <label>
+                    <span>Tax %</span>
+                    <input type="number" name="tax_percentage" min="0" max="99.99" step="0.01" value="{{ old('tax_percentage', 0) }}" data-replace-on-focus>
+                    @error('tax_percentage') <small>{{ $message }}</small> @enderror
+                </label>
+
+                <button class="product-save-button" type="submit" data-purchase-submit>
+                    <span class="product-save-button__idle">Receive stock</span>
+                    <span class="product-save-button__loading" aria-hidden="true">
+                        <i></i>
+                        Receiving
+                    </span>
+                </button>
             </form>
         </article>
+
         <article class="admin-section">
             <div class="section-title"><div><p class="eyebrow">Purchase history</p><h2>Recent purchase orders</h2></div></div>
+            <div class="product-toolbar">
+                <form class="product-filter-form billing-search-form purchase-filter-form" method="GET" action="{{ route('purchases.index') }}" data-purchase-search-form>
+                    <input type="search" name="search" value="{{ request('search') }}" placeholder="Search PO, supplier, product" data-purchase-search>
+                    <select name="per_page" aria-label="Purchase orders per page" data-purchase-search>
+                        @foreach ($perPageOptions as $option)
+                            <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }} / page</option>
+                        @endforeach
+                    </select>
+                    <a class="product-clear-filter" href="{{ route('purchases.index') }}">Clear</a>
+                </form>
+            </div>
+
             <div class="table-wrap"><table class="admin-table"><thead><tr><th>PO</th><th>Supplier</th><th>Items</th><th>Total</th></tr></thead><tbody>
                 @forelse ($orders as $order)
-                    <tr><td>{{ $order->order_number }}</td><td>{{ $order->supplier->name ?? '-' }}</td><td>@foreach ($order->items as $item)<strong>{{ $item->product->name ?? 'Product' }} x {{ $item->quantity }}</strong>@endforeach</td><td>₹{{ number_format($order->total_amount, 2) }}</td></tr>
+                    <tr><td>{{ $order->order_number }}</td><td>{{ $order->supplier->name ?? '-' }}</td><td>@foreach ($order->items as $item)<strong>{{ $item->product->name ?? 'Product' }} x {{ $item->quantity }}</strong>@endforeach</td><td>&#8377;{{ number_format($order->total_amount, 2) }}</td></tr>
                 @empty
-                    <tr><td colspan="4">No purchase orders yet.</td></tr>
+                    <tr><td colspan="4">{{ request()->filled('search') ? 'No purchase orders match the current search.' : 'No purchase orders yet.' }}</td></tr>
                 @endforelse
             </tbody></table></div>
-            {{ $orders->links() }}
+            @include('products.partials.pagination', ['paginator' => $orders, 'itemLabel' => 'purchase orders'])
         </article>
     </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[data-purchase-search-form]').forEach(function (form) {
+                var search = form.querySelector('[data-purchase-search]');
+                var fields = form.querySelectorAll('[data-purchase-search]');
+
+                if (!search) {
+                    return;
+                }
+
+                function submitSearch() {
+                    if (search.value.trim() === '') {
+                        search.disabled = true;
+                    }
+
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                        return;
+                    }
+
+                    form.submit();
+                }
+
+                fields.forEach(function (field) {
+                    field.addEventListener('change', submitSearch);
+                    field.addEventListener('search', submitSearch);
+                });
+            });
+
+            document.querySelectorAll('[data-purchase-form]').forEach(function (form) {
+                form.noValidate = true;
+
+                function fieldLabel(field) {
+                    var label = field.closest('label');
+                    var labelText = label ? label.querySelector('span') : null;
+
+                    return labelText ? labelText.textContent.trim() : 'This field';
+                }
+
+                function existingErrorElement(field) {
+                    if (field.nextElementSibling && field.nextElementSibling.matches('[data-validation-error]')) {
+                        return field.nextElementSibling;
+                    }
+
+                    return null;
+                }
+
+                function errorElement(field) {
+                    var existingError = existingErrorElement(field);
+
+                    if (existingError) {
+                        return existingError;
+                    }
+
+                    var error = document.createElement('small');
+                    error.setAttribute('data-validation-error', '');
+                    error.setAttribute('role', 'alert');
+                    field.insertAdjacentElement('afterend', error);
+
+                    return error;
+                }
+
+                function validateField(field) {
+                    var error = existingErrorElement(field);
+
+                    if (!field.willValidate) {
+                        return true;
+                    }
+
+                    if (field.checkValidity()) {
+                        if (error) {
+                            error.textContent = '';
+                            error.hidden = true;
+                        }
+
+                        field.removeAttribute('aria-invalid');
+
+                        return true;
+                    }
+
+                    error = errorElement(field);
+                    error.textContent = field.validity.valueMissing
+                        ? fieldLabel(field) + ' is required.'
+                        : field.validationMessage;
+                    error.hidden = false;
+                    field.setAttribute('aria-invalid', 'true');
+
+                    return false;
+                }
+
+                form.querySelectorAll('input, select, textarea').forEach(function (field) {
+                    field.addEventListener('input', function () {
+                        validateField(field);
+                    });
+
+                    field.addEventListener('change', function () {
+                        validateField(field);
+                    });
+                });
+
+                form.querySelectorAll('[data-replace-on-focus]').forEach(function (field) {
+                    field.addEventListener('focus', function () {
+                        field.select();
+                        field.dataset.valueSelected = 'true';
+                    });
+
+                    field.addEventListener('mouseup', function (event) {
+                        if (field.dataset.valueSelected !== 'true') {
+                            return;
+                        }
+
+                        event.preventDefault();
+                        delete field.dataset.valueSelected;
+                    });
+                });
+
+                form.addEventListener('submit', function (event) {
+                    var firstInvalid = null;
+                    var button = form.querySelector('[data-purchase-submit]');
+
+                    form.querySelectorAll('input, select, textarea').forEach(function (field) {
+                        if (!validateField(field) && !firstInvalid) {
+                            firstInvalid = field;
+                        }
+                    });
+
+                    if (!firstInvalid) {
+                        if (button) {
+                            button.disabled = true;
+                            button.classList.add('is-loading');
+                            button.setAttribute('aria-busy', 'true');
+                        }
+
+                        return;
+                    }
+
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    firstInvalid.focus();
+                });
+            });
+        });
+    </script>
 @endsection

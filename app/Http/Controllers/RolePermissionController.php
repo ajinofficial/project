@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\ActivityNotifier;
 use App\Support\RolePermission;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,6 +46,13 @@ class RolePermissionController extends Controller
         $permissions['owner'] = $validMenus;
 
         $request->user()->tenant->update(['role_permissions' => $permissions]);
+
+        ActivityNotifier::notify(
+            $request->user()->tenant_id,
+            'role_permissions_updated',
+            'Role permissions updated',
+            $request->user()->name.' updated staff menu access.'
+        );
 
         return back()->with('status', 'Role permissions updated.');
     }

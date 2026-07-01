@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Supplier;
+use App\Support\ActivityNotifier;
 use App\Support\StockNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -92,6 +93,12 @@ class ProductController extends Controller
 
         $product = Product::create($data);
         StockNotifier::sync($product);
+        ActivityNotifier::notify(
+            $request->user()->tenant_id,
+            'product_created',
+            'Product created',
+            $request->user()->name.' created product '.$product->name.'.'
+        );
 
         return redirect()
             ->route('products.index')
@@ -123,6 +130,12 @@ class ProductController extends Controller
 
         $product->update($data);
         StockNotifier::sync($product);
+        ActivityNotifier::notify(
+            $request->user()->tenant_id,
+            'product_updated',
+            'Product updated',
+            $request->user()->name.' updated product '.$product->name.'.'
+        );
 
         return redirect()
             ->route('products.index')
@@ -151,6 +164,13 @@ class ProductController extends Controller
             'user_id' => $request->user()->id,
         ]);
 
+        ActivityNotifier::notify(
+            $request->user()->tenant_id,
+            'stock_adjusted',
+            'Stock adjusted',
+            $request->user()->name.' adjusted '.$product->name.' by '.$data['adjustment'].' units. Current stock: '.$product->inventory.'.'
+        );
+
         return back()->with('status', 'Stock adjusted for '.$product->name.'.');
     }
 
@@ -163,6 +183,13 @@ class ProductController extends Controller
         }
 
         $product->update(['deleted_status' => 1]);
+
+        ActivityNotifier::notify(
+            $request->user()->tenant_id,
+            'product_deleted',
+            'Product deleted',
+            $request->user()->name.' deleted product '.$product->name.'.'
+        );
 
         return redirect()
             ->route('products.index')

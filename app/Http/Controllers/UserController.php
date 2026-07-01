@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\ActivityNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -63,7 +64,7 @@ class UserController extends Controller
             'password' => ['required', 'string', Password::min(8)->letters()->numbers(), 'confirmed'],
         ]);
 
-        User::create([
+        $createdUser = User::create([
             'tenant_id' => $tenant->id,
             'name' => $data['name'],
             'email' => $data['email'],
@@ -74,6 +75,13 @@ class UserController extends Controller
             'role' => $data['role'],
             'password' => $data['password'],
         ]);
+
+        ActivityNotifier::notify(
+            $tenant->id,
+            'user_created',
+            'User account created',
+            $request->user()->name.' created '.$createdUser->name.' as '.$createdUser->role_label.'.'
+        );
 
         return redirect()->route('users.index')->with('status', 'User account created.');
     }
@@ -86,7 +94,17 @@ class UserController extends Controller
             return back()->withErrors(['delete' => 'Owner accounts cannot be deleted.']);
         }
 
+        $deletedName = $user->name;
+        $deletedRole = $user->role_label;
+
         $user->delete();
+
+        ActivityNotifier::notify(
+            $request->user()->tenant_id,
+            'user_deleted',
+            'User account deleted',
+            $request->user()->name.' deleted '.$deletedName.' from '.$deletedRole.' access.'
+        );
 
         return redirect()->route('users.index')->with('status', 'User account deleted.');
     }

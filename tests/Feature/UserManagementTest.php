@@ -32,6 +32,11 @@ class UserManagementTest extends TestCase
             'email' => 'sales@example.com',
             'role' => User::ROLE_SALES_STAFF,
         ]);
+        $this->assertDatabaseHas('notifications', [
+            'tenant_id' => $tenant->id,
+            'type' => 'user_created',
+            'title' => 'User account created',
+        ]);
     }
 
     public function test_plan_user_limit_blocks_extra_users(): void
@@ -99,6 +104,11 @@ class UserManagementTest extends TestCase
 
         $response->assertRedirect(route('users.index'));
         $this->assertDatabaseMissing('users', ['id' => $staff->id]);
+        $this->assertDatabaseHas('notifications', [
+            'tenant_id' => $owner->tenant_id,
+            'type' => 'user_deleted',
+            'title' => 'User account deleted',
+        ]);
     }
 
     public function test_owner_user_cannot_be_deleted(): void
