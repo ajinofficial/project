@@ -466,7 +466,7 @@ class OperationsController extends Controller
             : now()->endOfDay();
 
         $salesQuery = SalesOrder::where('tenant_id', $tenantId)->whereBetween('created_at', [$startDate, $endDate]);
-        $purchaseQuery = PurchaseOrder::where('tenant_id', $tenantId)->whereBetween('created_at', [$startDate, $endDate]);
+        $purchaseQuery = PurchaseOrder::where('tenant_id', $tenantId)->whereBetween('received_at', [$startDate, $endDate]);
         $returnQuery = StockMovement::where('tenant_id', $tenantId)->whereIn('type', ['sales_return', 'purchase_return'])->whereBetween('created_at', [$startDate, $endDate]);
 
         $soldProductIds = SalesItem::query()

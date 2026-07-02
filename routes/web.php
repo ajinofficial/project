@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OperationsController;
@@ -35,6 +36,7 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('menu:dashboard')->name('dashboard');
+    Route::get('/clients', [ClientController::class, 'index'])->middleware('menu:clients')->name('clients.index');
     Route::get('/setup', [SetupController::class, 'index'])->middleware('menu:setup')->name('setup.index');
     Route::put('/setup', [SetupController::class, 'update'])->middleware('menu:setup')->name('setup.update');
     Route::get('/role-permissions', [RolePermissionController::class, 'index'])->middleware('menu:role_permissions')->name('role-permissions.index');

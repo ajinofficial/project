@@ -8,6 +8,7 @@ class RolePermission
 {
     public const MENUS = [
         'dashboard' => ['label' => 'Dashboard', 'abbr' => 'DB', 'route' => 'dashboard', 'active' => 'dashboard'],
+        'clients' => ['label' => 'Clients', 'abbr' => 'CL', 'route' => 'clients.index', 'active' => 'clients.*'],
         'inventory' => ['label' => 'Inventory', 'abbr' => 'IN', 'route' => 'products.index', 'active' => 'products.*'],
         'billing' => ['label' => 'Billing', 'abbr' => 'BL', 'route' => 'sales.index', 'active' => 'sales.*'],
         'purchases' => ['label' => 'Purchases', 'abbr' => 'PO', 'route' => 'purchases.index', 'active' => 'purchases.*'],
@@ -64,6 +65,10 @@ class RolePermission
 
     public static function canAccess(User $user, string $menu): bool
     {
+        if ($menu === 'clients') {
+            return (int) $user->tenant?->tenant_type === \App\Models\Tenant::TYPE_VENDOR;
+        }
+
         if ((int) $user->role === User::ROLE_OWNER) {
             return true;
         }

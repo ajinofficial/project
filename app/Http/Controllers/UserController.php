@@ -15,23 +15,49 @@ class UserController extends Controller
 {
     public function index(Request $request): View
     {
+        $perPageOptions = [10, 25, 50, 100];
+        $perPage = (int) $request->input('per_page', 10);
+
+        if (! in_array($perPage, $perPageOptions, true)) {
+            $perPage = 10;
+        }
+
         $tenant = $request->user()->tenant()->with('plan')->firstOrFail();
-        $users = User::where('tenant_id', $tenant->id)
+        $baseQuery = User::where('tenant_id', $tenant->id);
+        $hasActiveFilters = $request->filled('search') || $request->filled('role');
+
+        $users = (clone $baseQuery)
+            ->when($request->filled('role'), fn ($query) => $query->where('role', (int) $request->input('role')))
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = (string) $request->string('search');
+
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%");
+                });
+            })
             ->orderBy('role')
             ->orderBy('name')
-            ->paginate(10);
+            ->paginate($perPage)
+            ->appends(array_merge($request->except('page'), ['per_page' => $perPage]));
 
         $userLimit = $tenant->plan?->user_limit;
-        $userCount = User::where('tenant_id', $tenant->id)->count();
+        $userCount = (clone $baseQuery)->count();
 
         return view('users.index', [
             'users' => $users,
             'roles' => $this->creatableRoles(),
+            'filterRoles' => User::ROLES,
+            'countryCodes' => $this->countryCodes(),
             'tenant' => $tenant,
             'userLimit' => $userLimit,
             'userCount' => $userCount,
             'remainingUsers' => is_null($userLimit) ? null : max(0, $userLimit - $userCount),
             'canCreateUser' => is_null($userLimit) || $userCount < $userLimit,
+            'perPageOptions' => $perPageOptions,
+            'perPage' => $perPage,
+            'hasActiveFilters' => $hasActiveFilters,
         ]);
     }
 
@@ -39,6 +65,7 @@ class UserController extends Controller
     {
         $request->merge([
             'email' => Str::lower(trim((string) $request->input('email'))),
+            'country_code' => $request->input('country_code') ?: '+91',
         ]);
 
         $tenant = $request->user()->tenant()->with('plan')->firstOrFail();
@@ -59,9 +86,12 @@ class UserController extends Controller
                 'max:255',
                 Rule::unique('users', 'email')->where('tenant_id', $tenant->id),
             ],
-            'phone' => ['nullable', 'string', 'max:30'],
+            'country_code' => ['required', 'string', Rule::in(array_keys($this->countryCodes()))],
+            'phone' => ['nullable', 'digits_between:6,15'],
             'role' => ['required', 'integer', Rule::in(array_keys($this->creatableRoles()))],
             'password' => ['required', 'string', Password::min(8)->letters()->numbers(), 'confirmed'],
+        ], [
+            'phone.digits_between' => 'Phone number must be 6 to 15 digits.',
         ]);
 
         $createdUser = User::create([
@@ -70,6 +100,7 @@ class UserController extends Controller
             'email' => $data['email'],
             'company_name' => $tenant->business_name,
             'store_url' => null,
+            'country_code' => $data['country_code'],
             'phone' => $data['phone'] ?? null,
             'plan' => $tenant->plan_id ?: $request->user()->plan,
             'role' => $data['role'],
@@ -114,5 +145,16 @@ class UserController extends Controller
         return collect(User::ROLES)
             ->except([User::ROLE_OWNER])
             ->all();
+    }
+
+    private function countryCodes(): array
+    {
+        return [
+            '+91' => 'India (+91)',
+            '+1' => 'USA/Canada (+1)',
+            '+44' => 'United Kingdom (+44)',
+            '+61' => 'Australia (+61)',
+            '+971' => 'United Arab Emirates (+971)',
+        ];
     }
 }

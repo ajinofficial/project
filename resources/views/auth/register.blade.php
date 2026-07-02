@@ -40,11 +40,11 @@
             @endif
             <form class="register-form" method="POST" action="{{ route('register.store') }}">
                 @csrf
-                <div class="register-progress" aria-label="Registration steps">
+                <!-- <div class="register-progress" aria-label="Registration steps">
                     <span>1 Business</span>
                     <span>2 Plan</span>
                     <span>3 Account</span>
-                </div>
+                </div> -->
 
                 <section class="auth-form-section">
                     <div class="auth-section-title">

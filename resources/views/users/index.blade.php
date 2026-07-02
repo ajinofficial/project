@@ -58,41 +58,62 @@
                     </div>
                 @endif
 
-                <form class="product-form" method="POST" action="{{ route('users.store') }}">
+                <form class="product-form" method="POST" action="{{ route('users.store') }}" data-product-save-form>
                     @csrf
                     <label>
                         <span>Name</span>
-                        <input type="text" name="name" value="{{ old('name') }}" required @disabled(! $canCreateUser)>
+                        <input type="text" name="name" value="{{ old('name') }}" @class(['is-invalid' => $errors->has('name')]) required @disabled(! $canCreateUser)>
+                        @error('name') <small>{{ $message }}</small> @enderror
                     </label>
                     <label>
                         <span>Email</span>
-                        <input type="email" name="email" value="{{ old('email') }}" required @disabled(! $canCreateUser)>
+                        <input type="email" name="email" value="{{ old('email') }}" @class(['is-invalid' => $errors->has('email')]) required @disabled(! $canCreateUser)>
+                        @error('email') <small>{{ $message }}</small> @enderror
                     </label>
                     <div class="field-grid">
                         <label>
+                            <span>Country code</span>
+                            <select name="country_code" @class(['is-invalid' => $errors->has('country_code')]) required @disabled(! $canCreateUser)>
+                                @foreach ($countryCodes as $code => $label)
+                                    <option value="{{ $code }}" @selected(old('country_code', '+91') === $code)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('country_code') <small>{{ $message }}</small> @enderror
+                        </label>
+                        <label>
                             <span>Phone</span>
-                            <input type="text" name="phone" value="{{ old('phone') }}" @disabled(! $canCreateUser)>
+                            <input type="tel" name="phone" value="{{ old('phone') }}" inputmode="numeric" maxlength="15" pattern="[0-9]{6,15}" placeholder="9876543210" @class(['is-invalid' => $errors->has('phone')]) @disabled(! $canCreateUser)>
+                            @error('phone') <small>{{ $message }}</small> @enderror
                         </label>
                         <label>
                             <span>Role</span>
-                            <select name="role" required @disabled(! $canCreateUser)>
+                            <select name="role" @class(['is-invalid' => $errors->has('role')]) required @disabled(! $canCreateUser)>
                                 @foreach ($roles as $roleId => $roleLabel)
                                     <option value="{{ $roleId }}" @selected((int) old('role', \App\Models\User::ROLE_MANAGER) === (int) $roleId)>{{ $roleLabel }}</option>
                                 @endforeach
                             </select>
+                            @error('role') <small>{{ $message }}</small> @enderror
                         </label>
                     </div>
                     <div class="field-grid">
                         <label>
                             <span>Password</span>
-                            <input type="password" name="password" required @disabled(! $canCreateUser)>
+                            <input type="password" name="password" @class(['is-invalid' => $errors->has('password')]) required @disabled(! $canCreateUser)>
+                            @error('password') <small>{{ $message }}</small> @enderror
                         </label>
                         <label>
                             <span>Confirm password</span>
-                            <input type="password" name="password_confirmation" required @disabled(! $canCreateUser)>
+                            <input type="password" name="password_confirmation" @class(['is-invalid' => $errors->has('password_confirmation')]) required @disabled(! $canCreateUser)>
+                            @error('password_confirmation') <small>{{ $message }}</small> @enderror
                         </label>
                     </div>
-                    <button type="submit" @disabled(! $canCreateUser)>Create user</button>
+                    <button class="product-save-button" type="submit" data-product-save-button @disabled(! $canCreateUser)>
+                        <span class="product-save-button__idle">Create user</span>
+                        <span class="product-save-button__loading" aria-hidden="true">
+                            <i></i>
+                            Saving
+                        </span>
+                    </button>
                     @unless ($canCreateUser)
                         <p class="users-limit-note">This plan has reached its user limit.</p>
                     @endunless
@@ -106,6 +127,25 @@
                         <h2>Accounts</h2>
                     </div>
                 </div>
+
+                <div class="product-toolbar">
+                    <form class="product-filter-form users-filter-form" method="GET" action="{{ route('users.index') }}" data-users-filter-form>
+                        <input type="search" name="search" value="{{ request('search') }}" placeholder="Search name, email, phone" data-users-filter>
+                        <select name="role" data-users-filter>
+                            <option value="">All roles</option>
+                            @foreach ($filterRoles as $roleId => $roleLabel)
+                                <option value="{{ $roleId }}" @selected((string) request('role') === (string) $roleId)>{{ $roleLabel }}</option>
+                            @endforeach
+                        </select>
+                        <select name="per_page" aria-label="Users per page" data-users-filter>
+                            @foreach ($perPageOptions as $option)
+                                <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }} / page</option>
+                            @endforeach
+                        </select>
+                        <a class="product-clear-filter" href="{{ route('users.index') }}">Clear</a>
+                    </form>
+                </div>
+
                 <div class="table-wrap">
                     <table class="admin-table users-table">
                         <thead>
@@ -130,7 +170,13 @@
                                         </div>
                                     </td>
                                     <td>{{ $teamUser->role_label }}</td>
-                                    <td>{{ $teamUser->phone ?: '-' }}</td>
+                                    <td>
+                                        @if ($teamUser->phone)
+                                            {{ str_starts_with($teamUser->phone, '+') ? $teamUser->phone : ($teamUser->country_code ?: '+91').' '.$teamUser->phone }}
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
                                     <td>{{ $teamUser->created_at?->format('d M Y') }}</td>
                                     <td>
                                         @if ((int) $teamUser->role !== \App\Models\User::ROLE_OWNER)
@@ -145,14 +191,46 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5">No users yet.</td>
+                                    <td colspan="5">{{ $hasActiveFilters ? 'No users match the current filters.' : 'No users yet.' }}</td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
-                {{ $users->links() }}
+                @include('products.partials.pagination', ['paginator' => $users, 'itemLabel' => 'users'])
             </article>
         </section>
     </section>
+
+    @once
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll('[data-users-filter-form]').forEach(function (form) {
+                    function submitFilters() {
+                        if (typeof form.requestSubmit === 'function') {
+                            form.requestSubmit();
+                            return;
+                        }
+
+                        form.submit();
+                    }
+
+                    form.querySelectorAll('[data-users-filter]').forEach(function (field) {
+                        field.addEventListener('change', submitFilters);
+                        field.addEventListener('search', submitFilters);
+                    });
+
+                    form.addEventListener('submit', function () {
+                        form.querySelectorAll('input, select').forEach(function (field) {
+                            if (field.value === '') {
+                                field.disabled = true;
+                            }
+                        });
+                    });
+                });
+            });
+        </script>
+    @endonce
+
+    @include('products.partials.save-loader-script')
 @endsection

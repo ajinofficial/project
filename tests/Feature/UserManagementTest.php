@@ -20,7 +20,8 @@ class UserManagementTest extends TestCase
         $response = $this->actingAs($owner)->post(route('users.store'), [
             'name' => 'Sales Staff',
             'email' => 'sales@example.com',
-            'phone' => '+91 99999 99999',
+            'country_code' => '+91',
+            'phone' => '9999999999',
             'role' => User::ROLE_SALES_STAFF,
             'password' => 'Password123',
             'password_confirmation' => 'Password123',
@@ -30,6 +31,8 @@ class UserManagementTest extends TestCase
         $this->assertDatabaseHas('users', [
             'tenant_id' => $tenant->id,
             'email' => 'sales@example.com',
+            'country_code' => '+91',
+            'phone' => '9999999999',
             'role' => User::ROLE_SALES_STAFF,
         ]);
         $this->assertDatabaseHas('notifications', [
@@ -86,6 +89,27 @@ class UserManagementTest extends TestCase
         $response->assertSessionHasErrors('email');
     }
 
+    public function test_user_phone_number_must_match_digit_limit(): void
+    {
+        [$owner] = $this->tenantOwnerWithLimit(3);
+
+        $response = $this->actingAs($owner)
+            ->from(route('users.index'))
+            ->post(route('users.store'), [
+                'name' => 'Invalid Phone',
+                'email' => 'invalid-phone@example.com',
+                'country_code' => '+91',
+                'phone' => '12345',
+                'role' => User::ROLE_MANAGER,
+                'password' => 'Password123',
+                'password_confirmation' => 'Password123',
+            ]);
+
+        $response->assertRedirect(route('users.index'));
+        $response->assertSessionHasErrors('phone');
+        $this->assertDatabaseMissing('users', ['email' => 'invalid-phone@example.com']);
+    }
+
     public function test_non_owner_user_can_be_deleted(): void
     {
         [$owner] = $this->tenantOwnerWithLimit(3);
@@ -122,6 +146,66 @@ class UserManagementTest extends TestCase
         $response->assertRedirect(route('users.index'));
         $response->assertSessionHasErrors('delete');
         $this->assertDatabaseHas('users', ['id' => $owner->id]);
+    }
+
+    public function test_users_listing_can_be_filtered_by_search_and_role(): void
+    {
+        [$owner] = $this->tenantOwnerWithLimit(5);
+
+        User::create([
+            'tenant_id' => $owner->tenant_id,
+            'name' => 'Alpha Sales',
+            'email' => 'alpha@example.com',
+            'company_name' => 'Demo Store',
+            'phone' => '111',
+            'plan' => $owner->plan,
+            'role' => User::ROLE_SALES_STAFF,
+            'password' => 'Password123',
+        ]);
+
+        User::create([
+            'tenant_id' => $owner->tenant_id,
+            'name' => 'Beta Manager',
+            'email' => 'beta@example.com',
+            'company_name' => 'Demo Store',
+            'phone' => '222',
+            'plan' => $owner->plan,
+            'role' => User::ROLE_MANAGER,
+            'password' => 'Password123',
+        ]);
+
+        $response = $this->actingAs($owner)->get(route('users.index', [
+            'search' => 'alpha',
+            'role' => User::ROLE_SALES_STAFF,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Alpha Sales');
+        $response->assertDontSee('Beta Manager');
+    }
+
+    public function test_users_listing_supports_per_page_pagination(): void
+    {
+        [$owner] = $this->tenantOwnerWithLimit(null);
+
+        foreach (range(1, 26) as $index) {
+            User::create([
+                'tenant_id' => $owner->tenant_id,
+                'name' => 'Staff '.$index,
+                'email' => 'staff'.$index.'@example.com',
+                'company_name' => 'Demo Store',
+                'plan' => $owner->plan,
+                'role' => User::ROLE_MANAGER,
+                'password' => 'Password123',
+            ]);
+        }
+
+        $response = $this->actingAs($owner)->get(route('users.index', ['per_page' => 25]));
+
+        $response->assertOk();
+        $response->assertViewHas('perPage', 25);
+        $response->assertViewHas('users', fn ($users) => $users->perPage() === 25 && $users->total() === 27);
+        $response->assertSee('per_page=25', false);
     }
 
     private function tenantOwnerWithLimit(?int $limit): array

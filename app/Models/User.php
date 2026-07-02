@@ -38,6 +38,7 @@ class User extends Authenticatable
         'company_name',
         'store_url',
         'phone',
+        'country_code',
         'plan',
         'role',
         'password',

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class StockMovement extends Model
 {
-    protected $fillable = ['tenant_id', 'product_id', 'type', 'quantity', 'stock_after', 'reference_type', 'reference_id', 'notes', 'user_id'];
+    protected $fillable = ['tenant_id', 'product_id', 'type', 'quantity', 'stock_after', 'reference_type', 'reference_id', 'notes', 'user_id', 'created_at', 'updated_at'];
 
     protected $casts = ['quantity' => 'integer', 'stock_after' => 'integer'];
 
