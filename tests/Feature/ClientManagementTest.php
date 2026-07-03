@@ -27,11 +27,26 @@ class ClientManagementTest extends TestCase
         $response->assertSee(route('clients.index'), false);
     }
 
+    public function test_vendor_owner_lands_on_vendor_dashboard_not_client_dashboard(): void
+    {
+        [$owner] = $this->tenantOwner(Tenant::TYPE_VENDOR, 'Vendor HQ', 'vendor@example.com');
+        $this->createClientTenant('Alpha Retail', 'alpha@example.com');
+
+        $response = $this->actingAs($owner)->get(route('vendor.dashboard'));
+
+        $response->assertOk();
+        $response->assertSee('Vendor Dashboard');
+        $response->assertSee('Alpha Retail');
+
+        $this->actingAs($owner)->get(route('dashboard'))->assertForbidden();
+    }
+
     public function test_client_owner_cannot_access_clients_listing_or_sidebar_menu(): void
     {
         [$owner] = $this->tenantOwner(Tenant::TYPE_CLIENT, 'Client Store', 'client-owner@example.com');
 
         $this->actingAs($owner)->get(route('clients.index'))->assertForbidden();
+        $this->actingAs($owner)->get(route('vendor.dashboard'))->assertForbidden();
 
         $dashboard = $this->actingAs($owner)->get(route('dashboard'));
 

@@ -86,7 +86,7 @@ class NotificationTest extends TestCase
 
         $tenant = Tenant::create([
             'plan_id' => $plan->id,
-            'tenant_type' => Tenant::TYPE_VENDOR,
+            'tenant_type' => Tenant::TYPE_CLIENT,
             'business_name' => 'Demo Store',
             'owner_name' => 'Owner User',
             'mobile' => '+91 98765 43210',

@@ -45,8 +45,9 @@ textarea {
     padding: clamp(24px, 5vw, 56px);
     color: #f9fbf6;
     background:
-        linear-gradient(135deg, rgba(20, 108, 67, 0.92), rgba(15, 81, 50, 0.94)),
-        url("https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1400&q=80") center / cover;
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.18), transparent 28%),
+        radial-gradient(circle at 86% 76%, rgba(217, 79, 48, 0.22), transparent 24%),
+        linear-gradient(135deg, #146c43, #0f5132);
 }
 
 .topbar,
@@ -1873,8 +1874,9 @@ button.ghost-button {
     overflow: hidden;
     color: #ffffff;
     background:
-        linear-gradient(135deg, rgba(15, 23, 42, 0.78), rgba(21, 128, 61, 0.72)),
-        url("https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1600&q=85") center / cover;
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.14), transparent 26%),
+        radial-gradient(circle at 78% 74%, rgba(34, 197, 94, 0.24), transparent 28%),
+        linear-gradient(135deg, #0f172a, #166534);
 }
 
 .auth-ui .brand-panel::after,
@@ -5450,8 +5452,9 @@ button.ghost-button {
     padding: clamp(24px, 5vw, 58px);
     color: #ffffff;
     background:
-        linear-gradient(135deg, rgba(15, 23, 42, 0.86), rgba(22, 101, 52, 0.84)),
-        url("https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1500&q=80") center / cover;
+        radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.14), transparent 26%),
+        radial-gradient(circle at 78% 74%, rgba(34, 197, 94, 0.24), transparent 28%),
+        linear-gradient(135deg, #0f172a, #166534);
 }
 
 .login-brand {

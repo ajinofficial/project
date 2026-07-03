@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\ActivityNotifier;
+use App\Support\RolePermission;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -41,6 +42,6 @@ class SetupController extends Controller
             $request->user()->name.' updated billing, tax, stock alert, or invoice defaults.'
         );
 
-        return redirect()->route('dashboard')->with('status', 'Store setup saved.');
+        return redirect()->route(RolePermission::firstAccessibleRoute($request->user()))->with('status', 'Store setup saved.');
     }
 }

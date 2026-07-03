@@ -51,6 +51,21 @@ class LoginTest extends TestCase
         ]);
 
         $response->assertOk();
+        $response->assertJsonPath('redirect', route('vendor.dashboard'));
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_client_ajax_login_returns_dashboard_redirect_url_after_success(): void
+    {
+        $user = $this->tenantOwner(Tenant::TYPE_CLIENT, 'client-owner@example.com');
+
+        $response = $this->postJson(route('login.store'), [
+            'tenant_id' => $user->tenant_id,
+            'email' => $user->email,
+            'password' => 'Password123',
+        ]);
+
+        $response->assertOk();
         $response->assertJsonPath('redirect', route('dashboard'));
         $this->assertAuthenticatedAs($user);
     }
@@ -95,17 +110,17 @@ class LoginTest extends TestCase
             ->assertDontSee('alpha@example.com');
     }
 
-    private function tenantOwner(): User
+    private function tenantOwner(int $tenantType = Tenant::TYPE_VENDOR, string $email = 'owner@example.com'): User
     {
         $plan = Plan::where('name', 'starter')->firstOrFail();
 
         $tenant = Tenant::create([
             'plan_id' => $plan->id,
-            'tenant_type' => Tenant::TYPE_VENDOR,
+            'tenant_type' => $tenantType,
             'business_name' => 'Demo Store',
             'owner_name' => 'Owner User',
             'mobile' => '+91 98765 43210',
-            'email' => 'owner@example.com',
+            'email' => $email,
             'business_category' => Tenant::CATEGORY_RETAIL,
             'store_address' => 'Demo road',
             'role_permissions' => RolePermission::defaults(),
@@ -114,7 +129,7 @@ class LoginTest extends TestCase
         return User::create([
             'tenant_id' => $tenant->id,
             'name' => 'Owner User',
-            'email' => 'owner@example.com',
+            'email' => $email,
             'company_name' => 'Demo Store',
             'phone' => '9876543210',
             'country_code' => '+91',

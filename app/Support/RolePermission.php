@@ -7,6 +7,7 @@ use App\Models\User;
 class RolePermission
 {
     public const MENUS = [
+        'vendor_dashboard' => ['label' => 'Vendor Dashboard', 'abbr' => 'VD', 'route' => 'vendor.dashboard', 'active' => 'vendor.dashboard'],
         'dashboard' => ['label' => 'Dashboard', 'abbr' => 'DB', 'route' => 'dashboard', 'active' => 'dashboard'],
         'clients' => ['label' => 'Clients', 'abbr' => 'CL', 'route' => 'clients.index', 'active' => 'clients.*'],
         'inventory' => ['label' => 'Inventory', 'abbr' => 'IN', 'route' => 'products.index', 'active' => 'products.*'],
@@ -20,6 +21,8 @@ class RolePermission
         'setup' => ['label' => 'Store Setup', 'abbr' => 'ST', 'route' => 'setup.index', 'active' => 'setup.*'],
         'role_permissions' => ['label' => 'Role Permissions', 'abbr' => 'RP', 'route' => 'role-permissions.index', 'active' => 'role-permissions.*'],
     ];
+
+    private const FIXED_TENANT_MENUS = ['vendor_dashboard', 'clients'];
 
     public static function roleKey(int $role): string
     {
@@ -37,10 +40,20 @@ class RolePermission
         return array_keys(self::MENUS);
     }
 
+    public static function configurableMenus(): array
+    {
+        return array_diff_key(self::MENUS, array_flip(self::FIXED_TENANT_MENUS));
+    }
+
+    public static function configurableMenuKeys(): array
+    {
+        return array_keys(self::configurableMenus());
+    }
+
     public static function defaults(): array
     {
         return [
-            'owner' => self::allMenuKeys(),
+            'owner' => self::configurableMenuKeys(),
             'manager' => ['dashboard', 'inventory', 'billing', 'purchases', 'suppliers', 'customers', 'returns', 'reports'],
             'sales_staff' => ['dashboard', 'billing', 'customers', 'returns'],
             'warehouse_staff' => ['dashboard', 'inventory', 'purchases', 'suppliers', 'returns'],
@@ -51,7 +64,7 @@ class RolePermission
     public static function normalize(?array $permissions): array
     {
         $defaults = self::defaults();
-        $validMenus = self::allMenuKeys();
+        $validMenus = self::configurableMenuKeys();
 
         foreach ($defaults as $role => $roleDefaults) {
             $values = $permissions[$role] ?? $roleDefaults;
@@ -65,8 +78,16 @@ class RolePermission
 
     public static function canAccess(User $user, string $menu): bool
     {
-        if ($menu === 'clients') {
-            return (int) $user->tenant?->tenant_type === \App\Models\Tenant::TYPE_VENDOR;
+        if ((int) $user->tenant?->tenant_type === \App\Models\Tenant::TYPE_VENDOR) {
+            return in_array($menu, ['vendor_dashboard', 'clients'], true);
+        }
+
+        if ($menu === 'vendor_dashboard' || $menu === 'clients') {
+            return false;
+        }
+
+        if ($menu === 'dashboard') {
+            return (int) $user->tenant?->tenant_type === \App\Models\Tenant::TYPE_CLIENT;
         }
 
         if ((int) $user->role === User::ROLE_OWNER) {

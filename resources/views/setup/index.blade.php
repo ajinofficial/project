@@ -62,7 +62,7 @@
                         <p class="eyebrow">Billing defaults</p>
                         <h2>Invoice and tax setup</h2>
                     </div>
-                    <a href="{{ route('dashboard') }}">Skip for now</a>
+                    <a href="{{ route(\App\Support\RolePermission::firstAccessibleRoute(auth()->user())) }}">Skip for now</a>
                 </div>
 
                 <div class="setup-field-grid">

@@ -4,7 +4,7 @@
     <section class="admin-section notification-page" data-notification-page>
         <div class="section-title notification-page-head">
             <div>
-                <a class="notification-back-button" href="{{ url()->previous() === url()->current() ? route('dashboard') : url()->previous() }}">
+                <a class="notification-back-button" href="{{ url()->previous() === url()->current() ? route(\App\Support\RolePermission::firstAccessibleRoute(auth()->user())) : url()->previous() }}">
                     <span aria-hidden="true">&lt;</span> Back
                 </a>
                 <h2 class="notification-title">

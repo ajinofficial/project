@@ -75,7 +75,7 @@ class SetupTest extends TestCase
 
         $tenant = Tenant::create([
             'plan_id' => $plan->id,
-            'tenant_type' => Tenant::TYPE_VENDOR,
+            'tenant_type' => Tenant::TYPE_CLIENT,
             'business_name' => 'Mobile World',
             'owner_name' => 'Ajay Kumar',
             'mobile' => '+91 98765 43210',

@@ -4,15 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title ?? 'Dashboard' }} - InApp Inventory</title>
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/register.css') }}?v={{ filemtime(public_path('css/register.css')) }}">
 </head>
 <body class="admin-body inapp-body">
     <div @class(['inapp-shell', 'inapp-shell-full' => $hideSidebar ?? false])>
         @unless ($hideSidebar ?? false)
         <aside class="inapp-sidebar" aria-label="Admin navigation">
-            <a class="inapp-brand" href="{{ route('dashboard') }}">
+            <a class="inapp-brand" href="{{ route(\App\Support\RolePermission::firstAccessibleRoute(auth()->user())) }}">
                 <span class="inapp-brand-mark">SP</span>
                 <span>
                     <b>{{ auth()->user()->tenant->business_name ?? 'StockPilot' }}</b>
@@ -25,6 +23,7 @@
                 $canOpenMenu = fn (string $menu) => \App\Support\RolePermission::canAccess(auth()->user(), $menu);
                 $sidebarIcon = function (string $menuKey): string {
                     return match ($menuKey) {
+                        'vendor_dashboard' => '<path d="M4 21V7l8-4 8 4v14" /><path d="M9 21v-7h6v7" /><path d="M8 10h2" /><path d="M14 10h2" />',
                         'dashboard' => '<path d="M4 13h6V4H4v9Zm10 7h6V4h-6v16ZM4 20h6v-4H4v4Z" />',
                         'clients' => '<path d="M3 21V7l9-4 9 4v14" /><path d="M9 21v-7h6v7" /><path d="M7 10h2" /><path d="M15 10h2" />',
                         'inventory' => '<path d="M4 7h16v13H4V7Z" /><path d="M8 7V4h8v3" /><path d="M8 12h8" />',

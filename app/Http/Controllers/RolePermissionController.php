@@ -16,14 +16,14 @@ class RolePermissionController extends Controller
     {
         return view('role-permissions.index', [
             'roles' => User::ROLES,
-            'menus' => RolePermission::MENUS,
+            'menus' => RolePermission::configurableMenus(),
             'permissions' => RolePermission::normalize($request->user()->tenant->role_permissions ?? []),
         ]);
     }
 
     public function update(Request $request): RedirectResponse
     {
-        $validMenus = RolePermission::allMenuKeys();
+        $validMenus = RolePermission::configurableMenuKeys();
         $roleKeys = collect(array_keys(User::ROLES))
             ->map(fn ($role) => RolePermission::roleKey((int) $role))
             ->all();

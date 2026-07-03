@@ -10,6 +10,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VendorDashboardController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -35,6 +36,7 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/vendor-dashboard', [VendorDashboardController::class, 'index'])->middleware('menu:vendor_dashboard')->name('vendor.dashboard');
     Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('menu:dashboard')->name('dashboard');
     Route::get('/clients', [ClientController::class, 'index'])->middleware('menu:clients')->name('clients.index');
     Route::get('/setup', [SetupController::class, 'index'])->middleware('menu:setup')->name('setup.index');

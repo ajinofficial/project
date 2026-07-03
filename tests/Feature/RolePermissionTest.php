@@ -24,6 +24,8 @@ class RolePermissionTest extends TestCase
         $response->assertSee('Select all');
         $response->assertSee('Use default');
         $response->assertSee('Role permissions are current');
+        $response->assertDontSee('Vendor Dashboard');
+        $response->assertDontSee('Clients');
     }
 
     public function test_owner_can_update_role_permissions(): void
@@ -48,7 +50,7 @@ class RolePermissionTest extends TestCase
 
         $this->assertSame(['dashboard', 'inventory', 'billing'], $permissions['manager']);
         $this->assertSame(['dashboard', 'billing'], $permissions['sales_staff']);
-        $this->assertSame(RolePermission::allMenuKeys(), $permissions['owner']);
+        $this->assertSame(RolePermission::configurableMenuKeys(), $permissions['owner']);
         $this->assertDatabaseHas('notifications', [
             'tenant_id' => $tenant->id,
             'type' => 'role_permissions_updated',
@@ -78,7 +80,7 @@ class RolePermissionTest extends TestCase
 
         $tenant = Tenant::create([
             'plan_id' => $plan->id,
-            'tenant_type' => Tenant::TYPE_VENDOR,
+            'tenant_type' => Tenant::TYPE_CLIENT,
             'business_name' => 'Demo Store',
             'owner_name' => 'Owner User',
             'mobile' => '+91 98765 43210',
