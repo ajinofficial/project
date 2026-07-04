@@ -31,14 +31,16 @@ class ClientController extends Controller
             'users' => User::query()
                 ->whereHas('tenant', fn ($query) => $query->where('tenant_type', Tenant::TYPE_CLIENT))
                 ->count(),
+            'free_trial' => (clone $baseQuery)->whereHas('plan', fn ($query) => $query->where('name', 'free_trial'))->count(),
             'starter' => (clone $baseQuery)->whereHas('plan', fn ($query) => $query->where('name', 'starter'))->count(),
             'premium' => (clone $baseQuery)->whereHas('plan', fn ($query) => $query->where('name', 'premium'))->count(),
         ];
 
-        $hasActiveFilters = $request->filled('search') || $request->filled('plan_id');
+        $hasActiveFilters = $request->filled('search') || $request->filled('plan_id') || $request->filled('category');
 
         $clients = (clone $baseQuery)
             ->when($request->filled('plan_id'), fn ($query) => $query->where('plan_id', (int) $request->input('plan_id')))
+            ->when($request->filled('category'), fn ($query) => $query->where('business_category', (int) $request->input('category')))
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = (string) $request->string('search');
 
@@ -51,11 +53,14 @@ class ClientController extends Controller
             })
             ->latest()
             ->paginate($perPage)
-            ->appends(array_merge($request->except('page'), ['per_page' => $perPage]));
+            ->appends(array_merge($request->except('page'), [
+                'per_page' => $perPage,
+            ]));
 
         return view('clients.index', [
             'clients' => $clients,
             'plans' => Plan::orderBy('monthly_price')->get(),
+            'categories' => Tenant::BUSINESS_CATEGORIES,
             'stats' => $stats,
             'perPageOptions' => $perPageOptions,
             'perPage' => $perPage,

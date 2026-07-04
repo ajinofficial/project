@@ -1,6 +1,13 @@
 @extends('layouts.admin', ['title' => 'Clients'])
 
 @section('content')
+    @php
+        $selectedPlan = $plans->firstWhere('id', (int) request('plan_id'));
+        $selectedCategory = request('category') !== null && request('category') !== ''
+            ? ($categories[(int) request('category')] ?? null)
+            : null;
+    @endphp
+
     <section class="users-page clients-page">
         <header class="users-hero clients-hero">
             <div>
@@ -22,6 +29,10 @@
             <article>
                 <span>Client users</span>
                 <strong>{{ number_format($stats['users']) }}</strong>
+            </article>
+            <article>
+                <span>Free trials</span>
+                <strong>{{ number_format($stats['free_trial']) }}</strong>
             </article>
             <article>
                 <span>Starter plan</span>
@@ -50,14 +61,35 @@
                             <option value="{{ $plan->id }}" @selected((string) request('plan_id') === (string) $plan->id)>{{ ucfirst($plan->name) }}</option>
                         @endforeach
                     </select>
+                    <select name="category" data-clients-filter>
+                        <option value="">All categories</option>
+                        @foreach ($categories as $value => $label)
+                            <option value="{{ $value }}" @selected((string) request('category') === (string) $value)>{{ $label }}</option>
+                        @endforeach
+                    </select>
                     <select name="per_page" aria-label="Clients per page" data-clients-filter>
                         @foreach ($perPageOptions as $option)
                             <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }} / page</option>
                         @endforeach
                     </select>
+                    <button type="submit">Apply</button>
                     <a class="product-clear-filter" href="{{ route('clients.index') }}">Clear</a>
                 </form>
             </div>
+
+            @if ($hasActiveFilters)
+                <div class="clients-filter-chips" aria-label="Active client filters">
+                    @if (request('search'))
+                        <span>Search: {{ request('search') }}</span>
+                    @endif
+                    @if ($selectedPlan)
+                        <span>Plan: {{ ucfirst($selectedPlan->name) }}</span>
+                    @endif
+                    @if ($selectedCategory)
+                        <span>Category: {{ $selectedCategory }}</span>
+                    @endif
+                </div>
+            @endif
 
             <div class="table-wrap">
                 <table class="admin-table clients-table">
@@ -69,6 +101,7 @@
                             <th>Plan</th>
                             <th>Users</th>
                             <th>Created</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -95,10 +128,33 @@
                                 </td>
                                 <td>{{ number_format($client->users_count) }}</td>
                                 <td>{{ $client->created_at?->format('d M Y') }}</td>
+                                <td>
+                                    <button
+                                        type="button"
+                                        class="clients-view-button"
+                                        data-client-view
+                                        data-business="{{ $client->business_name }}"
+                                        data-owner="{{ $client->owner_name }}"
+                                        data-email="{{ $client->email }}"
+                                        data-mobile="{{ $client->mobile ?: '-' }}"
+                                        data-plan="{{ ucfirst($client->plan?->name ?? 'No plan') }}"
+                                        data-category="{{ $client->business_category_label }}"
+                                        data-users="{{ number_format($client->users_count) }}"
+                                        data-address="{{ $client->store_address ?: '-' }}"
+                                        data-created="{{ $client->created_at?->format('d M Y') }}"
+                                    >View</button>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6">{{ $hasActiveFilters ? 'No clients match the current filters.' : 'No client businesses yet.' }}</td>
+                                <td colspan="7">
+                                    <div class="clients-empty">
+                                        <strong>{{ $hasActiveFilters ? 'No clients match the current filters.' : 'No client businesses yet.' }}</strong>
+                                        @if ($hasActiveFilters)
+                                            <a href="{{ route('clients.index') }}">Clear filters</a>
+                                        @endif
+                                    </div>
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -107,6 +163,26 @@
 
             @include('products.partials.pagination', ['paginator' => $clients, 'itemLabel' => 'clients'])
         </article>
+
+        <div class="clients-drawer-backdrop" data-client-drawer-close hidden></div>
+        <aside class="clients-drawer" data-client-drawer aria-hidden="true" aria-label="Client details">
+            <div class="clients-drawer-head">
+                <div>
+                    <span data-drawer-category>Client</span>
+                    <h2 data-drawer-business>Client details</h2>
+                </div>
+                <button type="button" data-client-drawer-close aria-label="Close client details">x</button>
+            </div>
+            <dl class="clients-drawer-list">
+                <div><dt>Owner</dt><dd data-drawer-owner></dd></div>
+                <div><dt>Email</dt><dd data-drawer-email></dd></div>
+                <div><dt>Mobile</dt><dd data-drawer-mobile></dd></div>
+                <div><dt>Plan</dt><dd data-drawer-plan></dd></div>
+                <div><dt>Users</dt><dd data-drawer-users></dd></div>
+                <div><dt>Created</dt><dd data-drawer-created></dd></div>
+                <div class="clients-drawer-wide"><dt>Store address</dt><dd data-drawer-address></dd></div>
+            </dl>
+        </aside>
     </section>
 
     @once
@@ -134,6 +210,54 @@
                             }
                         });
                     });
+                });
+
+                const drawer = document.querySelector('[data-client-drawer]');
+                const backdrop = document.querySelector('.clients-drawer-backdrop');
+
+                function setDrawerValue(name, value) {
+                    const target = drawer?.querySelector(`[data-drawer-${name}]`);
+
+                    if (target) {
+                        target.textContent = value || '-';
+                    }
+                }
+
+                function closeDrawer() {
+                    drawer?.classList.remove('is-open');
+                    drawer?.setAttribute('aria-hidden', 'true');
+                    document.body.classList.remove('clients-drawer-open');
+
+                    if (backdrop) {
+                        backdrop.hidden = true;
+                    }
+                }
+
+                document.querySelectorAll('[data-client-view]').forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        if (!drawer || !backdrop) {
+                            return;
+                        }
+
+                        ['business', 'owner', 'email', 'mobile', 'plan', 'category', 'users', 'address', 'created'].forEach(function (name) {
+                            setDrawerValue(name, button.dataset[name]);
+                        });
+
+                        backdrop.hidden = false;
+                        drawer.classList.add('is-open');
+                        drawer.setAttribute('aria-hidden', 'false');
+                        document.body.classList.add('clients-drawer-open');
+                    });
+                });
+
+                document.querySelectorAll('[data-client-drawer-close]').forEach(function (button) {
+                    button.addEventListener('click', closeDrawer);
+                });
+
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape') {
+                        closeDrawer();
+                    }
                 });
             });
         </script>

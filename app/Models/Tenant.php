@@ -50,6 +50,7 @@ class Tenant extends Model
         'default_tax_percentage',
         'low_stock_threshold',
         'invoice_prefix',
+        'domain_expired_date',
         'role_permissions',
     ];
 
@@ -58,6 +59,7 @@ class Tenant extends Model
         'business_category' => 'integer',
         'low_stock_threshold' => 'integer',
         'tenant_type' => 'integer',
+        'domain_expired_date' => 'date',
         'role_permissions' => 'array',
     ];
 

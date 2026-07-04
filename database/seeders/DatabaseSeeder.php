@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Support\RolePermission;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
@@ -17,6 +18,19 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        DB::table('plans')->updateOrInsert(
+            ['id' => 4],
+            [
+                'name' => 'free_trial',
+                'monthly_price' => 0,
+                'features' => '30 days, 1 store, 1 user',
+                'store_limit' => 1,
+                'user_limit' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
         $plan = Plan::firstOrCreate(
             ['name' => 'starter'],
             [
@@ -37,6 +51,7 @@ class DatabaseSeeder extends Seeder
                 'mobile' => '+91 98765 43210',
                 'business_category' => Tenant::CATEGORY_RETAIL,
                 'store_address' => 'Demo market road, Bengaluru',
+                'domain_expired_date' => now()->addYears(5)->toDateString(),
                 'role_permissions' => RolePermission::defaults(),
             ]
         );

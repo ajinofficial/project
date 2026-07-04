@@ -16,7 +16,16 @@ class ClientManagementTest extends TestCase
     public function test_vendor_owner_can_open_clients_listing_from_sidebar(): void
     {
         [$owner] = $this->tenantOwner(Tenant::TYPE_VENDOR, 'Vendor HQ', 'vendor@example.com');
+        $freeTrial = Plan::updateOrCreate([
+            'name' => 'free_trial',
+        ], [
+            'monthly_price' => 0,
+            'features' => '30-day free trial',
+            'store_limit' => 1,
+            'user_limit' => 1,
+        ]);
         $this->createClientTenant('Alpha Retail', 'alpha@example.com');
+        $this->createClientTenant('Trial Retail', 'trial@example.com', $freeTrial->id);
 
         $response = $this->actingAs($owner)->get(route('clients.index'));
 
@@ -24,6 +33,8 @@ class ClientManagementTest extends TestCase
         $response->assertSee('Clients');
         $response->assertSee('Vendor Console');
         $response->assertSee('Alpha Retail');
+        $response->assertSee('Free trials');
+        $response->assertViewHas('stats', fn ($stats) => $stats['free_trial'] === 1);
         $response->assertSee(route('clients.index'), false);
     }
 
@@ -81,6 +92,25 @@ class ClientManagementTest extends TestCase
         $response->assertDontSee('Alpha Retail');
     }
 
+    public function test_clients_listing_can_be_filtered_by_category(): void
+    {
+        [$owner] = $this->tenantOwner(Tenant::TYPE_VENDOR, 'Vendor HQ', 'vendor@example.com');
+
+        $this->createClientTenant('Zulu Hardware', 'zulu@example.com', null, Tenant::CATEGORY_HARDWARE);
+        $this->createClientTenant('Alpha Retail', 'alpha@example.com', null, Tenant::CATEGORY_RETAIL);
+        $this->createClientTenant('Beta Hardware', 'beta@example.com', null, Tenant::CATEGORY_HARDWARE);
+
+        $response = $this->actingAs($owner)->get(route('clients.index', [
+            'category' => Tenant::CATEGORY_HARDWARE,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Category: Hardware');
+        $response->assertSee('Beta Hardware');
+        $response->assertSee('Zulu Hardware');
+        $response->assertDontSee('Alpha Retail');
+    }
+
     public function test_clients_listing_supports_per_page_pagination(): void
     {
         [$owner] = $this->tenantOwner(Tenant::TYPE_VENDOR, 'Vendor HQ', 'vendor@example.com');
@@ -128,7 +158,7 @@ class ClientManagementTest extends TestCase
         return [$owner, $tenant];
     }
 
-    private function createClientTenant(string $businessName, string $email, ?int $planId = null): Tenant
+    private function createClientTenant(string $businessName, string $email, ?int $planId = null, int $category = Tenant::CATEGORY_RETAIL): Tenant
     {
         $planId ??= Plan::where('name', 'starter')->firstOrFail()->id;
 
@@ -139,7 +169,7 @@ class ClientManagementTest extends TestCase
             'owner_name' => $businessName.' Owner',
             'mobile' => '+91 90000 00000',
             'email' => $email,
-            'business_category' => Tenant::CATEGORY_RETAIL,
+            'business_category' => $category,
             'store_address' => $businessName.' road',
             'role_permissions' => RolePermission::defaults(),
         ]);

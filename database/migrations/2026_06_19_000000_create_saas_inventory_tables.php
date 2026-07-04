@@ -34,6 +34,7 @@ return new class extends Migration
             $table->decimal('default_tax_percentage', 5, 2)->default(18);
             $table->unsignedInteger('low_stock_threshold')->default(10);
             $table->string('invoice_prefix')->default('INV');
+            $table->date('domain_expired_date')->nullable();
             $table->json('role_permissions')->nullable();
             $table->timestamps();
         });
@@ -235,6 +236,7 @@ return new class extends Migration
     {
         DB::table('plans')->insertOrIgnore([
             [
+                'id' => 1,
                 'name' => 'starter',
                 'monthly_price' => 499,
                 'features' => '1 store, 2 users',
@@ -244,6 +246,7 @@ return new class extends Migration
                 'updated_at' => now(),
             ],
             [
+                'id' => 2,
                 'name' => 'growth',
                 'monthly_price' => 999,
                 'features' => '5 users, advanced reports',
@@ -253,11 +256,22 @@ return new class extends Migration
                 'updated_at' => now(),
             ],
             [
+                'id' => 3,
                 'name' => 'premium',
                 'monthly_price' => 1999,
                 'features' => 'Unlimited users, multi-store',
                 'store_limit' => 99,
                 'user_limit' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 4,
+                'name' => 'free_trial',
+                'monthly_price' => 0,
+                'features' => '30 days, 1 store, 1 user',
+                'store_limit' => 1,
+                'user_limit' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -277,6 +291,7 @@ return new class extends Migration
                 'email' => $user->email,
                 'business_category' => 1,
                 'store_address' => 'Not configured',
+                'domain_expired_date' => now()->addYears(5)->toDateString(),
                 'role_permissions' => json_encode(RolePermission::defaults()),
                 'created_at' => now(),
                 'updated_at' => now(),
