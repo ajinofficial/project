@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\Product;
-use App\Models\PurchaseItem;
 use App\Models\PurchaseOrder;
 use App\Models\SalesItem;
 use App\Models\SalesOrder;
@@ -156,6 +155,7 @@ class OperationsController extends Controller
 
                 $query->where(function ($query) use ($search) {
                     $query->where('order_number', 'like', "%{$search}%")
+                        ->orWhere('supplier_invoice_number', 'like', "%{$search}%")
                         ->orWhereHas('supplier', fn ($query) => $query->where('name', 'like', "%{$search}%"))
                         ->orWhereHas('items.product', function ($query) use ($search) {
                             $query->where('name', 'like', "%{$search}%")
@@ -171,7 +171,6 @@ class OperationsController extends Controller
         return view('operations.purchases', [
             'perPage' => $perPage,
             'perPageOptions' => $perPageOptions,
-            'products' => Product::where('tenant_id', $request->user()->tenant_id)->orderBy('name')->get(),
             'suppliers' => Supplier::where('tenant_id', $request->user()->tenant_id)->orderBy('name')->get(),
             'orders' => $orders,
         ]);
@@ -185,74 +184,49 @@ class OperationsController extends Controller
                 'nullable',
                 Rule::exists('suppliers', 'id')->where('tenant_id', $tenantId),
             ],
-            'product_id' => [
-                'required',
-                Rule::exists('products', 'id')->where('tenant_id', $tenantId),
+            'supplier_invoice_number' => [
+                'nullable',
+                'string',
+                'max:120',
+                Rule::unique('purchase_orders', 'supplier_invoice_number')->where('tenant_id', $tenantId),
             ],
-            'quantity' => ['required', 'integer', 'min:1', 'max:999999'],
-            'purchase_price' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
-            'tax_percentage' => ['nullable', 'numeric', 'min:0', 'max:99.99'],
+            'bill_date' => ['required', 'date'],
+            'tax_amount' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
+            'total_amount' => ['required', 'numeric', 'min:0.01', 'max:99999999.99'],
         ], [
             'supplier_id.exists' => 'Select a supplier from your business.',
-            'product_id.required' => 'Select a product to receive.',
-            'product_id.exists' => 'Select a valid product from your inventory.',
-            'quantity.required' => 'Enter the received quantity.',
-            'quantity.integer' => 'Quantity must be a whole number.',
-            'quantity.min' => 'Quantity must be at least 1.',
-            'quantity.max' => 'Quantity cannot exceed 999999.',
-            'purchase_price.required' => 'Enter the purchase price.',
-            'purchase_price.numeric' => 'Purchase price must be a valid number.',
-            'purchase_price.min' => 'Purchase price cannot be negative.',
-            'purchase_price.max' => 'Purchase price is too high.',
-            'tax_percentage.numeric' => 'Tax percentage must be a valid number.',
-            'tax_percentage.min' => 'Tax percentage cannot be negative.',
-            'tax_percentage.max' => 'Tax percentage cannot exceed 99.99.',
+            'supplier_invoice_number.max' => 'Supplier invoice number cannot exceed 120 characters.',
+            'supplier_invoice_number.unique' => 'This supplier invoice number is already recorded.',
+            'bill_date.required' => 'Select the bill date.',
+            'bill_date.date' => 'Bill date must be a valid date.',
+            'tax_amount.numeric' => 'Tax amount must be a valid number.',
+            'tax_amount.min' => 'Tax amount cannot be negative.',
+            'tax_amount.max' => 'Tax amount is too high.',
+            'total_amount.required' => 'Enter the total amount.',
+            'total_amount.numeric' => 'Total amount must be a valid number.',
+            'total_amount.min' => 'Total amount must be greater than zero.',
+            'total_amount.max' => 'Total amount is too high.',
         ]);
 
-        $purchaseSummary = DB::transaction(function () use ($data, $request, $tenantId) {
-            $product = Product::where('tenant_id', $tenantId)->lockForUpdate()->findOrFail($data['product_id']);
-            $total = $data['quantity'] * $data['purchase_price'];
-
-            $order = PurchaseOrder::create([
-                'tenant_id' => $tenantId,
-                'supplier_id' => $data['supplier_id'] ?? null,
-                'order_number' => 'PO-'.now()->format('YmdHis'),
-                'status' => 'received',
-                'total_amount' => $total,
-                'received_at' => now(),
-            ]);
-
-            PurchaseItem::create([
-                'purchase_order_id' => $order->id,
-                'product_id' => $product->id,
-                'quantity' => $data['quantity'],
-                'purchase_price' => $data['purchase_price'],
-                'tax_percentage' => $data['tax_percentage'] ?? $product->tax_percentage,
-            ]);
-
-            $oldStock = max(1, $product->inventory);
-            $product->inventory += $data['quantity'];
-            $product->purchase_price = (($product->purchase_price * $oldStock) + $total) / ($oldStock + $data['quantity']);
-            $product->save();
-            StockNotifier::sync($product);
-
-            $this->movement($request, $product, 'purchase', $data['quantity'], 'purchase_orders', $order->id, 'Stock received from supplier.');
-
-            return [
-                'order_number' => $order->order_number,
-                'product_name' => $product->name,
-                'quantity' => $data['quantity'],
-            ];
-        });
+        $order = PurchaseOrder::create([
+            'tenant_id' => $tenantId,
+            'supplier_id' => $data['supplier_id'] ?? null,
+            'order_number' => 'PO-'.now()->format('YmdHis'),
+            'supplier_invoice_number' => $data['supplier_invoice_number'] ?? null,
+            'status' => 'received',
+            'tax_amount' => $data['tax_amount'] ?? 0,
+            'total_amount' => $data['total_amount'],
+            'received_at' => Carbon::parse($data['bill_date'])->startOfDay(),
+        ]);
 
         ActivityNotifier::notify(
             $tenantId,
             'purchase_received',
-            'Purchase received',
-            $request->user()->name.' received '.$purchaseSummary['quantity'].' units of '.$purchaseSummary['product_name'].' on '.$purchaseSummary['order_number'].'.'
+            'Purchase bill recorded',
+            $request->user()->name.' recorded purchase bill '.$order->order_number.' for '.$order->total_amount.'.'
         );
 
-        return back()->with('status', 'Purchase received and inventory updated.');
+        return back()->with('status', 'Purchase bill recorded.');
     }
 
     public function sales(Request $request): View
@@ -287,19 +261,76 @@ class OperationsController extends Controller
     {
         $tenantId = $request->user()->tenant_id;
         $data = $request->validate([
-            'customer_id' => ['nullable', 'exists:customers,id'],
-            'product_id' => ['required', 'exists:products,id'],
-            'quantity' => ['required', 'integer', 'min:1', 'max:999999'],
+            'customer_id' => [
+                'nullable',
+                Rule::exists('customers', 'id')->where('tenant_id', $tenantId),
+            ],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => [
+                'required',
+                Rule::exists('products', 'id')->where('tenant_id', $tenantId),
+            ],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:999999'],
             'paid_amount' => ['required', 'numeric', 'min:0'],
             'payment_method' => ['required', 'in:cash,upi,card,net_banking,credit'],
+        ], [
+            'customer_id.exists' => 'Select a customer from your business.',
+            'items.required' => 'Add at least one product to the bill.',
+            'items.min' => 'Add at least one product to the bill.',
+            'items.*.product_id.required' => 'Select a product for every bill row.',
+            'items.*.product_id.exists' => 'Select valid products from your inventory.',
+            'items.*.quantity.required' => 'Enter quantity for every bill row.',
+            'items.*.quantity.integer' => 'Quantity must be a whole number.',
+            'items.*.quantity.min' => 'Quantity must be at least 1.',
+            'paid_amount.required' => 'Enter the paid amount.',
+            'paid_amount.numeric' => 'Paid amount must be a valid number.',
+            'paid_amount.min' => 'Paid amount cannot be negative.',
+            'payment_method.required' => 'Select the payment method.',
+            'payment_method.in' => 'Select a valid payment method.',
         ]);
 
-        $saleSummary = DB::transaction(function () use ($data, $request, $tenantId) {
-            $product = Product::where('tenant_id', $tenantId)->lockForUpdate()->findOrFail($data['product_id']);
-            abort_if($product->available_stock < $data['quantity'], 422, 'Not enough stock available.');
+        $data['items'] = collect($data['items'])
+            ->groupBy('product_id')
+            ->map(fn ($items, $productId) => [
+                'product_id' => (int) $productId,
+                'quantity' => (int) $items->sum('quantity'),
+            ])
+            ->values()
+            ->all();
 
-            $subtotal = $data['quantity'] * $product->price;
-            $tax = $subtotal * ($product->tax_percentage / 100);
+        $saleSummary = DB::transaction(function () use ($data, $request, $tenantId) {
+            $productIds = collect($data['items'])->pluck('product_id')->all();
+            $products = Product::where('tenant_id', $tenantId)
+                ->whereIn('id', $productIds)
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            $subtotal = 0;
+            $tax = 0;
+            $totalQuantity = 0;
+
+            foreach ($data['items'] as $item) {
+                $product = $products->get($item['product_id']);
+
+                if (! $product) {
+                    throw ValidationException::withMessages([
+                        'items' => 'Select valid products from your inventory.',
+                    ]);
+                }
+
+                if ($product->available_stock < $item['quantity']) {
+                    throw ValidationException::withMessages([
+                        'items' => $product->name.' has only '.$product->available_stock.' units available.',
+                    ]);
+                }
+
+                $lineSubtotal = $item['quantity'] * $product->price;
+                $subtotal += $lineSubtotal;
+                $tax += $lineSubtotal * ($product->tax_percentage / 100);
+                $totalQuantity += $item['quantity'];
+            }
+
             $total = $subtotal + $tax;
 
             $order = SalesOrder::create([
@@ -313,29 +344,33 @@ class OperationsController extends Controller
                 'payment_method' => $data['payment_method'],
             ]);
 
-            SalesItem::create([
-                'sales_order_id' => $order->id,
-                'product_id' => $product->id,
-                'quantity' => $data['quantity'],
-                'selling_price' => $product->price,
-                'tax_percentage' => $product->tax_percentage,
-            ]);
+            foreach ($data['items'] as $item) {
+                $product = $products->get($item['product_id']);
 
-            $product->inventory -= $data['quantity'];
-            $product->save();
-            StockNotifier::sync($product);
+                SalesItem::create([
+                    'sales_order_id' => $order->id,
+                    'product_id' => $product->id,
+                    'quantity' => $item['quantity'],
+                    'selling_price' => $product->price,
+                    'tax_percentage' => $product->tax_percentage,
+                ]);
+
+                $product->inventory -= $item['quantity'];
+                $product->save();
+                StockNotifier::sync($product);
+
+                $this->movement($request, $product, 'sale', -$item['quantity'], 'sales_orders', $order->id, 'Invoice generated.');
+            }
 
             if ($order->customer_id && $order->paid_amount < $order->total_amount) {
                 Customer::where('tenant_id', $tenantId)->where('id', $order->customer_id)
                     ->increment('outstanding_balance', $order->total_amount - $order->paid_amount);
             }
 
-            $this->movement($request, $product, 'sale', -$data['quantity'], 'sales_orders', $order->id, 'Invoice generated.');
-
             return [
                 'invoice_number' => $order->invoice_number,
-                'product_name' => $product->name,
-                'quantity' => $data['quantity'],
+                'item_count' => count($data['items']),
+                'quantity' => $totalQuantity,
                 'total' => $order->total_amount,
             ];
         });
@@ -344,7 +379,7 @@ class OperationsController extends Controller
             $tenantId,
             'sale_billed',
             'Sale billed',
-            $request->user()->name.' billed '.$saleSummary['invoice_number'].' for '.$saleSummary['quantity'].' units of '.$saleSummary['product_name'].'.'
+            $request->user()->name.' billed '.$saleSummary['invoice_number'].' for '.$saleSummary['quantity'].' units across '.$saleSummary['item_count'].' product(s).'
         );
 
         return back()->with('status', 'Sale billed and stock reduced.');

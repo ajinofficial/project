@@ -1,7 +1,7 @@
 @extends('layouts.admin', [
-    'title' => 'New Inventory Item',
+    'title' => 'New Product',
     'eyebrow' => 'Stock setup',
-    'heading' => 'New inventory item',
+    'heading' => 'New product',
 ])
 
 @section('content')
@@ -11,7 +11,7 @@
                 <p class="eyebrow">Item details</p>
                 <h2>Add stock item</h2>
             </div>
-            <a href="{{ route('products.index') }}">Back to inventory</a>
+            <a href="{{ route('products.index') }}">Back to products</a>
         </div>
 
         <form class="product-form" method="POST" action="{{ route('products.store') }}" enctype="multipart/form-data" data-product-save-form>

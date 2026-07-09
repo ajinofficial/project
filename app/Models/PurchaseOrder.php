@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PurchaseOrder extends Model
 {
-    protected $fillable = ['tenant_id', 'supplier_id', 'order_number', 'status', 'total_amount', 'received_at'];
+    protected $fillable = ['tenant_id', 'supplier_id', 'order_number', 'supplier_invoice_number', 'status', 'tax_amount', 'total_amount', 'received_at'];
 
-    protected $casts = ['total_amount' => 'decimal:2', 'received_at' => 'datetime'];
+    protected $casts = ['tax_amount' => 'decimal:2', 'total_amount' => 'decimal:2', 'received_at' => 'datetime'];
 
     public function supplier(): BelongsTo
     {

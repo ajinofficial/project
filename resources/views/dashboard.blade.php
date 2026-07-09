@@ -121,11 +121,6 @@
                                 <span>{{ $product->sku ?: 'SKU-'.$product->id }} · {{ $product->category ?: 'Uncategorized' }}</span>
                             </div>
                             <b>{{ $product->inventory }}</b>
-                            <form method="POST" action="{{ route('products.stock', $product) }}">
-                                @csrf
-                                <input type="number" name="adjustment" value="1" aria-label="Adjust {{ $product->name }} stock">
-                                <button type="submit">Apply</button>
-                            </form>
                         </div>
                     @empty
                         <div class="empty-state tight-empty">No products yet.</div>

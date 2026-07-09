@@ -78,7 +78,7 @@ class ProductController extends Controller
     public function create(Request $request): View
     {
         return view('products.create', [
-            'product' => new Product(['status' => 'draft', 'inventory' => 0, 'tax_percentage' => 18, 'minimum_stock_level' => 10]),
+            'product' => new Product(['status' => 'draft', 'inventory' => 0, 'minimum_stock_level' => 10]),
             'suppliers' => Supplier::where('tenant_id', $request->user()->tenant_id)->orderBy('name')->get(),
         ]);
     }
@@ -89,7 +89,12 @@ class ProductController extends Controller
         $data['user_id'] = $request->user()->id;
         $data['tenant_id'] = $request->user()->tenant_id;
         $data['image_url'] = $this->storeCroppedImage($request) ?: ($data['image_url'] ?? null);
+        $data['inventory'] = 0;
+        $data['tax_percentage'] = $request->user()->tenant->default_tax_percentage ?? 0;
+        $data['compare_at_price'] = null;
+        $this->applyProfitPricing($data);
         unset($data['cropped_image']);
+        unset($data['profit_percentage']);
 
         $product = Product::create($data);
         StockNotifier::sync($product);
@@ -126,7 +131,12 @@ class ProductController extends Controller
             $data['image_url'] = $uploadedImage;
         }
 
+        unset($data['inventory']);
+        unset($data['tax_percentage']);
+        unset($data['compare_at_price']);
+        $this->applyProfitPricing($data);
         unset($data['cropped_image']);
+        unset($data['profit_percentage']);
 
         $product->update($data);
         StockNotifier::sync($product);
@@ -140,38 +150,6 @@ class ProductController extends Controller
         return redirect()
             ->route('products.index')
             ->with('status', 'Product updated.');
-    }
-
-    public function adjustStock(Request $request, Product $product): RedirectResponse
-    {
-        $this->authorizeProduct($request, $product);
-
-        $data = $request->validate([
-            'adjustment' => ['required', 'integer', 'min:-999999', 'max:999999'],
-        ]);
-
-        $product->inventory = max(0, $product->inventory + $data['adjustment']);
-        $product->save();
-        StockNotifier::sync($product);
-
-        \App\Models\StockMovement::create([
-            'tenant_id' => $request->user()->tenant_id,
-            'product_id' => $product->id,
-            'type' => 'adjustment',
-            'quantity' => $data['adjustment'],
-            'stock_after' => $product->inventory,
-            'notes' => 'Manual stock adjustment.',
-            'user_id' => $request->user()->id,
-        ]);
-
-        ActivityNotifier::notify(
-            $request->user()->tenant_id,
-            'stock_adjusted',
-            'Stock adjusted',
-            $request->user()->name.' adjusted '.$product->name.' by '.$data['adjustment'].' units. Current stock: '.$product->inventory.'.'
-        );
-
-        return back()->with('status', 'Stock adjusted for '.$product->name.'.');
     }
 
     public function destroy(Request $request, Product $product): RedirectResponse
@@ -217,10 +195,11 @@ class ProductController extends Controller
             ],
             'supplier' => ['nullable', 'string', 'max:255'],
             'purchase_price' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
-            'price' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
+            'profit_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'compare_at_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
-            'tax_percentage' => ['required', 'numeric', 'min:0', 'max:99.99'],
-            'inventory' => ['required', 'integer', 'min:0', 'max:999999'],
+            'tax_percentage' => ['nullable', 'numeric', 'min:0', 'max:99.99'],
+            'inventory' => ['nullable', 'integer', 'min:0', 'max:999999'],
             'minimum_stock_level' => ['required', 'integer', 'min:0', 'max:999999'],
             'reserved_stock' => ['nullable', 'integer', 'min:0', 'max:999999'],
             'damaged_stock' => ['nullable', 'integer', 'min:0', 'max:999999'],
@@ -230,6 +209,18 @@ class ProductController extends Controller
             'cropped_image' => ['nullable', 'string'],
             'description' => ['nullable', 'string', 'max:5000'],
         ]);
+    }
+
+    private function applyProfitPricing(array &$data): void
+    {
+        if (! array_key_exists('profit_percentage', $data) || $data['profit_percentage'] === null || $data['profit_percentage'] === '') {
+            return;
+        }
+
+        $purchasePrice = (float) $data['purchase_price'];
+        $profitPercentage = (float) $data['profit_percentage'];
+
+        $data['price'] = round($purchasePrice + ($purchasePrice * ($profitPercentage / 100)), 2);
     }
 
     private function authorizeProduct(Request $request, Product $product): void

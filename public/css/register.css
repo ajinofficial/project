@@ -3917,29 +3917,6 @@ button.ghost-button {
     background: var(--v-lime);
 }
 
-.inline-stock-form {
-    display: grid;
-    grid-template-columns: 62px 58px;
-    gap: 6px;
-}
-
-.inline-stock-form input {
-    min-height: 32px;
-    border: 1px solid var(--v-line);
-    border-radius: 7px;
-    padding: 6px 8px;
-    font-size: 12px;
-}
-
-.inline-stock-form button {
-    min-height: 32px;
-    border-radius: 7px;
-    padding: 6px 8px;
-    color: #050703;
-    background: var(--v-lime);
-    font-size: 11px;
-}
-
 .inventory-actions {
     display: flex;
     gap: 6px;

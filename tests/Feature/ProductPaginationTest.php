@@ -69,6 +69,46 @@ class ProductPaginationTest extends TestCase
         $response->assertDontSee('Product 999');
         $response->assertSee('per_page=25', false);
         $response->assertSee('sort=name', false);
+        $response->assertDontSee('Quick Stock');
+        $response->assertDontSee('inline-stock-form', false);
+        $response->assertDontSee('/products/1/stock', false);
+    }
+
+    public function test_product_quick_stock_endpoint_is_removed(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+
+        $product = Product::create($this->productPayload([
+            'tenant_id' => $tenant->id,
+            'user_id' => $owner->id,
+            'inventory' => 10,
+        ]));
+
+        $response = $this->actingAs($owner)->post('/products/'.$product->id.'/stock', [
+            'adjustment' => 5,
+        ]);
+
+        $response->assertNotFound();
+        $this->assertSame(10, $product->fresh()->inventory);
+        $this->assertSame(0, StockMovement::where('tenant_id', $tenant->id)->count());
+    }
+
+    public function test_dashboard_recent_products_do_not_show_quick_stock_form(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+
+        $product = Product::create($this->productPayload([
+            'tenant_id' => $tenant->id,
+            'user_id' => $owner->id,
+            'name' => 'Dashboard Stock Product',
+        ]));
+
+        $response = $this->actingAs($owner)->get(route('dashboard'));
+
+        $response->assertOk();
+        $response->assertSee('Dashboard Stock Product');
+        $response->assertDontSee('/products/'.$product->id.'/stock', false);
+        $response->assertDontSee('Adjust '.$product->name.' stock');
     }
 
     public function test_invalid_product_page_size_falls_back_to_default(): void
@@ -169,7 +209,7 @@ class ProductPaginationTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('No products yet');
-        $response->assertSee('Add your first product to start managing inventory.');
+        $response->assertSee('Add your first product to start managing your product catalog.');
         $response->assertSee('Add product');
         $response->assertDontSee('No matching products');
     }
@@ -224,6 +264,17 @@ class ProductPaginationTest extends TestCase
         $response->assertSee('data-product-save-form', false);
         $response->assertSee('data-product-save-button', false);
         $response->assertSee('data-replace-on-focus', false);
+        $response->assertDontSee('name="inventory"', false);
+        $response->assertDontSee('Stock on hand');
+        $response->assertDontSee('name="tax_percentage"', false);
+        $response->assertDontSee('Tax percentage');
+        $response->assertSee('name="profit_percentage"', false);
+        $response->assertSee('name="profit_percentage" value="0" min="0" max="100"', false);
+        $response->assertSee('Profit percentage');
+        $response->assertDontSee('name="price"', false);
+        $response->assertDontSee('Selling price</span>', false);
+        $response->assertDontSee('name="compare_at_price"', false);
+        $response->assertDontSee('Compare at price');
         $response->assertSee('Saving');
         $response->assertSee('Local Supplier');
         $response->assertDontSee('Other Tenant Supplier');
@@ -252,6 +303,17 @@ class ProductPaginationTest extends TestCase
         $response->assertOk();
         $response->assertSee('data-product-save-form', false);
         $response->assertSee('data-product-save-button', false);
+        $response->assertDontSee('name="inventory"', false);
+        $response->assertDontSee('Stock on hand');
+        $response->assertDontSee('name="tax_percentage"', false);
+        $response->assertDontSee('Tax percentage');
+        $response->assertSee('name="profit_percentage"', false);
+        $response->assertSee('value="100"', false);
+        $response->assertSee('max="100"', false);
+        $response->assertDontSee('name="price"', false);
+        $response->assertDontSee('Selling price</span>', false);
+        $response->assertDontSee('name="compare_at_price"', false);
+        $response->assertDontSee('Compare at price');
         $response->assertSee('Updating');
     }
 
@@ -273,12 +335,78 @@ class ProductPaginationTest extends TestCase
             'tenant_id' => $tenant->id,
             'name' => 'Stored Product',
             'supplier_id' => $supplier->id,
+            'inventory' => 0,
+            'tax_percentage' => $tenant->fresh()->default_tax_percentage,
+            'compare_at_price' => null,
         ]);
         $this->assertDatabaseHas('notifications', [
             'tenant_id' => $tenant->id,
             'type' => 'product_created',
             'title' => 'Product created',
         ]);
+    }
+
+    public function test_product_store_calculates_selling_price_from_profit_percentage(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+
+        $payload = $this->productPayload([
+            'purchase_price' => 80,
+            'price' => null,
+            'profit_percentage' => 25,
+        ]);
+
+        $response = $this->actingAs($owner)->post(route('products.store'), $payload);
+
+        $response->assertRedirect(route('products.index'));
+        $this->assertDatabaseHas('products', [
+            'tenant_id' => $tenant->id,
+            'name' => 'Stored Product',
+            'purchase_price' => 80,
+            'price' => 100,
+        ]);
+    }
+
+    public function test_product_store_rejects_profit_percentage_above_100(): void
+    {
+        [$owner] = $this->tenantOwner();
+
+        $response = $this->actingAs($owner)
+            ->from(route('products.create'))
+            ->post(route('products.store'), $this->productPayload([
+                'price' => null,
+                'profit_percentage' => 100.01,
+            ]));
+
+        $response->assertRedirect(route('products.create'));
+        $response->assertSessionHasErrors('profit_percentage');
+    }
+
+    public function test_product_update_keeps_inventory_owned_by_stock_flow(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+
+        $product = Product::create($this->productPayload([
+            'tenant_id' => $tenant->id,
+            'user_id' => $owner->id,
+            'inventory' => 12,
+            'tax_percentage' => 18,
+            'compare_at_price' => 150,
+        ]));
+
+        $response = $this->actingAs($owner)
+            ->put(route('products.update', $product), $this->productPayload([
+                'name' => 'Updated Product',
+                'inventory' => 99,
+                'tax_percentage' => 5,
+                'compare_at_price' => 80,
+            ]));
+
+        $response->assertRedirect(route('products.index'));
+        $this->assertSame(12, $product->fresh()->inventory);
+        $this->assertSame('18.00', $product->fresh()->tax_percentage);
+        $this->assertSame('150.00', $product->fresh()->compare_at_price);
+        $this->assertSame('Updated Product', $product->fresh()->name);
     }
 
     public function test_product_store_rejects_supplier_from_another_tenant(): void
@@ -689,6 +817,7 @@ class ProductPaginationTest extends TestCase
                 'tenant_id' => $tenant->id,
                 'supplier_id' => $supplier->id,
                 'order_number' => sprintf('PO-FILTER-%02d', $number),
+                'supplier_invoice_number' => sprintf('SUP-INV-%02d', $number),
                 'status' => 'received',
                 'total_amount' => 100,
                 'received_at' => now(),
@@ -725,18 +854,105 @@ class ProductPaginationTest extends TestCase
         $response->assertSee('per_page=10', false);
         $response->assertSee('search=PO-FILTER', false);
         $response->assertSee('PO-FILTER-11');
+        $response->assertSee('SUP-INV-11');
         $response->assertDontSee('PO-FILTER-999');
+
+        $invoiceResponse = $this->actingAs($owner)->get(route('purchases.index', [
+            'search' => 'SUP-INV-12',
+        ]));
+
+        $invoiceResponse->assertOk();
+        $invoiceResponse->assertSee('SUP-INV-12');
+        $invoiceResponse->assertDontSee('SUP-INV-11');
     }
 
-    public function test_purchase_form_defaults_price_and_tax_to_zero(): void
+    public function test_purchase_form_records_bill_fields_without_product_rows(): void
     {
         [$owner] = $this->tenantOwner();
 
         $response = $this->actingAs($owner)->get(route('purchases.index'));
 
         $response->assertOk();
-        $response->assertSee('name="purchase_price" min="0" step="0.01" value="0"', false);
-        $response->assertSee('name="tax_percentage" min="0" max="99.99" step="0.01" value="0"', false);
+        $response->assertSee('name="supplier_invoice_number"', false);
+        $response->assertSee('name="bill_date"', false);
+        $response->assertSee('name="tax_amount" min="0" step="0.01" value="0"', false);
+        $response->assertSee('name="total_amount" min="0.01" step="0.01" value="0"', false);
+        $response->assertDontSee('data-purchase-add-row', false);
+        $response->assertDontSee('name="product_id"', false);
+    }
+
+    public function test_purchase_store_saves_bill_details(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+
+        $response = $this->actingAs($owner)
+            ->from(route('purchases.index'))
+            ->post(route('purchases.store'), [
+                'supplier_invoice_number' => 'BILL-2026-001',
+                'bill_date' => '2026-07-09',
+                'tax_amount' => 18,
+                'total_amount' => 118,
+            ]);
+
+        $response->assertRedirect(route('purchases.index'));
+        $this->assertDatabaseHas('purchase_orders', [
+            'tenant_id' => $tenant->id,
+            'supplier_invoice_number' => 'BILL-2026-001',
+            'tax_amount' => 18,
+            'total_amount' => 118,
+            'received_at' => '2026-07-09 00:00:00',
+        ]);
+    }
+
+    public function test_purchase_store_does_not_require_product(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+
+        $response = $this->actingAs($owner)
+            ->from(route('purchases.index'))
+            ->post(route('purchases.store'), [
+                'supplier_invoice_number' => 'BILL-NO-PRODUCT',
+                'bill_date' => '2026-07-09',
+                'tax_amount' => 12,
+                'total_amount' => 212,
+            ]);
+
+        $response->assertRedirect(route('purchases.index'));
+        $this->assertDatabaseHas('purchase_orders', [
+            'tenant_id' => $tenant->id,
+            'supplier_invoice_number' => 'BILL-NO-PRODUCT',
+            'tax_amount' => 12,
+            'total_amount' => 212,
+        ]);
+        $this->assertSame(0, PurchaseItem::count());
+    }
+
+    public function test_purchase_store_rejects_duplicate_supplier_invoice_number_inside_tenant(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+
+        PurchaseOrder::create([
+            'tenant_id' => $tenant->id,
+            'order_number' => 'PO-EXISTING',
+            'supplier_invoice_number' => 'BILL-DUP',
+            'status' => 'received',
+            'tax_amount' => 0,
+            'total_amount' => 100,
+            'received_at' => now(),
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->from(route('purchases.index'))
+            ->post(route('purchases.store'), [
+                'supplier_invoice_number' => 'BILL-DUP',
+                'bill_date' => '2026-07-09',
+                'tax_amount' => 0,
+                'total_amount' => 50,
+            ]);
+
+        $response->assertRedirect(route('purchases.index'));
+        $response->assertSessionHasErrors('supplier_invoice_number');
+        $this->assertSame(1, PurchaseOrder::where('tenant_id', $tenant->id)->count());
     }
 
     public function test_purchase_form_shows_validation_hooks_and_custom_errors(): void
@@ -746,14 +962,13 @@ class ProductPaginationTest extends TestCase
         $response = $this->actingAs($owner)
             ->from(route('purchases.index'))
             ->post(route('purchases.store'), [
-                'product_id' => null,
-                'quantity' => 0,
-                'purchase_price' => null,
-                'tax_percentage' => 120,
+                'bill_date' => null,
+                'tax_amount' => -1,
+                'total_amount' => 0,
             ]);
 
         $response->assertRedirect(route('purchases.index'));
-        $response->assertSessionHasErrors(['product_id', 'quantity', 'purchase_price', 'tax_percentage']);
+        $response->assertSessionHasErrors(['bill_date', 'tax_amount', 'total_amount']);
 
         $followUp = $this->actingAs($owner)->get(route('purchases.index'));
 
@@ -761,36 +976,9 @@ class ProductPaginationTest extends TestCase
         $followUp->assertSee('data-purchase-form', false);
         $followUp->assertSee('data-purchase-submit', false);
         $followUp->assertSee('Check the purchase details');
-        $followUp->assertSee('Select a product to receive.');
-        $followUp->assertSee('Quantity must be at least 1.');
-        $followUp->assertSee('Enter the purchase price.');
-        $followUp->assertSee('Tax percentage cannot exceed 99.99.');
-    }
-
-    public function test_purchase_store_rejects_product_from_another_tenant(): void
-    {
-        [$owner] = $this->tenantOwner();
-        [$otherOwner, $otherTenant] = $this->tenantOwner('blocked-purchase-product@example.com');
-
-        $product = Product::create($this->productPayload([
-            'tenant_id' => $otherTenant->id,
-            'user_id' => $otherOwner->id,
-            'name' => 'Blocked Purchase Product',
-            'sku' => 'BLOCKED-PO',
-        ]));
-
-        $response = $this->actingAs($owner)
-            ->from(route('purchases.index'))
-            ->post(route('purchases.store'), [
-                'product_id' => $product->id,
-                'quantity' => 1,
-                'purchase_price' => 50,
-                'tax_percentage' => 18,
-            ]);
-
-        $response->assertRedirect(route('purchases.index'));
-        $response->assertSessionHasErrors('product_id');
-        $this->assertSame(0, PurchaseOrder::where('tenant_id', $owner->tenant_id)->count());
+        $followUp->assertSee('Select the bill date.');
+        $followUp->assertSee('Tax amount cannot be negative.');
+        $followUp->assertSee('Total amount must be greater than zero.');
     }
 
     public function test_product_index_shows_blocked_delete_popup_for_active_product(): void
@@ -919,10 +1107,10 @@ class ProductPaginationTest extends TestCase
         $this->actingAs($owner)
             ->from(route('purchases.index'))
             ->post(route('purchases.store'), [
-                'product_id' => $product->id,
-                'quantity' => 5,
-                'purchase_price' => 40,
-                'tax_percentage' => 18,
+                'supplier_invoice_number' => 'NOTIFY-BILL-01',
+                'bill_date' => '2026-07-09',
+                'tax_amount' => 18,
+                'total_amount' => 218,
             ])
             ->assertRedirect(route('purchases.index'));
 
@@ -930,8 +1118,9 @@ class ProductPaginationTest extends TestCase
             ->from(route('sales.index'))
             ->post(route('sales.store'), [
                 'customer_id' => $customer->id,
-                'product_id' => $product->id,
-                'quantity' => 2,
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 2],
+                ],
                 'paid_amount' => 236,
                 'payment_method' => 'cash',
             ])
@@ -953,6 +1142,54 @@ class ProductPaginationTest extends TestCase
                 'type' => $type,
             ]);
         }
+    }
+
+    public function test_sale_store_accepts_multiple_products_in_one_invoice(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+
+        $firstProduct = Product::create($this->productPayload([
+            'tenant_id' => $tenant->id,
+            'user_id' => $owner->id,
+            'name' => 'First Bill Product',
+            'sku' => 'BILL-01',
+            'price' => 100,
+            'tax_percentage' => 10,
+            'inventory' => 10,
+        ]));
+
+        $secondProduct = Product::create($this->productPayload([
+            'tenant_id' => $tenant->id,
+            'user_id' => $owner->id,
+            'name' => 'Second Bill Product',
+            'sku' => 'BILL-02',
+            'price' => 50,
+            'tax_percentage' => 0,
+            'inventory' => 10,
+        ]));
+
+        $response = $this->actingAs($owner)
+            ->from(route('sales.index'))
+            ->post(route('sales.store'), [
+                'items' => [
+                    ['product_id' => $firstProduct->id, 'quantity' => 2],
+                    ['product_id' => $secondProduct->id, 'quantity' => 3],
+                ],
+                'paid_amount' => 370,
+                'payment_method' => 'cash',
+            ]);
+
+        $response->assertRedirect(route('sales.index'));
+
+        $order = SalesOrder::where('tenant_id', $tenant->id)->firstOrFail();
+
+        $this->assertSame('350.00', $order->subtotal);
+        $this->assertSame('20.00', $order->tax_amount);
+        $this->assertSame('370.00', $order->total_amount);
+        $this->assertSame(2, $order->items()->count());
+        $this->assertSame(8, $firstProduct->fresh()->inventory);
+        $this->assertSame(7, $secondProduct->fresh()->inventory);
+        $this->assertSame(2, StockMovement::where('tenant_id', $tenant->id)->where('type', 'sale')->count());
     }
 
     private function tenantOwner(string $email = 'owner@example.com'): array

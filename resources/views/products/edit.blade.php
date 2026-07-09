@@ -1,7 +1,7 @@
 @extends('layouts.admin', [
-    'title' => 'Edit Inventory Item',
+    'title' => 'Edit Product',
     'eyebrow' => 'Stock update',
-    'heading' => 'Edit inventory item',
+    'heading' => 'Edit product',
 ])
 
 @section('content')
@@ -11,7 +11,7 @@
                 <p class="eyebrow">Item details</p>
                 <h2>{{ $product->name }}</h2>
             </div>
-            <a href="{{ route('products.index') }}">Back to inventory</a>
+            <a href="{{ route('products.index') }}">Back to products</a>
         </div>
 
         <form class="product-form" method="POST" action="{{ route('products.update', $product) }}" enctype="multipart/form-data" data-product-save-form>

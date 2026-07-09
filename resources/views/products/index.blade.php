@@ -6,7 +6,7 @@
     <section class="product-workspace">
         <header class="product-page-head">
             <div>
-                <p class="eyebrow">Inventory</p>
+                <p class="eyebrow">Products</p>
                 <h1>Products</h1>
                 <span>Manage item availability, pricing, and stock movement.</span>
             </div>
@@ -85,7 +85,7 @@
                         <a class="product-clear-filter" href="{{ route('products.index') }}" data-product-listing-link>Clear filters</a>
                     @else
                         <h3>No products yet</h3>
-                        <p>Add your first product to start managing inventory.</p>
+                        <p>Add your first product to start managing your product catalog.</p>
                         <a class="primary-link" href="{{ route('products.create') }}">Add product</a>
                     @endif
                 </div>
@@ -100,7 +100,6 @@
                                 <th>Qty</th>
                                 <th>Health</th>
                                 <th>Status</th>
-                                <th>Quick Stock</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -141,13 +140,6 @@
                                     <td><span class="status-chip {{ $stockClass }}">{{ $stockLabel }}</span></td>
                                     <td><span class="status-chip status-{{ $product->status }}">{{ ucfirst($product->status) }}</span></td>
                                     <td>
-                                        <form class="inline-stock-form" method="POST" action="{{ route('products.stock', $product) }}">
-                                            @csrf
-                                            <input type="number" name="adjustment" value="1" step="1" aria-label="Stock adjustment for {{ $product->name }}">
-                                            <button type="submit">Apply</button>
-                                        </form>
-                                    </td>
-                                    <td>
                                         <div class="inventory-actions">
                                             <a href="{{ route('products.edit', $product) }}">Edit</a>
                                             <form method="POST" action="{{ route('products.update', $product) }}">
@@ -161,9 +153,6 @@
                                                 <input type="hidden" name="supplier_id" value="{{ $product->supplier_id }}">
                                                 <input type="hidden" name="purchase_price" value="{{ $product->purchase_price }}">
                                                 <input type="hidden" name="price" value="{{ $product->price }}">
-                                                <input type="hidden" name="compare_at_price" value="{{ $product->compare_at_price }}">
-                                                <input type="hidden" name="tax_percentage" value="{{ $product->tax_percentage }}">
-                                                <input type="hidden" name="inventory" value="{{ $product->inventory }}">
                                                 <input type="hidden" name="minimum_stock_level" value="{{ $product->minimum_stock_level }}">
                                                 <input type="hidden" name="reserved_stock" value="{{ $product->reserved_stock }}">
                                                 <input type="hidden" name="damaged_stock" value="{{ $product->damaged_stock }}">
@@ -184,7 +173,7 @@
                                                     data-confirm-button="OK"
                                                 @else
                                                     data-confirm-title="Delete product"
-                                                    data-confirm-message="Delete {{ $product->name }}? It will be hidden from inventory."
+                                                    data-confirm-message="Delete {{ $product->name }}? It will be hidden from products."
                                                     data-confirm-button="Delete"
                                                 @endif
                                             >

@@ -27,6 +27,7 @@
                         'dashboard' => '<path d="M4 13h6V4H4v9Zm10 7h6V4h-6v16ZM4 20h6v-4H4v4Z" />',
                         'clients' => '<path d="M3 21V7l9-4 9 4v14" /><path d="M9 21v-7h6v7" /><path d="M7 10h2" /><path d="M15 10h2" />',
                         'inventory' => '<path d="M4 7h16v13H4V7Z" /><path d="M8 7V4h8v3" /><path d="M8 12h8" />',
+                        'stock' => '<path d="M4 7l8-4 8 4-8 4-8-4Z" /><path d="M4 7v10l8 4 8-4V7" /><path d="M12 11v10" />',
                         'billing' => '<path d="M6 3h12v18l-2-1-2 1-2-1-2 1-2-1-2 1V3Z" /><path d="M9 8h6" /><path d="M9 12h6" /><path d="M9 16h4" />',
                         'purchases' => '<path d="M6 7h15l-2 8H8L6 3H3" /><path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" /><path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />',
                         'suppliers' => '<path d="M3 16V6h11v10H3Z" /><path d="M14 10h4l3 3v3h-7v-6Z" /><path d="M7 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" /><path d="M17 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />',
