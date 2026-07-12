@@ -271,7 +271,7 @@ class OperationsController extends Controller
                 Rule::exists('products', 'id')->where('tenant_id', $tenantId),
             ],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:999999'],
-            'paid_amount' => ['required', 'numeric', 'min:0'],
+            'paid_amount' => ['required', 'numeric', 'min:0.01'],
             'payment_method' => ['required', 'in:cash,upi,card,net_banking,credit'],
         ], [
             'customer_id.exists' => 'Select a customer from your business.',
@@ -284,7 +284,7 @@ class OperationsController extends Controller
             'items.*.quantity.min' => 'Quantity must be at least 1.',
             'paid_amount.required' => 'Enter the paid amount.',
             'paid_amount.numeric' => 'Paid amount must be a valid number.',
-            'paid_amount.min' => 'Paid amount cannot be negative.',
+            'paid_amount.min' => 'Paid amount must be greater than zero.',
             'payment_method.required' => 'Select the payment method.',
             'payment_method.in' => 'Select a valid payment method.',
         ]);

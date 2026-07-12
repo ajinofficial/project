@@ -48,7 +48,7 @@
 
         <section class="v-panel product-management-panel stock-form-panel">
             <div class="section-title"><div><p class="eyebrow">Stock control</p><h2>Stock add form</h2></div></div>
-            <form class="product-form" method="POST" action="{{ route('stock.adjust') }}" data-stock-adjust-form>
+            <form class="product-form" method="POST" action="{{ route('stock.adjust') }}" data-stock-adjust-form novalidate>
                 @csrf
 
                 @if ($errors->any())
@@ -77,7 +77,7 @@
                 </label>
 
                 <label>
-                    <span>Quantity to add</span>
+                    <span>Quantity</span>
                     <input type="number" name="adjustment" min="1" step="1" value="{{ old('adjustment', 1) }}" required data-replace-on-focus>
                     @error('adjustment') <small>{{ $message }}</small> @enderror
                 </label>
@@ -194,7 +194,91 @@
                     });
                 });
 
-                form.addEventListener('submit', function () {
+                form.noValidate = true;
+
+                function fieldLabel(field) {
+                    var label = field.closest('label');
+                    var labelText = label ? label.querySelector('span') : null;
+
+                    return labelText ? labelText.textContent.trim() : 'This field';
+                }
+
+                function existingErrorElement(field) {
+                    if (field.nextElementSibling && field.nextElementSibling.matches('[data-validation-error]')) {
+                        return field.nextElementSibling;
+                    }
+
+                    return null;
+                }
+
+                function errorElement(field) {
+                    var existingError = existingErrorElement(field);
+
+                    if (existingError) {
+                        return existingError;
+                    }
+
+                    var error = document.createElement('small');
+                    error.setAttribute('data-validation-error', '');
+                    error.setAttribute('role', 'alert');
+                    field.insertAdjacentElement('afterend', error);
+
+                    return error;
+                }
+
+                function validateField(field) {
+                    var error = existingErrorElement(field);
+
+                    if (!field.willValidate) {
+                        return true;
+                    }
+
+                    if (field.checkValidity()) {
+                        if (error) {
+                            error.textContent = '';
+                            error.hidden = true;
+                        }
+
+                        field.removeAttribute('aria-invalid');
+
+                        return true;
+                    }
+
+                    error = errorElement(field);
+                    error.textContent = field.validity.valueMissing
+                        ? fieldLabel(field) + ' is required.'
+                        : field.validationMessage;
+                    error.hidden = false;
+                    field.setAttribute('aria-invalid', 'true');
+
+                    return false;
+                }
+
+                form.querySelectorAll('input, select, textarea').forEach(function (field) {
+                    field.addEventListener('input', function () {
+                        validateField(field);
+                    });
+
+                    field.addEventListener('change', function () {
+                        validateField(field);
+                    });
+                });
+
+                form.addEventListener('submit', function (event) {
+                    var firstInvalid = null;
+
+                    form.querySelectorAll('input, select, textarea').forEach(function (field) {
+                        if (!validateField(field) && !firstInvalid) {
+                            firstInvalid = field;
+                        }
+                    });
+
+                    if (firstInvalid) {
+                        event.preventDefault();
+                        firstInvalid.focus();
+                        return;
+                    }
+
                     var button = form.querySelector('[data-stock-adjust-submit]');
 
                     if (button) {

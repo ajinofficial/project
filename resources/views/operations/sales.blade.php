@@ -185,12 +185,257 @@
             gap: 4px;
         }
 
+        .invoice-view-button {
+            min-height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border: 1px solid #d0d5dd;
+            border-radius: 8px;
+            padding: 0 11px;
+            color: #344054;
+            background: #ffffff;
+            font-size: 12px;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        .invoice-view-button:hover {
+            border-color: #bfdbfe;
+            color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .invoice-view-button svg {
+            width: 16px;
+            height: 16px;
+            fill: none;
+            stroke: currentColor;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-width: 2;
+        }
+
+        .invoice-drawer-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 30;
+            display: none;
+            background: rgba(15, 23, 42, 0.42);
+            backdrop-filter: blur(2px);
+        }
+
+        .invoice-drawer-backdrop.is-open {
+            display: block;
+        }
+
+        .invoice-drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            z-index: 31;
+            width: min(520px, 100vw);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #d0d5dd;
+            background: #ffffff;
+            box-shadow: -24px 0 60px rgba(16, 24, 40, 0.22);
+            transform: translateX(105%);
+            transition: transform 180ms ease;
+        }
+
+        .invoice-drawer.is-open {
+            transform: translateX(0);
+        }
+
+        .invoice-drawer-head,
+        .invoice-drawer-actions {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+            border-bottom: 1px solid #edf1f5;
+            padding: 20px;
+            background: #fbfdff;
+        }
+
+        .invoice-drawer-head h2 {
+            margin: 4px 0 6px;
+            color: var(--inapp-text);
+            font-size: 24px;
+        }
+
+        .invoice-drawer-head span {
+            color: var(--inapp-muted);
+            font-size: 13px;
+        }
+
+        .invoice-drawer-close {
+            width: 36px;
+            height: 36px;
+            min-height: 36px;
+            display: grid;
+            place-items: center;
+            border: 1px solid #d0d5dd;
+            border-radius: 8px;
+            color: #344054;
+            background: #ffffff;
+        }
+
+        .invoice-drawer-close:hover,
+        .invoice-drawer-close:focus {
+            border-color: #fecaca;
+            color: #b42318;
+            background: #fff7f7;
+            outline: none;
+        }
+
+        .invoice-drawer-close svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: currentColor;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-width: 2;
+        }
+
+        .invoice-drawer-body {
+            display: grid;
+            align-content: start;
+            gap: 16px;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        .invoice-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .invoice-detail-grid div,
+        .invoice-total-box {
+            border: 1px solid #edf1f5;
+            border-radius: 8px;
+            padding: 12px;
+            background: #ffffff;
+        }
+
+        .invoice-detail-grid span,
+        .invoice-total-box span {
+            display: block;
+            color: var(--inapp-muted);
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .invoice-detail-grid strong,
+        .invoice-total-box strong {
+            display: block;
+            margin-top: 5px;
+            color: var(--inapp-text);
+            overflow-wrap: anywhere;
+        }
+
+        .invoice-total-box {
+            display: grid;
+            gap: 8px;
+            background: #f8fbff;
+        }
+
+        .invoice-total-box div {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .invoice-drawer-items {
+            display: grid;
+            gap: 10px;
+        }
+
+        .invoice-drawer-item {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 10px;
+            border: 1px solid #edf1f5;
+            border-radius: 8px;
+            padding: 12px;
+            background: #ffffff;
+        }
+
+        .invoice-drawer-item strong,
+        .invoice-drawer-item small {
+            display: block;
+        }
+
+        .invoice-drawer-item small {
+            margin-top: 4px;
+            color: var(--inapp-muted);
+            font-size: 12px;
+        }
+
+        .invoice-drawer-actions {
+            align-items: center;
+            justify-content: flex-end;
+            border-top: 1px solid #edf1f5;
+            border-bottom: 0;
+            margin-top: auto;
+        }
+
         .billing-invoice-table {
             min-width: 0;
         }
 
         .billing-invoice-table td::before {
             display: none;
+        }
+
+        .billing-invoice-panel.is-loading .billing-invoice-listing,
+        .billing-invoice-panel.is-loading .product-pagination {
+            opacity: 0.38;
+            pointer-events: none;
+        }
+
+        .billing-invoice-listing {
+            position: relative;
+        }
+
+        .billing-listing-loader {
+            position: absolute;
+            inset: 0;
+            z-index: 4;
+            display: none;
+            min-height: 180px;
+            place-items: center;
+            align-content: center;
+            gap: 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.76);
+            backdrop-filter: blur(2px);
+        }
+
+        .billing-invoice-panel.is-loading .billing-listing-loader {
+            display: grid;
+        }
+
+        .billing-listing-loader span {
+            width: 34px;
+            height: 34px;
+            border: 4px solid #eef0e8;
+            border-top-color: var(--v-lime);
+            border-radius: 999px;
+            animation: product-listing-spin 0.75s linear infinite;
+        }
+
+        .billing-listing-loader strong {
+            color: #2f352b;
+            font-size: 13px;
+            font-weight: 900;
         }
 
         @media (max-width: 1300px) {
@@ -487,7 +732,7 @@
                 <div class="field-grid">
                     <label>
                         <span>Paid amount</span>
-                        <input type="number" name="paid_amount" min="0" step="0.01" value="{{ old('paid_amount', 0) }}" required data-replace-on-focus>
+                        <input type="number" name="paid_amount" min="0.01" step="0.01" value="{{ old('paid_amount', 0) }}" required data-replace-on-focus>
                         @error('paid_amount') <small>{{ $message }}</small> @enderror
                     </label>
 
@@ -514,16 +759,36 @@
                 </button>
             </form>
         </article>
-        <article class="admin-section">
+        <article class="admin-section billing-invoice-panel" data-billing-listing>
             <div class="section-title"><div><p class="eyebrow">Invoices</p><h2>Recent invoices</h2></div></div>
             <div class="product-toolbar">
                 <form class="product-filter-form billing-search-form" method="GET" action="{{ route('sales.index') }}" data-billing-search-form>
                     <input type="search" name="search" value="{{ request('search') }}" placeholder="Search invoice, customer, product" data-billing-search>
-                    <a class="product-clear-filter" href="{{ route('sales.index') }}">Clear</a>
+                    <a class="product-clear-filter" href="{{ route('sales.index') }}" data-billing-listing-link>Clear</a>
                 </form>
             </div>
-            <div class="table-wrap"><table class="admin-table billing-invoice-table"><thead><tr><th>Invoice</th><th>Customer</th><th>Items</th><th>Total</th><th>Paid</th></tr></thead><tbody>
+            <div class="table-wrap billing-invoice-listing">
+                <div class="billing-listing-loader" data-billing-listing-loader aria-live="polite" aria-hidden="true">
+                    <span aria-hidden="true"></span>
+                    <strong>Loading invoices</strong>
+                </div>
+                <table class="admin-table billing-invoice-table"><thead><tr><th>Invoice</th><th>Customer</th><th>Items</th><th>Total</th><th>Paid</th><th>Action</th></tr></thead><tbody>
                 @forelse ($orders as $order)
+                    @php
+                        $invoiceItems = $order->items->map(function ($item) {
+                            $lineSubtotal = (float) $item->selling_price * (int) $item->quantity;
+                            $lineTotal = $lineSubtotal + ($lineSubtotal * ((float) $item->tax_percentage / 100));
+
+                            return [
+                                'product' => $item->product->name ?? 'Product',
+                                'sku' => $item->product->sku ?: ($item->product->barcode ?? 'No SKU'),
+                                'quantity' => (int) $item->quantity,
+                                'rate' => number_format((float) $item->selling_price, 2),
+                                'tax' => number_format((float) $item->tax_percentage, 2),
+                                'total' => number_format($lineTotal, 2),
+                            ];
+                        })->values();
+                    @endphp
                     <tr>
                         <td data-label="Invoice">{{ $order->invoice_number }}</td>
                         <td data-label="Customer">{{ $order->customer->name ?? 'Walk-in' }}</td>
@@ -536,14 +801,69 @@
                         </td>
                         <td data-label="Total">&#8377;{{ number_format($order->total_amount, 2) }}</td>
                         <td data-label="Paid">&#8377;{{ number_format($order->paid_amount, 2) }}</td>
+                        <td data-label="Action">
+                            <button
+                                type="button"
+                                class="invoice-view-button"
+                                data-invoice-view
+                                data-invoice-number="{{ $order->invoice_number }}"
+                                data-invoice-customer="{{ $order->customer->name ?? 'Walk-in' }}"
+                                data-invoice-date="{{ $order->created_at->format('d M Y, h:i A') }}"
+                                data-invoice-subtotal="{{ number_format($order->subtotal, 2) }}"
+                                data-invoice-tax="{{ number_format($order->tax_amount, 2) }}"
+                                data-invoice-total="{{ number_format($order->total_amount, 2) }}"
+                                data-invoice-paid="{{ number_format($order->paid_amount, 2) }}"
+                                data-invoice-payment="{{ ucfirst(str_replace('_', ' ', $order->payment_method)) }}"
+                                data-invoice-items="{{ base64_encode($invoiceItems->toJson()) }}"
+                            >
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                                <span>View</span>
+                            </button>
+                        </td>
                     </tr>
                 @empty
-                    <tr><td colspan="5">No invoices yet.</td></tr>
+                    <tr><td colspan="6">No invoices yet.</td></tr>
                 @endforelse
             </tbody></table></div>
             @include('products.partials.pagination', ['paginator' => $orders, 'itemLabel' => 'invoices'])
         </article>
     </section>
+
+    <div class="invoice-drawer-backdrop" data-invoice-backdrop></div>
+    <aside class="invoice-drawer" data-invoice-drawer aria-hidden="true">
+        <div class="invoice-drawer-head">
+            <div>
+                <p class="eyebrow">Invoice details</p>
+                <h2 data-invoice-drawer-number>Invoice</h2>
+                <span data-invoice-drawer-date></span>
+            </div>
+            <button type="button" class="invoice-drawer-close" data-close-invoice aria-label="Close invoice details">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="invoice-drawer-body">
+            <div class="invoice-detail-grid">
+                <div><span>Customer</span><strong data-invoice-drawer-customer></strong></div>
+                <div><span>Payment</span><strong data-invoice-drawer-payment></strong></div>
+            </div>
+            <div>
+                <p class="eyebrow">Products</p>
+                <div class="invoice-drawer-items" data-invoice-drawer-items></div>
+            </div>
+            <div class="invoice-total-box">
+                <div><span>Subtotal</span><strong data-invoice-drawer-subtotal></strong></div>
+                <div><span>Tax</span><strong data-invoice-drawer-tax></strong></div>
+                <div><span>Total</span><strong data-invoice-drawer-total></strong></div>
+                <div><span>Paid</span><strong data-invoice-drawer-paid></strong></div>
+            </div>
+        </div>
+    </aside>
 
     <template data-billing-row-template>
         <div class="billing-item-row" data-billing-row>
@@ -574,6 +894,84 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var productData = @json($productPayload);
+            var invoiceDrawer = document.querySelector('[data-invoice-drawer]');
+            var invoiceBackdrop = document.querySelector('[data-invoice-backdrop]');
+            var billingListing = document.querySelector('[data-billing-listing]');
+            var billingListingLoader = document.querySelector('[data-billing-listing-loader]');
+
+            function showBillingListingLoader() {
+                if (!billingListing || !billingListingLoader) {
+                    return;
+                }
+
+                billingListing.classList.add('is-loading');
+                billingListingLoader.setAttribute('aria-hidden', 'false');
+            }
+
+            function money(value) {
+                return '\u20B9' + value;
+            }
+
+            function closeInvoiceDrawer() {
+                invoiceDrawer?.classList.remove('is-open');
+                invoiceDrawer?.setAttribute('aria-hidden', 'true');
+                invoiceBackdrop?.classList.remove('is-open');
+            }
+
+            document.querySelectorAll('[data-invoice-view]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    var items = [];
+
+                    try {
+                        items = JSON.parse(atob(button.dataset.invoiceItems || 'W10='));
+                    } catch (error) {
+                        items = [];
+                    }
+
+                    document.querySelector('[data-invoice-drawer-number]').textContent = button.dataset.invoiceNumber || 'Invoice';
+                    document.querySelector('[data-invoice-drawer-date]').textContent = button.dataset.invoiceDate || '';
+                    document.querySelector('[data-invoice-drawer-customer]').textContent = button.dataset.invoiceCustomer || 'Walk-in';
+                    document.querySelector('[data-invoice-drawer-payment]').textContent = button.dataset.invoicePayment || '-';
+                    document.querySelector('[data-invoice-drawer-subtotal]').textContent = money(button.dataset.invoiceSubtotal || '0.00');
+                    document.querySelector('[data-invoice-drawer-tax]').textContent = money(button.dataset.invoiceTax || '0.00');
+                    document.querySelector('[data-invoice-drawer-total]').textContent = money(button.dataset.invoiceTotal || '0.00');
+                    document.querySelector('[data-invoice-drawer-paid]').textContent = money(button.dataset.invoicePaid || '0.00');
+
+                    var list = document.querySelector('[data-invoice-drawer-items]');
+                    list.innerHTML = '';
+
+                    items.forEach(function (item) {
+                        var row = document.createElement('div');
+                        row.className = 'invoice-drawer-item';
+                        row.innerHTML = '<div><strong></strong><small></small></div><strong></strong>';
+                        row.querySelector('strong').textContent = item.product || 'Product';
+                        row.querySelector('small').textContent = (item.sku || 'No SKU') + ' - Qty ' + item.quantity + ' - Rate ' + money(item.rate || '0.00') + ' - Tax ' + (item.tax || '0.00') + '%';
+                        row.lastElementChild.textContent = money(item.total || '0.00');
+                        list.appendChild(row);
+                    });
+
+                    if (items.length === 0) {
+                        var empty = document.createElement('div');
+                        empty.className = 'empty-state product-empty';
+                        empty.textContent = 'No invoice items found.';
+                        list.appendChild(empty);
+                    }
+
+                    invoiceDrawer?.classList.add('is-open');
+                    invoiceDrawer?.setAttribute('aria-hidden', 'false');
+                    invoiceBackdrop?.classList.add('is-open');
+                });
+            });
+
+            document.querySelectorAll('[data-close-invoice], [data-invoice-backdrop]').forEach(function (button) {
+                button.addEventListener('click', closeInvoiceDrawer);
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    closeInvoiceDrawer();
+                }
+            });
 
             document.querySelectorAll('[data-billing-search-form]').forEach(function (form) {
                 var search = form.querySelector('[data-billing-search]');
@@ -583,6 +981,8 @@
                 }
 
                 function submitSearch() {
+                    showBillingListingLoader();
+
                     if (search.value.trim() === '') {
                         search.disabled = true;
                     }
@@ -597,6 +997,20 @@
 
                 search.addEventListener('change', submitSearch);
                 search.addEventListener('search', submitSearch);
+
+                form.addEventListener('submit', function () {
+                    showBillingListingLoader();
+                });
+            });
+
+            document.querySelectorAll('[data-billing-listing-link], .billing-invoice-panel .product-pagination a').forEach(function (link) {
+                link.addEventListener('click', function (event) {
+                    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                        return;
+                    }
+
+                    showBillingListingLoader();
+                });
             });
 
             document.querySelectorAll('[data-billing-form]').forEach(function (form) {

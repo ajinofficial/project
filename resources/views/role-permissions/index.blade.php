@@ -15,13 +15,6 @@
                 <h1>Role permissions</h1>
                 <p>Configure sidebar access by role. Owner always keeps every menu enabled.</p>
             </div>
-            <div class="permission-hero-actions">
-                <div class="permission-total">
-                    <span>Menus</span>
-                    <strong>{{ count($menus) }}</strong>
-                </div>
-                <a class="ghost-button" href="{{ route('setup.index') }}">Back to setup</a>
-            </div>
         </header>
 
         @if ($errors->any())
@@ -46,8 +39,12 @@
 
                     <button type="button" class="permission-summary-card" data-open-permission="{{ $roleKey }}" data-summary-card="{{ $roleKey }}">
                         <span>{{ strtoupper(substr($roleLabel, 0, 2)) }}</span>
-                        <strong data-summary-count="{{ $roleKey }}">{{ count($selectedMenus) }}</strong>
+                        <strong>
+                            <b data-summary-count="{{ $roleKey }}">{{ count($selectedMenus) }}</b>
+                            <em>/ {{ count($menus) }}</em>
+                        </strong>
                         <small>{{ $roleLabel }}</small>
+                        <i style="--permission-progress: {{ count($menus) > 0 ? round((count($selectedMenus) / count($menus)) * 100) : 0 }}%" data-summary-meter="{{ $roleKey }}"></i>
                     </button>
                 @endforeach
             </section>
@@ -87,6 +84,7 @@
                                     <path d="M12 20h9" />
                                     <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" />
                                 </svg>
+                                <span>Edit</span>
                             </button>
                         </article>
                     @endforeach
@@ -108,7 +106,12 @@
                             <h2>{{ $roleLabel }}</h2>
                             <span>{{ $isOwner ? 'Owner access cannot be reduced.' : 'Choose sidebar menus for this role.' }}</span>
                         </div>
-                        <button type="button" data-close-permission aria-label="Close permissions panel">x</button>
+                        <button type="button" data-close-permission aria-label="Close permissions panel">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M18 6 6 18" />
+                                <path d="m6 6 12 12" />
+                            </svg>
+                        </button>
                     </div>
 
                     <div class="permission-drawer-tools">
@@ -133,7 +136,7 @@
                             @php
                                 $defaultChecked = $isOwner || in_array($menuKey, $permissionDefaults[$roleKey] ?? [], true);
                             @endphp
-                            <label class="permission-drawer-check" data-permission-menu="{{ $roleKey }}" data-menu-label="{{ strtolower($menu['label'].' '.$menu['route']) }}">
+                            <label class="permission-drawer-check" data-permission-menu="{{ $roleKey }}" data-menu-label="{{ strtolower($menu['label']) }}">
                                 <input
                                     type="checkbox"
                                     name="permissions[{{ $roleKey }}][]"
@@ -148,7 +151,6 @@
                                 <span>{{ $menu['abbr'] }}</span>
                                 <div>
                                     <strong>{{ $menu['label'] }}</strong>
-                                    <small>{{ $menu['route'] }}</small>
                                 </div>
                             </label>
                         @endforeach
@@ -164,16 +166,6 @@
                 </aside>
             @endforeach
 
-            <div class="permission-save-bar">
-                <div>
-                    <strong data-permission-save-title>Role permissions are current</strong>
-                    <span data-permission-save-copy>Changes affect each staff member the next time they open a menu.</span>
-                </div>
-                <button type="submit" data-permission-save-button disabled>
-                    <span class="permission-save-spinner" aria-hidden="true"></span>
-                    <span data-permission-save-text>Save permissions</span>
-                </button>
-            </div>
         </form>
     </section>
 
@@ -186,10 +178,6 @@
             }
 
             const roleKeys = @json($roleKeys);
-            const saveButton = form.querySelector('[data-permission-save-button]');
-            const saveText = form.querySelector('[data-permission-save-text]');
-            const saveTitle = form.querySelector('[data-permission-save-title]');
-            const saveCopy = form.querySelector('[data-permission-save-copy]');
             const initialState = {};
 
             form.querySelectorAll('[data-permission-checkbox]').forEach((checkbox) => {
@@ -219,6 +207,14 @@
 
                 if (summaryCount) {
                     summaryCount.textContent = total;
+                }
+
+                const summaryMeter = form.querySelector(`[data-summary-meter="${role}"]`);
+
+                if (summaryMeter) {
+                    const maxMenus = {{ count($menus) }};
+                    const progress = maxMenus > 0 ? Math.round((total / maxMenus) * 100) : 0;
+                    summaryMeter.style.setProperty('--permission-progress', `${progress}%`);
                 }
 
                 if (drawerCount) {
@@ -262,9 +258,6 @@
             function updateSaveState() {
                 const changed = hasChanges();
 
-                saveButton.disabled = ! changed;
-                saveTitle.textContent = changed ? 'Unsaved role permission changes' : 'Role permissions are current';
-                saveCopy.textContent = changed ? 'Save to update staff menu access.' : 'Changes affect each staff member the next time they open a menu.';
                 form.classList.toggle('has-unsaved-changes', changed);
             }
 
@@ -345,15 +338,12 @@
             });
 
             form.addEventListener('submit', () => {
-                form.querySelectorAll('[data-permission-submit], [data-permission-save-button]').forEach((button) => {
+                form.querySelectorAll('[data-permission-submit]').forEach((button) => {
                     button.disabled = true;
                     button.classList.add('is-loading');
                     button.setAttribute('aria-busy', 'true');
                 });
 
-                if (saveText) {
-                    saveText.textContent = 'Saving';
-                }
             });
 
             document.addEventListener('keydown', (event) => {

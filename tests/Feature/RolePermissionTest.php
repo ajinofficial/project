@@ -23,7 +23,12 @@ class RolePermissionTest extends TestCase
         $response->assertSee('Manage menu access');
         $response->assertSee('Select all');
         $response->assertSee('Use default');
-        $response->assertSee('Role permissions are current');
+        $response->assertSee('>Edit</span>', false);
+        $response->assertSee('Save permissions');
+        $response->assertDontSee('data-permission-save-button', false);
+        $response->assertSee('data-summary-meter="owner"', false);
+        $response->assertSee('/ 12', false);
+        $response->assertDontSee('role-permissions.index');
         $response->assertDontSee('Vendor Dashboard');
         $response->assertDontSee('Clients');
     }
@@ -55,6 +60,7 @@ class RolePermissionTest extends TestCase
             'tenant_id' => $tenant->id,
             'type' => 'role_permissions_updated',
             'title' => 'Role permissions updated',
+            'message' => 'Owner User updated permissions for Manager, Sales staff, Warehouse staff, and Accountant.',
         ]);
     }
 

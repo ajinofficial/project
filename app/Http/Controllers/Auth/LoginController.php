@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Support\RolePermission;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -16,12 +18,34 @@ class LoginController extends Controller
 {
     public function create(): View
     {
+        $oldTenant = old('tenant_id')
+            ? Tenant::query()->find(old('tenant_id'), ['id', 'business_name'])
+            : null;
+
         return view('auth.login', [
-            'businesses' => Tenant::query()
-                ->orderBy('business_name')
-                ->limit(50)
-                ->get(['id', 'business_name']),
+            'oldBusiness' => $oldTenant,
         ]);
+    }
+
+    public function businesses(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $keyword = trim($validated['q'] ?? '');
+
+        if ($keyword === '') {
+            return response()->json(['data' => []]);
+        }
+
+        $businesses = Tenant::query()
+            ->where('business_name', 'like', '%'.$keyword.'%')
+            ->orderBy('business_name')
+            ->limit(10)
+            ->get(['id', 'business_name']);
+
+        return response()->json(['data' => $businesses]);
     }
 
     public function store(Request $request): RedirectResponse|JsonResponse
@@ -35,29 +59,26 @@ class LoginController extends Controller
             'tenant_id.exists' => 'Select a valid business name.',
         ]);
 
-        $authCredentials = [
-            'email' => $credentials['email'],
-            'password' => $credentials['password'],
-        ];
+        $user = User::query()
+            ->where('email', $credentials['email'])
+            ->first();
 
-        if (! Auth::attempt($authCredentials, $request->boolean('remember'))) {
+        if (! $user) {
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => 'The provided credentials do not match our records.',
+                    'message' => 'We could not find an account with this email.',
                     'errors' => [
-                        'email' => ['The provided credentials do not match our records.'],
+                        'email' => ['We could not find an account with this email.'],
                     ],
                 ], 422);
             }
 
             return back()
-                ->withErrors(['email' => 'The provided credentials do not match our records.'])
-                ->onlyInput('email');
+                ->withErrors(['email' => 'We could not find an account with this email.'])
+                ->onlyInput('email', 'tenant_id');
         }
 
-        if ((int) $request->user()->tenant_id !== (int) $credentials['tenant_id']) {
-            Auth::logout();
-
+        if ((int) $user->tenant_id !== (int) $credentials['tenant_id']) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'This account does not belong to the selected business.',
@@ -69,9 +90,25 @@ class LoginController extends Controller
 
             return back()
                 ->withErrors(['tenant_id' => 'This account does not belong to the selected business.'])
-                ->onlyInput('email');
+                ->onlyInput('email', 'tenant_id');
         }
 
+        if (! Hash::check($credentials['password'], $user->password)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'The password is incorrect.',
+                    'errors' => [
+                        'password' => ['The password is incorrect.'],
+                    ],
+                ], 422);
+            }
+
+            return back()
+                ->withErrors(['password' => 'The password is incorrect.'])
+                ->onlyInput('email', 'tenant_id');
+        }
+
+        Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
 
         $redirect = route(RolePermission::firstAccessibleRoute($request->user()));

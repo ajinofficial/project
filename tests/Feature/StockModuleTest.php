@@ -26,6 +26,7 @@ class StockModuleTest extends TestCase
             'sku' => 'LEDGER-01',
             'inventory' => 4,
             'minimum_stock_level' => 5,
+            'image_url' => 'http://localhost/uploads/stock/ledger-product.jpg',
         ]));
 
         StockMovement::create([
@@ -44,8 +45,12 @@ class StockModuleTest extends TestCase
         $response->assertSee('Stock movement ledger');
         $response->assertSee('Purchases add stock. Billing reduces stock. Returns and adjustments update stock.');
         $response->assertSee('Ledger Product');
+        $response->assertSee('<img src="http://localhost/uploads/stock/ledger-product.jpg" alt="">', false);
         $response->assertSee('Opening purchase.');
         $response->assertSee('Low stock watchlist');
+        $response->assertSee('data-stock-listing', false);
+        $response->assertSee('data-stock-listing-loader', false);
+        $response->assertSee('Loading movements');
         $response->assertSee(route('stock.create'), false);
     }
 
@@ -70,6 +75,8 @@ class StockModuleTest extends TestCase
         $response->assertSee('name="profit_percentage"', false);
         $response->assertSee('name="profit_percentage" min="0" max="100"', false);
         $response->assertSee('Selling price after profit');
+        $response->assertSee('novalidate', false);
+        $response->assertSee('is required.', false);
     }
 
     public function test_stock_adjustment_updates_inventory_and_records_movement(): void
@@ -147,6 +154,58 @@ class StockModuleTest extends TestCase
             'stock_after' => 15,
             'notes' => 'Supplier refill. Purchase price: 80.00. Profit: 25.00%. Selling price: 100.00.',
         ]);
+    }
+
+    public function test_stock_movement_filters_by_search_and_type(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+
+        $matchedProduct = Product::create($this->productPayload([
+            'tenant_id' => $tenant->id,
+            'user_id' => $owner->id,
+            'name' => 'Filtered Widget',
+            'sku' => 'FILTER-01',
+        ]));
+
+        $otherProduct = Product::create($this->productPayload([
+            'tenant_id' => $tenant->id,
+            'user_id' => $owner->id,
+            'name' => 'Other Widget',
+            'sku' => 'OTHER-01',
+        ]));
+
+        StockMovement::create([
+            'tenant_id' => $tenant->id,
+            'product_id' => $matchedProduct->id,
+            'type' => 'purchase',
+            'quantity' => 8,
+            'stock_after' => 8,
+            'notes' => 'Filter target note.',
+            'user_id' => $owner->id,
+        ]);
+
+        StockMovement::create([
+            'tenant_id' => $tenant->id,
+            'product_id' => $otherProduct->id,
+            'type' => 'sale',
+            'quantity' => -2,
+            'stock_after' => 6,
+            'notes' => 'Should not show.',
+            'user_id' => $owner->id,
+        ]);
+
+        $response = $this->actingAs($owner)->get(route('stock.index', [
+            'search' => 'filter',
+            'type' => 'purchase',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('data-stock-search-form', false);
+        $response->assertSee('data-stock-search', false);
+        $response->assertSee('Filtered Widget');
+        $response->assertSee('Filter target note.');
+        $response->assertDontSee('Other Widget');
+        $response->assertDontSee('Should not show.');
     }
 
     public function test_stock_adjustment_cannot_make_inventory_negative(): void

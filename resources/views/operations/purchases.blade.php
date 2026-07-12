@@ -81,7 +81,7 @@
 
                     <label>
                         <span>Bill date</span>
-                        <input class="purchase-date-input" type="date" name="bill_date" value="{{ old('bill_date', now()->toDateString()) }}" required>
+                        <input class="purchase-date-input" type="date" name="bill_date" value="{{ old('bill_date', now()->toDateString()) }}" required data-date-picker>
                         @error('bill_date') <small>{{ $message }}</small> @enderror
                     </label>
 
@@ -141,6 +141,22 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('[data-date-picker]').forEach(function (field) {
+                field.addEventListener('click', function () {
+                    field.focus();
+
+                    if (typeof field.showPicker !== 'function') {
+                        return;
+                    }
+
+                    try {
+                        field.showPicker();
+                    } catch (error) {
+                        // Some browsers only allow the native picker in trusted pointer events.
+                    }
+                });
+            });
+
             document.querySelectorAll('[data-purchase-search-form]').forEach(function (form) {
                 var search = form.querySelector('[data-purchase-search]');
                 var fields = form.querySelectorAll('[data-purchase-search]');

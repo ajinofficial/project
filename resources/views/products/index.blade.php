@@ -150,7 +150,6 @@
                                                 <input type="hidden" name="barcode" value="{{ $product->barcode }}">
                                                 <input type="hidden" name="category" value="{{ $product->category }}">
                                                 <input type="hidden" name="brand" value="{{ $product->brand }}">
-                                                <input type="hidden" name="supplier_id" value="{{ $product->supplier_id }}">
                                                 <input type="hidden" name="purchase_price" value="{{ $product->purchase_price }}">
                                                 <input type="hidden" name="price" value="{{ $product->price }}">
                                                 <input type="hidden" name="minimum_stock_level" value="{{ $product->minimum_stock_level }}">

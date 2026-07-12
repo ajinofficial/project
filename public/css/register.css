@@ -2216,15 +2216,28 @@ button.ghost-button {
 }
 
 .password-toggle {
+    width: 48px;
     min-height: auto;
+    display: grid;
+    place-items: center;
     border-left: 1px solid #e4e9f0;
     border-radius: 0;
-    padding: 0 13px;
+    padding: 0;
     color: var(--auth-primary);
     background: #f8fbff;
     box-shadow: none;
     font-size: 12px;
     font-weight: 900;
+}
+
+.password-toggle svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
 }
 
 .password-toggle:hover {
@@ -5645,6 +5658,56 @@ button.ghost-button {
     padding-right: 40px;
 }
 
+.business-search {
+    position: relative;
+}
+
+.business-search-results {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 20;
+    display: grid;
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid #d0d7e2;
+    border-radius: 8px;
+    padding: 6px;
+    background: #ffffff;
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
+}
+
+.business-search-results[hidden] {
+    display: none;
+}
+
+.business-search-option {
+    width: 100%;
+    min-height: 42px;
+    border: 0;
+    border-radius: 6px;
+    padding: 10px 12px;
+    color: #182230;
+    background: transparent;
+    font-weight: 800;
+    text-align: left;
+}
+
+.business-search-option:hover,
+.business-search-option:focus {
+    color: #175cd3;
+    background: #eff6ff;
+    outline: none;
+}
+
+.business-search-empty {
+    padding: 10px 12px;
+    color: #667085;
+    font-size: 13px;
+    font-weight: 700;
+}
+
 .login-field small[hidden] {
     display: none;
 }
@@ -5939,12 +6002,22 @@ button.ghost-button {
     gap: 18px;
 }
 
+.product-form > label,
+.product-form .field-grid > label {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    min-width: 0;
+}
+
 .product-form .field-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
 }
 
-.product-form .field-grid:nth-of-type(3) {
+.product-form .stock-buckets {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
@@ -6589,7 +6662,7 @@ button.ghost-button {
 
 .permission-page {
     display: grid;
-    gap: 18px;
+    gap: 20px;
 }
 
 .permission-hero {
@@ -6597,10 +6670,12 @@ button.ghost-button {
     justify-content: space-between;
     gap: 18px;
     align-items: flex-start;
-    border: 1px solid #dbeafe;
+    border: 1px solid #d8e2ef;
     border-radius: 8px;
-    padding: 22px;
-    background: linear-gradient(135deg, #eff6ff, #ffffff 64%, #f0fdf4);
+    padding: 24px;
+    background:
+        linear-gradient(135deg, #f8fbff 0%, #ffffff 58%, #f4fbf6 100%);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
 }
 
 .permission-hero h1 {
@@ -6652,7 +6727,7 @@ button.ghost-button {
 
 .permission-form {
     display: grid;
-    gap: 12px;
+    gap: 14px;
 }
 
 .permission-summary-grid {
@@ -6662,21 +6737,24 @@ button.ghost-button {
 }
 
 .permission-summary-card {
-    min-height: 118px;
+    min-height: 132px;
     display: grid;
     align-content: space-between;
-    gap: 8px;
-    border: 1px solid #e5e9ee;
+    gap: 10px;
+    border: 1px solid #e3e8ef;
     border-radius: 8px;
     padding: 16px;
     background: #ffffff;
     text-align: left;
     box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+    transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
 }
 
 .permission-summary-card:hover {
     border-color: #bfdbfe;
     background: #f8fbff;
+    box-shadow: 0 12px 28px rgba(16, 24, 40, 0.08);
+    transform: translateY(-1px);
 }
 
 .permission-summary-card span {
@@ -6691,10 +6769,28 @@ button.ghost-button {
     font-weight: 900;
 }
 
+.permission-summary-card strong,
+.permission-summary-card strong b,
+.permission-summary-card strong em {
+    display: inline-flex;
+    align-items: baseline;
+}
+
 .permission-summary-card strong {
+    gap: 4px;
     color: var(--inapp-text);
-    font-size: 30px;
     line-height: 1;
+}
+
+.permission-summary-card strong b {
+    font-size: 31px;
+}
+
+.permission-summary-card strong em {
+    color: #98a2b3;
+    font-size: 13px;
+    font-style: normal;
+    font-weight: 900;
 }
 
 .permission-summary-card small {
@@ -6703,10 +6799,27 @@ button.ghost-button {
     font-weight: 900;
 }
 
+.permission-summary-card > i {
+    height: 7px;
+    overflow: hidden;
+    display: block;
+    border-radius: 999px;
+    background: #eef2f6;
+}
+
+.permission-summary-card > i::before {
+    content: "";
+    width: var(--permission-progress, 0%);
+    height: 100%;
+    display: block;
+    border-radius: inherit;
+    background: #2563eb;
+}
+
 .permission-card {
-    border: 1px solid #e5e9ee;
+    border: 1px solid #e3e8ef;
     border-radius: 8px;
-    padding: 20px;
+    padding: 18px;
     background: #ffffff;
     box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
 }
@@ -6794,59 +6907,12 @@ button.ghost-button {
     cursor: not-allowed;
 }
 
-.permission-save-bar {
-    position: sticky;
-    bottom: 0;
-    z-index: 4;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    border: 1px solid #dbeafe;
-    border-radius: 8px;
-    padding: 14px 16px;
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: 0 -10px 30px rgba(16, 24, 40, 0.08);
-    backdrop-filter: blur(10px);
-}
-
-.permission-save-bar strong,
-.permission-save-bar span {
-    display: block;
-}
-
-.permission-save-bar strong {
-    color: var(--inapp-text);
-}
-
-.permission-save-bar span {
-    margin-top: 3px;
-    color: var(--inapp-muted);
-    font-size: 13px;
-}
-
-.permission-save-bar button {
-    min-height: 42px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    border: 0;
-    border-radius: 8px;
-    padding: 0 18px;
-    color: #ffffff;
-    background: var(--inapp-primary);
-    font-weight: 900;
-}
-
-.permission-save-bar button:disabled,
 .permission-drawer-actions button[type="submit"]:disabled {
     cursor: not-allowed;
     color: #667085;
     background: #e5e7eb;
 }
 
-.permission-save-bar button.is-loading:disabled,
 .permission-drawer-actions button[type="submit"].is-loading:disabled {
     cursor: wait;
     color: #ffffff;
@@ -6863,7 +6929,6 @@ button.ghost-button {
     animation: permission-save-spin 0.75s linear infinite;
 }
 
-.permission-save-bar button.is-loading .permission-save-spinner,
 .permission-drawer-actions button.is-loading .permission-save-spinner {
     display: inline-block;
 }
@@ -6874,14 +6939,9 @@ button.ghost-button {
     }
 }
 
-.permission-form.has-unsaved-changes .permission-save-bar {
-    border-color: #bfdbfe;
-    box-shadow: 0 -12px 34px rgba(37, 99, 235, 0.12);
-}
-
 .permission-role-list {
     display: grid;
-    gap: 10px;
+    gap: 12px;
 }
 
 .permission-role-card {
@@ -6889,10 +6949,17 @@ button.ghost-button {
     grid-template-columns: 44px minmax(0, 1fr) auto;
     gap: 14px;
     align-items: center;
-    border: 1px solid #edf1f5;
+    border: 1px solid #e7ebf0;
     border-radius: 8px;
-    padding: 14px;
-    background: #ffffff;
+    padding: 15px;
+    background: linear-gradient(180deg, #ffffff, #fbfcff);
+    transition: border-color 150ms ease, background 150ms ease, box-shadow 150ms ease;
+}
+
+.permission-role-card:hover {
+    border-color: #bfdbfe;
+    background: #f8fbff;
+    box-shadow: 0 8px 20px rgba(16, 24, 40, 0.06);
 }
 
 .permission-role-avatar {
@@ -6947,14 +7014,25 @@ button.ghost-button {
 }
 
 .permission-edit-button {
-    display: grid;
-    width: 38px;
-    height: 38px;
-    place-items: center;
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
     border: 1px solid #d0d5dd;
     border-radius: 8px;
+    padding: 0 12px;
     color: #344054;
     background: #ffffff;
+    font-size: 12px;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.permission-edit-button:hover {
+    border-color: #bfdbfe;
+    color: #2563eb;
+    background: #eff6ff;
 }
 
 .permission-edit-button svg {
@@ -6967,12 +7045,19 @@ button.ghost-button {
     stroke-width: 2;
 }
 
+.permission-edit-button span {
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+}
+
 .permission-drawer-backdrop {
     position: fixed;
     inset: 0;
     z-index: 30;
     display: none;
-    background: rgba(15, 23, 42, 0.36);
+    background: rgba(15, 23, 42, 0.42);
+    backdrop-filter: blur(2px);
 }
 
 .permission-drawer-backdrop.is-open {
@@ -6984,13 +7069,13 @@ button.ghost-button {
     top: 0;
     right: 0;
     z-index: 31;
-    width: min(470px, 100vw);
+    width: min(520px, 100vw);
     height: 100vh;
     display: flex;
     flex-direction: column;
     border-left: 1px solid #d0d5dd;
     background: #ffffff;
-    box-shadow: -18px 0 50px rgba(16, 24, 40, 0.18);
+    box-shadow: -24px 0 60px rgba(16, 24, 40, 0.22);
     transform: translateX(105%);
     transition: transform 180ms ease;
 }
@@ -7004,7 +7089,8 @@ button.ghost-button {
     justify-content: space-between;
     gap: 14px;
     border-bottom: 1px solid #edf1f5;
-    padding: 20px;
+    padding: 22px;
+    background: #fbfdff;
 }
 
 .permission-drawer-head h2 {
@@ -7019,13 +7105,26 @@ button.ghost-button {
 }
 
 .permission-drawer-head button {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    display: grid;
+    place-items: center;
     border: 1px solid #d0d5dd;
     border-radius: 8px;
     color: #344054;
     background: #ffffff;
     font-weight: 900;
+}
+
+.permission-drawer-head button svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
 }
 
 .permission-drawer-tools {
@@ -7034,7 +7133,7 @@ button.ghost-button {
     gap: 10px;
     align-items: center;
     border-bottom: 1px solid #edf1f5;
-    padding: 14px 20px;
+    padding: 14px 22px;
 }
 
 .permission-drawer-tools input {
@@ -7048,7 +7147,13 @@ button.ghost-button {
 }
 
 .permission-drawer-tools strong {
-    color: #2563eb;
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 5px 10px;
+    color: #175cd3;
+    background: #eff6ff;
     font-size: 12px;
     white-space: nowrap;
 }
@@ -7058,8 +7163,8 @@ button.ghost-button {
     gap: 8px;
     flex-wrap: wrap;
     border-bottom: 1px solid #edf1f5;
-    padding: 12px 20px;
-    background: #f8fbff;
+    padding: 12px 22px;
+    background: #f8fafc;
 }
 
 .permission-bulk-actions button {
@@ -7093,19 +7198,29 @@ button.ghost-button {
     gap: 10px;
     flex: 1;
     overflow: auto;
-    padding: 16px 20px;
+    padding: 16px 22px;
 }
 
 .permission-drawer-check {
     display: grid;
-    grid-template-columns: 42px minmax(0, 1fr);
+    grid-template-columns: 42px minmax(0, 1fr) 24px;
     gap: 12px;
     align-items: center;
-    border: 1px solid #edf1f5;
+    border: 1px solid #e7ebf0;
     border-radius: 8px;
     padding: 12px;
     background: #ffffff;
     cursor: pointer;
+    transition: border-color 150ms ease, background 150ms ease, box-shadow 150ms ease;
+}
+
+.permission-drawer-check::after {
+    content: "";
+    width: 22px;
+    height: 22px;
+    border: 1px solid #d0d5dd;
+    border-radius: 999px;
+    background: #ffffff;
 }
 
 .permission-drawer-check[hidden] {
@@ -7135,8 +7250,26 @@ button.ghost-button {
     background: #2563eb;
 }
 
+.permission-drawer-check:has(input:checked) {
+    border-color: #bfdbfe;
+    background: #f8fbff;
+}
+
+.permission-drawer-check:has(input:checked)::after {
+    border-color: #2563eb;
+    background:
+        linear-gradient(135deg, transparent 52%, #ffffff 52%) 6px 11px / 6px 2px no-repeat,
+        linear-gradient(45deg, transparent 52%, #ffffff 52%) 4px 10px / 6px 2px no-repeat,
+        #2563eb;
+}
+
 .permission-drawer-check input:disabled + span {
     color: #166534;
+    background: #dcfce7;
+}
+
+.permission-drawer-check:has(input:disabled)::after {
+    border-color: #16a34a;
     background: #dcfce7;
 }
 
@@ -7165,7 +7298,9 @@ button.ghost-button {
     justify-content: flex-end;
     gap: 10px;
     border-top: 1px solid #edf1f5;
-    padding: 16px 20px;
+    padding: 16px 22px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 -12px 30px rgba(16, 24, 40, 0.06);
 }
 
 .permission-drawer-actions button[type="submit"] {
@@ -7603,7 +7738,7 @@ button.ghost-button {
 
     .filter-bar,
     .product-form .field-grid,
-    .product-form .field-grid:nth-of-type(3),
+    .product-form .stock-buckets,
     .users-filter-form,
     .clients-filter-form,
     .supplier-form .supplier-field-grid {
@@ -7680,7 +7815,6 @@ button.ghost-button {
 
     .setup-hero,
     .permission-hero,
-    .permission-save-bar,
     .setup-save-bar {
         flex-direction: column;
         align-items: stretch;

@@ -51,19 +51,6 @@
     </label>
 </div>
 
-<label>
-    <span>Supplier</span>
-    <select name="supplier_id">
-        <option value="">No supplier selected</option>
-        @foreach (($suppliers ?? collect()) as $supplier)
-            <option value="{{ $supplier->id }}" @selected((string) old('supplier_id', $product->supplier_id) === (string) $supplier->id)>
-                {{ $supplier->name }}
-            </option>
-        @endforeach
-    </select>
-    @error('supplier_id') <small>{{ $message }}</small> @enderror
-</label>
-
 <div class="field-grid">
     @php
         $purchasePriceValue = (float) old('purchase_price', $product->purchase_price ?? 0);
@@ -91,9 +78,13 @@
         <input type="number" name="minimum_stock_level" value="{{ old('minimum_stock_level', $product->minimum_stock_level ?? auth()->user()->tenant->low_stock_threshold) }}" min="0" step="1" required data-replace-on-focus>
         @error('minimum_stock_level') <small>{{ $message }}</small> @enderror
     </label>
+    <label>
+        <span>Returned stock</span>
+        <input type="number" name="returned_stock" value="{{ old('returned_stock', $product->returned_stock ?? 0) }}" min="0" step="1" data-replace-on-focus>
+    </label>
 </div>
 
-<div class="field-grid stock-buckets">
+<div class="field-grid">
     <label>
         <span>Reserved stock</span>
         <input type="number" name="reserved_stock" value="{{ old('reserved_stock', $product->reserved_stock ?? 0) }}" min="0" step="1" data-replace-on-focus>
@@ -101,10 +92,6 @@
     <label>
         <span>Damaged stock</span>
         <input type="number" name="damaged_stock" value="{{ old('damaged_stock', $product->damaged_stock ?? 0) }}" min="0" step="1" data-replace-on-focus>
-    </label>
-    <label>
-        <span>Returned stock</span>
-        <input type="number" name="returned_stock" value="{{ old('returned_stock', $product->returned_stock ?? 0) }}" min="0" step="1" data-replace-on-focus>
     </label>
 </div>
 
@@ -140,7 +127,7 @@
 
 <label>
     <span>Description</span>
-    <textarea name="description" rows="5" placeholder="Supplier notes, shelf location, package contents, reorder notes, or selling details.">{{ old('description', $product->description) }}</textarea>
+    <textarea name="description" rows="5" placeholder="Shelf location, package contents, reorder notes, or selling details.">{{ old('description', $product->description) }}</textarea>
     @error('description') <small>{{ $message }}</small> @enderror
 </label>
 

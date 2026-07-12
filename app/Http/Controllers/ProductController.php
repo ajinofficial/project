@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use App\Models\Supplier;
 use App\Support\ActivityNotifier;
 use App\Support\StockNotifier;
 use Illuminate\Http\RedirectResponse;
@@ -79,7 +78,6 @@ class ProductController extends Controller
     {
         return view('products.create', [
             'product' => new Product(['status' => 'draft', 'inventory' => 0, 'minimum_stock_level' => 10]),
-            'suppliers' => Supplier::where('tenant_id', $request->user()->tenant_id)->orderBy('name')->get(),
         ]);
     }
 
@@ -116,7 +114,6 @@ class ProductController extends Controller
 
         return view('products.edit', [
             'product' => $product,
-            'suppliers' => Supplier::where('tenant_id', $request->user()->tenant_id)->orderBy('name')->get(),
         ]);
     }
 
@@ -189,11 +186,6 @@ class ProductController extends Controller
             'barcode' => ['nullable', 'string', 'max:120'],
             'category' => ['nullable', 'string', 'max:120'],
             'brand' => ['nullable', 'string', 'max:120'],
-            'supplier_id' => [
-                'nullable',
-                Rule::exists('suppliers', 'id')->where('tenant_id', $request->user()->tenant_id),
-            ],
-            'supplier' => ['nullable', 'string', 'max:255'],
             'purchase_price' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
             'profit_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],

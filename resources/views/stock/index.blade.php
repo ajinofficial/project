@@ -55,8 +55,8 @@
                 <span>Track stock on hand and audit purchase, billing, return, and adjustment movement.</span>
             </div>
             <div class="product-head-actions">
-                <a class="ghost-button" href="{{ route('products.index') }}">Inventory</a>
-                <a class="primary-link" href="{{ route('stock.create') }}">Add stock</a>
+                <a class="ghost-button" href="{{ route('products.index') }}" data-stock-listing-link>Inventory</a>
+                <a class="primary-link" href="{{ route('stock.create') }}" data-stock-listing-link>Add stock</a>
             </div>
         </header>
 
@@ -86,13 +86,17 @@
             </div>
         </section>
 
-        <section class="v-panel product-management-panel">
+        <section class="v-panel product-management-panel" data-stock-listing>
             <div class="section-title"><div><p class="eyebrow">Connected flow</p><h2>Stock movement ledger</h2></div></div>
             <div class="stock-flow-row">
                 <div>
                     <strong>Purchases add stock. Billing reduces stock. Returns and adjustments update stock.</strong>
                     <span>Every operation writes to this ledger with quantity, stock after, and reference notes.</span>
                 </div>
+            </div>
+            <div class="product-listing-loader" data-stock-listing-loader aria-live="polite" aria-hidden="true">
+                <span aria-hidden="true"></span>
+                <strong>Loading movements</strong>
             </div>
 
             <div class="product-toolbar">
@@ -125,7 +129,13 @@
                                 <td>{{ $movement->created_at->format('d M Y') }}</td>
                                 <td>
                                     <div class="inventory-product-cell">
-                                        <span class="item-thumb">{{ strtoupper(substr($movement->product->name ?? 'P', 0, 1)) }}</span>
+                                        <span class="item-thumb">
+                                            @if ($movement->product?->image_url)
+                                                <img src="{{ $movement->product->image_url }}" alt="">
+                                            @else
+                                                {{ strtoupper(substr($movement->product->name ?? 'P', 0, 1)) }}
+                                            @endif
+                                        </span>
                                         <div>
                                             <strong>{{ $movement->product->name ?? 'Product' }}</strong>
                                             <small>{{ $movement->product->sku ?? 'No SKU' }}</small>
@@ -147,4 +157,69 @@
             @include('products.partials.pagination', ['paginator' => $movements, 'itemLabel' => 'movements'])
         </section>
     </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var listing = document.querySelector('[data-stock-listing]');
+            var loader = document.querySelector('[data-stock-listing-loader]');
+
+            function showStockListingLoader() {
+                if (! listing || ! loader) {
+                    return;
+                }
+
+                listing.classList.add('is-loading');
+                loader.setAttribute('aria-hidden', 'false');
+            }
+
+            document.querySelectorAll('[data-stock-search-form]').forEach(function (form) {
+                var search = form.querySelector('input[name="search"]');
+                var fields = form.querySelectorAll('[data-stock-search]');
+                var timer = null;
+
+                function submitFilters() {
+                    showStockListingLoader();
+
+                    if (search && search.value.trim() === '') {
+                        search.disabled = true;
+                    }
+
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                        return;
+                    }
+
+                    form.submit();
+                }
+
+                fields.forEach(function (field) {
+                    if (field.matches('input[type="search"]')) {
+                        field.addEventListener('input', function () {
+                            window.clearTimeout(timer);
+                            timer = window.setTimeout(submitFilters, 350);
+                        });
+
+                        field.addEventListener('search', submitFilters);
+                        return;
+                    }
+
+                    field.addEventListener('change', submitFilters);
+                });
+
+                form.addEventListener('submit', function () {
+                    showStockListingLoader();
+                });
+            });
+
+            document.querySelectorAll('[data-stock-listing-link], .product-pagination a').forEach(function (link) {
+                link.addEventListener('click', function (event) {
+                    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                        return;
+                    }
+
+                    showStockListingLoader();
+                });
+            });
+        });
+    </script>
 @endsection
