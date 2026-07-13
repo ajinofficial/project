@@ -8,6 +8,7 @@ use App\Support\ActivityNotifier;
 use App\Support\StockNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -92,6 +93,7 @@ class StockController extends Controller
                 Rule::exists('products', 'id')->where('tenant_id', $tenantId),
             ],
             'adjustment' => ['required', 'integer', 'min:-999999', 'max:999999', 'not_in:0'],
+            'stock_date' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'],
             'purchase_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'profit_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'notes' => ['nullable', 'string', 'max:1000'],
@@ -101,6 +103,9 @@ class StockController extends Controller
             'adjustment.required' => 'Enter the stock adjustment.',
             'adjustment.integer' => 'Stock adjustment must be a whole number.',
             'adjustment.not_in' => 'Stock adjustment cannot be zero.',
+            'stock_date.required' => 'Select the stock date.',
+            'stock_date.date_format' => 'Select a valid stock date.',
+            'stock_date.before_or_equal' => 'Stock date cannot be in the future.',
             'purchase_price.numeric' => 'Purchase price must be a valid number.',
             'purchase_price.min' => 'Purchase price cannot be negative.',
             'purchase_price.max' => 'Purchase price is too high.',
@@ -148,6 +153,9 @@ class StockController extends Controller
                 }
             }
 
+            $movementDate = Carbon::createFromFormat('Y-m-d', $data['stock_date'])
+                ->setTimeFrom(now());
+
             StockMovement::create([
                 'tenant_id' => $tenantId,
                 'product_id' => $product->id,
@@ -156,6 +164,8 @@ class StockController extends Controller
                 'stock_after' => $product->inventory,
                 'notes' => $notes,
                 'user_id' => $request->user()->id,
+                'created_at' => $movementDate,
+                'updated_at' => $movementDate,
             ]);
 
             return [

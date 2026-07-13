@@ -220,6 +220,241 @@
                 }
             });
 
+            (function initialiseDatePickers() {
+                var monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                var weekdayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+                var activePicker = null;
+
+                function pad(value) {
+                    return String(value).padStart(2, '0');
+                }
+
+                function toIso(date) {
+                    return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
+                }
+
+                function parseIso(value) {
+                    var parts = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(value || '');
+
+                    if (! parts) {
+                        return null;
+                    }
+
+                    var date = new Date(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3]));
+                    return toIso(date) === value ? date : null;
+                }
+
+                function closePicker(picker, restoreFocus) {
+                    if (! picker || picker.calendar.hidden) {
+                        return;
+                    }
+
+                    picker.calendar.hidden = true;
+                    picker.field.setAttribute('aria-expanded', 'false');
+                    activePicker = activePicker === picker ? null : activePicker;
+
+                    if (restoreFocus) {
+                        picker.field.focus();
+                    }
+                }
+
+                function isUnavailable(picker, date) {
+                    var iso = toIso(date);
+                    return (picker.field.min && iso < picker.field.min) || (picker.field.max && iso > picker.field.max);
+                }
+
+                function render(picker) {
+                    var selected = parseIso(picker.field.value);
+                    var selectedIso = selected ? toIso(selected) : '';
+                    var todayIso = toIso(new Date());
+                    var firstDay = new Date(picker.viewYear, picker.viewMonth, 1);
+                    var startDate = new Date(picker.viewYear, picker.viewMonth, 1 - firstDay.getDay());
+
+                    picker.monthSelect.value = String(picker.viewMonth);
+                    picker.yearSelect.value = String(picker.viewYear);
+                    picker.days.replaceChildren();
+
+                    for (var index = 0; index < 42; index += 1) {
+                        var date = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + index);
+                        var iso = toIso(date);
+                        var button = document.createElement('button');
+
+                        button.type = 'button';
+                        button.className = 'common-calendar__day';
+                        button.textContent = String(date.getDate());
+                        button.dataset.date = iso;
+                        button.setAttribute('aria-label', date.toLocaleDateString(undefined, {
+                            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                        }));
+
+                        if (date.getMonth() !== picker.viewMonth) button.classList.add('is-outside');
+                        if (iso === todayIso) button.classList.add('is-today');
+                        if (iso === selectedIso) {
+                            button.classList.add('is-selected');
+                            button.setAttribute('aria-current', 'date');
+                        }
+
+                        button.disabled = isUnavailable(picker, date);
+                        picker.days.appendChild(button);
+                    }
+                }
+
+                function addYearOption(picker, year) {
+                    if (picker.yearSelect.querySelector('option[value="' + year + '"]')) {
+                        return;
+                    }
+
+                    var option = document.createElement('option');
+                    option.value = String(year);
+                    option.textContent = String(year);
+                    picker.yearSelect.appendChild(option);
+                }
+
+                function openPicker(picker) {
+                    if (activePicker && activePicker !== picker) {
+                        closePicker(activePicker, false);
+                    }
+
+                    var initial = parseIso(picker.field.value) || new Date();
+                    picker.viewMonth = initial.getMonth();
+                    picker.viewYear = initial.getFullYear();
+                    addYearOption(picker, picker.viewYear);
+                    render(picker);
+                    picker.calendar.hidden = false;
+                    picker.field.setAttribute('aria-expanded', 'true');
+                    activePicker = picker;
+                }
+
+                document.querySelectorAll('input[type="date"]').forEach(function (field, pickerIndex) {
+                    var wrapper = document.createElement('div');
+                    var calendar = document.createElement('div');
+                    var selectors = document.createElement('div');
+                    var monthSelect = document.createElement('select');
+                    var yearSelect = document.createElement('select');
+                    var weekdays = document.createElement('div');
+                    var days = document.createElement('div');
+                    var currentYear = new Date().getFullYear();
+                    var minDate = parseIso(field.min);
+                    var maxDate = parseIso(field.max);
+                    var minYear = minDate ? minDate.getFullYear() : currentYear - 100;
+                    var maxYear = maxDate ? maxDate.getFullYear() : currentYear + 20;
+                    var picker = {
+                        field: field,
+                        calendar: calendar,
+                        monthSelect: monthSelect,
+                        yearSelect: yearSelect,
+                        days: days,
+                        viewMonth: 0,
+                        viewYear: currentYear
+                    };
+
+                    wrapper.className = 'common-date-picker';
+                    field.parentNode.insertBefore(wrapper, field);
+                    wrapper.appendChild(field);
+                    field.setAttribute('aria-haspopup', 'dialog');
+                    field.setAttribute('aria-expanded', 'false');
+                    field.setAttribute('aria-controls', 'common-calendar-' + pickerIndex);
+
+                    calendar.className = 'common-calendar';
+                    calendar.id = 'common-calendar-' + pickerIndex;
+                    calendar.setAttribute('role', 'dialog');
+                    calendar.setAttribute('aria-label', 'Choose a date');
+                    calendar.hidden = true;
+                    selectors.className = 'common-calendar__selectors';
+                    monthSelect.setAttribute('aria-label', 'Month');
+                    yearSelect.setAttribute('aria-label', 'Year');
+
+                    monthNames.forEach(function (month, index) {
+                        var option = document.createElement('option');
+                        option.value = String(index);
+                        option.textContent = month;
+                        monthSelect.appendChild(option);
+                    });
+
+                    for (var year = maxYear; year >= minYear; year -= 1) {
+                        var yearOption = document.createElement('option');
+                        yearOption.value = String(year);
+                        yearOption.textContent = String(year);
+                        yearSelect.appendChild(yearOption);
+                    }
+
+                    selectors.append(monthSelect, yearSelect);
+                    weekdays.className = 'common-calendar__weekdays';
+                    weekdayNames.forEach(function (weekday) {
+                        var label = document.createElement('span');
+                        label.textContent = weekday;
+                        weekdays.appendChild(label);
+                    });
+                    days.className = 'common-calendar__days';
+                    calendar.append(selectors, weekdays, days);
+                    wrapper.appendChild(calendar);
+
+                    field.addEventListener('pointerdown', function (event) {
+                        if (event.button !== undefined && event.button !== 0) return;
+                        event.preventDefault();
+                        field.focus();
+                        calendar.hidden ? openPicker(picker) : closePicker(picker, false);
+                    });
+
+                    field.addEventListener('click', function (event) {
+                        event.preventDefault();
+                    });
+
+                    field.addEventListener('keydown', function (event) {
+                        if (! ['Enter', ' ', 'ArrowDown'].includes(event.key)) return;
+                        event.preventDefault();
+                        openPicker(picker);
+                        var selectedDay = days.querySelector('.is-selected:not(:disabled), .common-calendar__day:not(:disabled)');
+                        if (selectedDay) selectedDay.focus();
+                    });
+
+                    monthSelect.addEventListener('change', function () {
+                        picker.viewMonth = Number(monthSelect.value);
+                        render(picker);
+                    });
+
+                    yearSelect.addEventListener('change', function () {
+                        picker.viewYear = Number(yearSelect.value);
+                        render(picker);
+                    });
+
+                    days.addEventListener('click', function (event) {
+                        var day = event.target.closest('.common-calendar__day');
+                        if (! day || day.disabled) return;
+
+                        field.value = day.dataset.date;
+                        field.dispatchEvent(new Event('input', { bubbles: true }));
+                        field.dispatchEvent(new Event('change', { bubbles: true }));
+                        closePicker(picker, true);
+                    });
+
+                    days.addEventListener('keydown', function (event) {
+                        var offsets = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
+                        if (! Object.prototype.hasOwnProperty.call(offsets, event.key)) return;
+
+                        var buttons = Array.from(days.querySelectorAll('.common-calendar__day'));
+                        var next = buttons[buttons.indexOf(document.activeElement) + offsets[event.key]];
+                        if (next && ! next.disabled) {
+                            event.preventDefault();
+                            next.focus();
+                        }
+                    });
+                });
+
+                document.addEventListener('pointerdown', function (event) {
+                    if (activePicker && ! activePicker.calendar.parentElement.contains(event.target)) {
+                        closePicker(activePicker, false);
+                    }
+                });
+
+                document.addEventListener('keydown', function (event) {
+                    if (activePicker && event.key === 'Escape') {
+                        event.preventDefault();
+                        closePicker(activePicker, true);
+                    }
+                });
+            })();
+
             var modal = document.querySelector('[data-confirm-modal]');
             if (! modal) {
                 return;

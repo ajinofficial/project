@@ -16,28 +16,6 @@
             grid-column: 1 / -1;
         }
 
-        .purchase-date-input {
-            width: 100%;
-            min-height: 48px;
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            padding: 12px 14px;
-            color: var(--ink);
-            background: var(--panel);
-            font: inherit;
-            outline: none;
-        }
-
-        .purchase-date-input:focus {
-            border-color: var(--focus);
-            box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.14);
-        }
-
-        .purchase-date-input::-webkit-calendar-picker-indicator {
-            cursor: pointer;
-            opacity: .72;
-        }
-
         .purchase-history-items {
             display: grid;
             gap: 4px;
@@ -81,7 +59,7 @@
 
                     <label>
                         <span>Bill date</span>
-                        <input class="purchase-date-input" type="date" name="bill_date" value="{{ old('bill_date', now()->toDateString()) }}" required data-date-picker>
+                        <input type="date" name="bill_date" value="{{ old('bill_date', now()->toDateString()) }}" required data-date-picker>
                         @error('bill_date') <small>{{ $message }}</small> @enderror
                     </label>
 
@@ -141,22 +119,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('[data-date-picker]').forEach(function (field) {
-                field.addEventListener('click', function () {
-                    field.focus();
-
-                    if (typeof field.showPicker !== 'function') {
-                        return;
-                    }
-
-                    try {
-                        field.showPicker();
-                    } catch (error) {
-                        // Some browsers only allow the native picker in trusted pointer events.
-                    }
-                });
-            });
-
             document.querySelectorAll('[data-purchase-search-form]').forEach(function (form) {
                 var search = form.querySelector('[data-purchase-search]');
                 var fields = form.querySelectorAll('[data-purchase-search]');

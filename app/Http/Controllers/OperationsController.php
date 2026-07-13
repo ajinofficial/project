@@ -489,8 +489,9 @@ class OperationsController extends Controller
     {
         $tenantId = $request->user()->tenant_id;
         $filters = $request->validate([
-            'start_date' => ['nullable', 'date'],
-            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'start_date' => ['nullable', 'date', 'before_or_equal:today'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date', 'before_or_equal:today'],
+            'movement_type' => ['nullable', Rule::in(['purchase', 'sale', 'sales_return', 'purchase_return', 'adjustment'])],
         ]);
 
         $startDate = isset($filters['start_date'])
@@ -503,6 +504,53 @@ class OperationsController extends Controller
         $salesQuery = SalesOrder::where('tenant_id', $tenantId)->whereBetween('created_at', [$startDate, $endDate]);
         $purchaseQuery = PurchaseOrder::where('tenant_id', $tenantId)->whereBetween('received_at', [$startDate, $endDate]);
         $returnQuery = StockMovement::where('tenant_id', $tenantId)->whereIn('type', ['sales_return', 'purchase_return'])->whereBetween('created_at', [$startDate, $endDate]);
+        $rangeRevenue = (float) (clone $salesQuery)->sum('total_amount');
+        $rangeOrders = (clone $salesQuery)->count();
+        $profit = (float) SalesItem::query()
+            ->join('sales_orders', 'sales_items.sales_order_id', '=', 'sales_orders.id')
+            ->join('products', 'sales_items.product_id', '=', 'products.id')
+            ->where('sales_orders.tenant_id', $tenantId)
+            ->whereBetween('sales_orders.created_at', [$startDate, $endDate])
+            ->selectRaw('COALESCE(SUM((sales_items.selling_price - products.purchase_price) * sales_items.quantity), 0) as value')
+            ->value('value');
+        $unitsSold = (int) SalesItem::query()
+            ->join('sales_orders', 'sales_items.sales_order_id', '=', 'sales_orders.id')
+            ->where('sales_orders.tenant_id', $tenantId)
+            ->whereBetween('sales_orders.created_at', [$startDate, $endDate])
+            ->sum('sales_items.quantity');
+        $dailySales = (clone $salesQuery)
+            ->selectRaw('DATE(created_at) as report_date, SUM(total_amount) as total')
+            ->groupBy('report_date')
+            ->pluck('total', 'report_date');
+        $dailyPurchases = (clone $purchaseQuery)
+            ->selectRaw('DATE(received_at) as report_date, SUM(total_amount) as total')
+            ->groupBy('report_date')
+            ->pluck('total', 'report_date');
+        $periodDays = (int) $startDate->copy()->startOfDay()->diffInDays($endDate->copy()->startOfDay()) + 1;
+        $bucketDays = max(1, (int) ceil($periodDays / 12));
+        $chartPoints = collect();
+        $bucketStart = $startDate->copy()->startOfDay();
+
+        while ($bucketStart->lte($endDate)) {
+            $bucketEnd = $bucketStart->copy()->addDays($bucketDays - 1)->endOfDay();
+
+            if ($bucketEnd->gt($endDate)) {
+                $bucketEnd = $endDate->copy();
+            }
+
+            $from = $bucketStart->toDateString();
+            $to = $bucketEnd->toDateString();
+            $chartPoints->push([
+                'label' => $bucketDays === 1 ? $bucketStart->format('d M') : $bucketStart->format('d M').'–'.$bucketEnd->format('d M'),
+                'sales' => (float) $dailySales->filter(fn ($value, $date) => $date >= $from && $date <= $to)->sum(),
+                'purchases' => (float) $dailyPurchases->filter(fn ($value, $date) => $date >= $from && $date <= $to)->sum(),
+            ]);
+            $bucketStart = $bucketEnd->copy()->addSecond()->startOfDay();
+        }
+        $movementsQuery = StockMovement::with('product')
+            ->where('tenant_id', $tenantId)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->when($filters['movement_type'] ?? null, fn ($query, $type) => $query->where('type', $type));
 
         $soldProductIds = SalesItem::query()
             ->join('products as sold_products', 'sales_items.product_id', '=', 'sold_products.id')
@@ -512,22 +560,21 @@ class OperationsController extends Controller
         return view('operations.reports', [
             'startDate' => $startDate,
             'endDate' => $endDate,
-            'rangeRevenue' => (clone $salesQuery)->sum('total_amount'),
-            'rangeOrders' => (clone $salesQuery)->count(),
+            'movementType' => $filters['movement_type'] ?? '',
+            'rangeRevenue' => $rangeRevenue,
+            'rangeOrders' => $rangeOrders,
+            'averageOrderValue' => $rangeOrders > 0 ? $rangeRevenue / $rangeOrders : 0,
+            'profitMargin' => $rangeRevenue > 0 ? ($profit / $rangeRevenue) * 100 : 0,
+            'unitsSold' => $unitsSold,
+            'chartPoints' => $chartPoints,
             'rangePurchases' => (clone $purchaseQuery)->sum('total_amount'),
             'rangeReturns' => (clone $returnQuery)->count(),
-            'profit' => SalesItem::query()
-                ->join('sales_orders', 'sales_items.sales_order_id', '=', 'sales_orders.id')
-                ->join('products', 'sales_items.product_id', '=', 'products.id')
-                ->where('sales_orders.tenant_id', $tenantId)
-                ->whereBetween('sales_orders.created_at', [$startDate, $endDate])
-                ->selectRaw('COALESCE(SUM((sales_items.selling_price - products.purchase_price) * sales_items.quantity), 0) as value')
-                ->value('value'),
+            'profit' => $profit,
             'topProducts' => SalesItem::with('product')
                 ->join('sales_orders', 'sales_items.sales_order_id', '=', 'sales_orders.id')
                 ->where('sales_orders.tenant_id', $tenantId)
                 ->whereBetween('sales_orders.created_at', [$startDate, $endDate])
-                ->selectRaw('sales_items.product_id, SUM(sales_items.quantity) as sold')
+                ->selectRaw('sales_items.product_id, SUM(sales_items.quantity) as sold, SUM(sales_items.quantity * sales_items.selling_price) as revenue')
                 ->groupBy('sales_items.product_id')
                 ->orderByDesc('sold')
                 ->take(5)
@@ -540,7 +587,7 @@ class OperationsController extends Controller
             'lowStock' => Product::where('tenant_id', $tenantId)->whereColumn('inventory', '<=', 'minimum_stock_level')->orderBy('inventory')->take(8)->get(),
             'lowStockTotal' => Product::where('tenant_id', $tenantId)->whereColumn('inventory', '<=', 'minimum_stock_level')->count(),
             'movementTotal' => StockMovement::where('tenant_id', $tenantId)->whereBetween('created_at', [$startDate, $endDate])->count(),
-            'movements' => StockMovement::with('product')->where('tenant_id', $tenantId)->whereBetween('created_at', [$startDate, $endDate])->latest()->take(12)->get(),
+            'movements' => $movementsQuery->latest()->take(12)->get(),
         ]);
     }
 

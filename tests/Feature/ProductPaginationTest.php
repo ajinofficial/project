@@ -779,9 +779,22 @@ class ProductPaginationTest extends TestCase
             'updated_at' => '2026-06-15 10:00:00',
         ]);
 
+        StockMovement::create([
+            'tenant_id' => $tenant->id,
+            'product_id' => $product->id,
+            'type' => 'sale',
+            'quantity' => -1,
+            'stock_after' => 9,
+            'notes' => 'Range sale movement',
+            'user_id' => $owner->id,
+            'created_at' => '2026-06-16 10:00:00',
+            'updated_at' => '2026-06-16 10:00:00',
+        ]);
+
         $response = $this->actingAs($owner)->get(route('reports.index', [
             'start_date' => '2026-06-01',
             'end_date' => '2026-06-30',
+            'movement_type' => 'sales_return',
         ]));
 
         $response->assertOk();
@@ -794,6 +807,15 @@ class ProductPaginationTest extends TestCase
         $response->assertSee('Range Report Product');
         $response->assertSee('2 sold');
         $response->assertSee('Range return');
+        $response->assertSee('data-print-report', false);
+        $response->assertSee('data-movement-filter', false);
+        $response->assertSee('Sales vs purchases');
+        $response->assertSee('Product bar chart');
+        $response->assertSee('reports-chart-line is-sales', false);
+        $response->assertSee('reports-bar-chart', false);
+        $response->assertSee('value="sales_return" selected', false);
+        $response->assertSee('Last 7 days');
+        $response->assertDontSee('Range sale movement');
         $response->assertDontSee('&#8377;500', false);
         $response->assertDontSee('Other Tenant Report Product');
     }

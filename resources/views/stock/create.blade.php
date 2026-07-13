@@ -76,11 +76,19 @@
                     @error('product_id') <small>{{ $message }}</small> @enderror
                 </label>
 
-                <label>
-                    <span>Quantity</span>
-                    <input type="number" name="adjustment" min="1" step="1" value="{{ old('adjustment', 1) }}" required data-replace-on-focus>
-                    @error('adjustment') <small>{{ $message }}</small> @enderror
-                </label>
+                <div class="field-grid">
+                    <label>
+                        <span>Quantity</span>
+                        <input type="number" name="adjustment" min="1" step="1" value="{{ old('adjustment', 1) }}" required data-replace-on-focus>
+                        @error('adjustment') <small>{{ $message }}</small> @enderror
+                    </label>
+
+                    <label>
+                        <span>Stock date</span>
+                        <input type="date" name="stock_date" value="{{ old('stock_date', now()->toDateString()) }}" max="{{ now()->toDateString() }}" required data-date-picker>
+                        @error('stock_date') <small>{{ $message }}</small> @enderror
+                    </label>
+                </div>
                 <p class="stock-adjust-hint">For reductions or corrections, use a negative value from the stock ledger workflow if needed.</p>
 
                 <div class="field-grid">

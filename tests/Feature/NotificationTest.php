@@ -20,7 +20,7 @@ class NotificationTest extends TestCase
 
         Notification::create([
             'tenant_id' => $tenant->id,
-            'type' => 'activity',
+            'type' => 'stock_alert',
             'channel' => 'in_app',
             'title' => 'Read notification',
             'message' => 'Already read.',
@@ -45,6 +45,12 @@ class NotificationTest extends TestCase
         $response->assertSee('Already reviewed');
         $response->assertSee('Read notification');
         $response->assertSee('Unread notification');
+        $response->assertSee('data-notification-filter-form', false);
+        $response->assertSee('data-notification-search', false);
+        $response->assertSee('data-notification-type', false);
+        $response->assertSee('setTimeout(submitFilters, 400)', false);
+        $response->assertSee('notification-read-all-button', false);
+        $response->assertSee('Mark all notifications as read?', false);
 
         $unreadResponse = $this->actingAs($owner)->get(route('notifications.index', ['filter' => 'unread']));
 
@@ -57,6 +63,15 @@ class NotificationTest extends TestCase
         $readResponse->assertOk();
         $readResponse->assertSee('Read notification');
         $readResponse->assertDontSee('<h3>Unread notification</h3>', false);
+
+        $searchResponse = $this->actingAs($owner)->get(route('notifications.index', [
+            'search' => 'Needs attention',
+            'type' => 'activity',
+        ]));
+
+        $searchResponse->assertOk();
+        $searchResponse->assertSee('Unread notification');
+        $searchResponse->assertDontSee('<h3>Read notification</h3>', false);
     }
 
     public function test_mark_read_preserves_unread_filter(): void
@@ -78,6 +93,86 @@ class NotificationTest extends TestCase
 
         $response->assertRedirect(route('notifications.index', ['filter' => 'unread']));
         $this->assertNotNull($notification->fresh()->read_at);
+    }
+
+    public function test_mark_unread_preserves_active_notification_filters(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+
+        $notification = Notification::create([
+            'tenant_id' => $tenant->id,
+            'type' => 'activity',
+            'channel' => 'in_app',
+            'title' => 'Reviewed notification',
+            'message' => 'Review this again later.',
+            'read_at' => now(),
+        ]);
+
+        $response = $this->actingAs($owner)->patch(route('notifications.unread', $notification), [
+            'filter' => 'read',
+            'search' => 'Reviewed',
+            'type' => 'activity',
+        ]);
+
+        $response->assertRedirect(route('notifications.index', [
+            'filter' => 'read',
+            'search' => 'Reviewed',
+            'type' => 'activity',
+        ]));
+        $this->assertNull($notification->fresh()->read_at);
+    }
+
+    public function test_notifications_page_exposes_infinite_scroll_pagination_and_loader(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+
+        foreach (range(1, 16) as $number) {
+            Notification::create([
+                'tenant_id' => $tenant->id,
+                'type' => 'activity',
+                'channel' => 'in_app',
+                'title' => 'Scroll notification '.$number,
+                'message' => 'Infinite scroll test item.',
+            ]);
+        }
+
+        $response = $this->actingAs($owner)->get(route('notifications.index'));
+
+        $response->assertOk();
+        $response->assertSee('data-notification-list', false);
+        $response->assertSee('data-notification-pagination', false);
+        $response->assertSee('data-next-page="http://localhost/notifications?page=2"', false);
+        $response->assertSee('data-notification-loader', false);
+        $response->assertSee('Loading notifications');
+        $response->assertSee('IntersectionObserver', false);
+        $this->assertSame(15, substr_count($response->getContent(), '<article class="notification-page-item is-unread">'));
+    }
+
+    public function test_mark_all_read_updates_unread_notifications_and_shows_caught_up_state(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+
+        foreach (range(1, 2) as $number) {
+            Notification::create([
+                'tenant_id' => $tenant->id,
+                'type' => 'activity',
+                'channel' => 'in_app',
+                'title' => 'Bulk notification '.$number,
+                'message' => 'Pending bulk action.',
+            ]);
+        }
+
+        $response = $this->actingAs($owner)->patch(route('notifications.readAll'), [
+            'filter' => 'unread',
+        ]);
+
+        $response->assertRedirect(route('notifications.index', ['filter' => 'unread']));
+        $this->assertSame(0, Notification::where('tenant_id', $tenant->id)->whereNull('read_at')->count());
+
+        $followUp = $this->actingAs($owner)->get(route('notifications.index'));
+        $followUp->assertOk();
+        $followUp->assertSee('All caught up');
+        $followUp->assertDontSee('notification-read-all-button', false);
     }
 
     private function tenantOwner(): array

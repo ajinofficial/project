@@ -71,6 +71,8 @@ class StockModuleTest extends TestCase
         $response->assertSee('Stock add form');
         $response->assertSee('Add Form Product');
         $response->assertSee('name="adjustment"', false);
+        $response->assertSee('name="stock_date"', false);
+        $response->assertSee('max="'.now()->toDateString().'"', false);
         $response->assertSee('name="purchase_price"', false);
         $response->assertSee('name="profit_percentage"', false);
         $response->assertSee('name="profit_percentage" min="0" max="100"', false);
@@ -95,6 +97,7 @@ class StockModuleTest extends TestCase
             ->post(route('stock.adjust'), [
                 'product_id' => $product->id,
                 'adjustment' => -3,
+                'stock_date' => now()->toDateString(),
                 'notes' => 'Cycle count correction.',
             ]);
 
@@ -133,6 +136,7 @@ class StockModuleTest extends TestCase
             ->post(route('stock.adjust'), [
                 'product_id' => $product->id,
                 'adjustment' => 5,
+                'stock_date' => '2025-07-10',
                 'purchase_price' => 80,
                 'profit_percentage' => 25,
                 'notes' => 'Supplier refill.',
@@ -154,6 +158,7 @@ class StockModuleTest extends TestCase
             'stock_after' => 15,
             'notes' => 'Supplier refill. Purchase price: 80.00. Profit: 25.00%. Selling price: 100.00.',
         ]);
+        $this->assertSame('2025-07-10', StockMovement::where('product_id', $product->id)->firstOrFail()->created_at->toDateString());
     }
 
     public function test_stock_movement_filters_by_search_and_type(): void
@@ -223,6 +228,7 @@ class StockModuleTest extends TestCase
             ->post(route('stock.adjust'), [
                 'product_id' => $product->id,
                 'adjustment' => -3,
+                'stock_date' => now()->toDateString(),
             ]);
 
         $response->assertRedirect(route('stock.index'));
