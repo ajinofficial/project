@@ -81,7 +81,7 @@
 
                 <label class="supplier-field supplier-field-wide">
                     <span>Contact information</span>
-                    <input class="supplier-form-control" name="contact_information" value="{{ old('contact_information') }}" placeholder="Phone, email, or contact person">
+                    <input class="supplier-form-control" name="contact_information" value="{{ old('contact_information') }}" placeholder="Phone, email, or contact person" required @if ($errors->has('contact_information')) aria-invalid="true" @endif>
                     @error('contact_information') <small>{{ $message }}</small> @enderror
                 </label>
 

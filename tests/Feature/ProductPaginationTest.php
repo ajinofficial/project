@@ -483,11 +483,12 @@ class ProductPaginationTest extends TestCase
             ->from(route('suppliers.index'))
             ->post(route('suppliers.store'), [
                 'name' => null,
+                'contact_information' => null,
                 'outstanding_balance' => null,
             ]);
 
         $response->assertRedirect(route('suppliers.index'));
-        $response->assertSessionHasErrors(['name', 'outstanding_balance']);
+        $response->assertSessionHasErrors(['name', 'contact_information', 'outstanding_balance']);
 
         $followUp = $this->actingAs($owner)->get(route('suppliers.index'));
 
@@ -496,6 +497,7 @@ class ProductPaginationTest extends TestCase
         $followUp->assertSee('data-supplier-submit', false);
         $followUp->assertSee('Check the supplier details');
         $followUp->assertSee('Enter the supplier name.');
+        $followUp->assertSee('Enter the contact information.');
         $followUp->assertSee('Enter the outstanding balance.');
     }
 
@@ -547,12 +549,13 @@ class ProductPaginationTest extends TestCase
             ->from(route('customers.index'))
             ->post(route('customers.store'), [
                 'name' => null,
+                'mobile' => null,
                 'credit_limit' => null,
                 'outstanding_balance' => null,
             ]);
 
         $response->assertRedirect(route('customers.index'));
-        $response->assertSessionHasErrors(['name', 'credit_limit', 'outstanding_balance']);
+        $response->assertSessionHasErrors(['name', 'mobile', 'credit_limit', 'outstanding_balance']);
 
         $followUp = $this->actingAs($owner)->get(route('customers.index'));
 
@@ -561,8 +564,10 @@ class ProductPaginationTest extends TestCase
         $followUp->assertSee('data-customer-submit', false);
         $followUp->assertSee('Check the customer details');
         $followUp->assertSee('Enter the customer name.');
+        $followUp->assertSee('Enter the mobile number.');
         $followUp->assertSee('Enter the credit limit.');
         $followUp->assertSee('Enter the outstanding balance.');
+        $followUp->assertSee('product-save-button__loading', false);
     }
 
     public function test_return_listing_filters_paginates_and_preserves_query_string(): void
@@ -988,13 +993,14 @@ class ProductPaginationTest extends TestCase
         $response = $this->actingAs($owner)
             ->from(route('purchases.index'))
             ->post(route('purchases.store'), [
+                'supplier_invoice_number' => null,
                 'bill_date' => null,
                 'tax_amount' => -1,
                 'total_amount' => 0,
             ]);
 
         $response->assertRedirect(route('purchases.index'));
-        $response->assertSessionHasErrors(['bill_date', 'tax_amount', 'total_amount']);
+        $response->assertSessionHasErrors(['supplier_invoice_number', 'bill_date', 'tax_amount', 'total_amount']);
 
         $followUp = $this->actingAs($owner)->get(route('purchases.index'));
 
@@ -1002,6 +1008,7 @@ class ProductPaginationTest extends TestCase
         $followUp->assertSee('data-purchase-form', false);
         $followUp->assertSee('data-purchase-submit', false);
         $followUp->assertSee('Check the purchase details');
+        $followUp->assertSee('Enter the supplier invoice number.');
         $followUp->assertSee('Select the bill date.');
         $followUp->assertSee('Tax amount cannot be negative.');
         $followUp->assertSee('Total amount must be greater than zero.');

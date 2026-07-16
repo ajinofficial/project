@@ -89,6 +89,36 @@ class UserManagementTest extends TestCase
         $response->assertSessionHasErrors('email');
     }
 
+    public function test_user_creation_returns_json_validation_errors_for_ajax_requests(): void
+    {
+        [$owner] = $this->tenantOwnerWithLimit(3);
+
+        $response = $this->actingAs($owner)
+            ->postJson(route('users.store'), []);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['name', 'email', 'role', 'password']);
+    }
+
+    public function test_user_creation_returns_json_success_for_ajax_requests(): void
+    {
+        [$owner] = $this->tenantOwnerWithLimit(3);
+
+        $response = $this->actingAs($owner)
+            ->postJson(route('users.store'), [
+                'name' => 'Ajax Staff',
+                'email' => 'ajax-staff@example.com',
+                'country_code' => '+91',
+                'role' => User::ROLE_MANAGER,
+                'password' => 'Password123',
+                'password_confirmation' => 'Password123',
+            ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('message', 'User account created.')
+            ->assertJsonPath('redirect', route('users.index'));
+    }
+
     public function test_user_phone_number_must_match_digit_limit(): void
     {
         [$owner] = $this->tenantOwnerWithLimit(3);

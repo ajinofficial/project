@@ -3,7 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ?? 'Dashboard' }} - InApp Inventory</title>
+    <title>{{ $title ?? 'Dashboard' }} - InvestRivo</title>
+    @include('partials.app-base-url')
     <link rel="stylesheet" href="{{ asset('css/register.css') }}?v={{ filemtime(public_path('css/register.css')) }}">
 </head>
 <body class="admin-body inapp-body">
@@ -11,9 +12,9 @@
         @unless ($hideSidebar ?? false)
         <aside class="inapp-sidebar" aria-label="Admin navigation">
             <a class="inapp-brand" href="{{ route(\App\Support\RolePermission::firstAccessibleRoute(auth()->user())) }}">
-                <span class="inapp-brand-mark">SP</span>
+                <span class="inapp-brand-logo" role="img" aria-label="InvestRivo logo"></span>
                 <span>
-                    <b>{{ auth()->user()->tenant->business_name ?? 'StockPilot' }}</b>
+                    <b>{{ auth()->user()->tenant->business_name ?? 'InvestRivo' }}</b>
                     <small>{{ (int) auth()->user()->tenant?->tenant_type === \App\Models\Tenant::TYPE_VENDOR ? 'Vendor Console' : 'SaaS Inventory' }}</small>
                 </span>
             </a>

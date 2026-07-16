@@ -3,19 +3,20 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login - StockPilot Inventory</title>
+    <title>Login - Investrivo</title>
+    @include('partials.app-base-url')
     <link rel="stylesheet" href="{{ asset('css/register.css') }}">
 </head>
 <body class="login-page auth-ui">
     <main class="inventory-login-shell">
         <section class="login-visual-panel" aria-label="Inventory workspace summary">
             <nav class="login-brand">
-                <span class="brand-icon">SP</span>
-                <strong>StockPilot</strong>
+                <span class="brand-logo" role="img" aria-label="InvestRivo logo"></span>
+                <strong>Investrivo</strong>
             </nav>
 
             <div class="login-hero-copy">
-                <p class="eyebrow">Shop inventory SaaS</p>
+                <p class="eyebrow">Investrivo inventory platform</p>
                 <h1>Control stock, catalog status, and reorder work from one desk.</h1>
                 <p>Built for store teams that need fast SKU lookup, low-stock visibility, and reliable daily inventory operations.</p>
             </div>

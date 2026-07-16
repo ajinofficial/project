@@ -58,17 +58,18 @@
                     </div>
                 @endif
 
-                <form class="product-form" method="POST" action="{{ route('users.store') }}" data-product-save-form>
+                <form class="product-form" method="POST" action="{{ route('users.store') }}" data-user-create-form novalidate>
                     @csrf
+                    <div class="error-summary" role="alert" data-user-form-summary hidden></div>
                     <label>
                         <span>Name</span>
                         <input type="text" name="name" value="{{ old('name') }}" @class(['is-invalid' => $errors->has('name')]) required @disabled(! $canCreateUser)>
-                        @error('name') <small>{{ $message }}</small> @enderror
+                        <small data-user-form-error="name">@error('name') {{ $message }} @enderror</small>
                     </label>
                     <label>
                         <span>Email</span>
                         <input type="email" name="email" value="{{ old('email') }}" @class(['is-invalid' => $errors->has('email')]) required @disabled(! $canCreateUser)>
-                        @error('email') <small>{{ $message }}</small> @enderror
+                        <small data-user-form-error="email">@error('email') {{ $message }} @enderror</small>
                     </label>
                     <div class="field-grid">
                         <label>
@@ -78,12 +79,12 @@
                                     <option value="{{ $code }}" @selected(old('country_code', '+91') === $code)>{{ $label }}</option>
                                 @endforeach
                             </select>
-                            @error('country_code') <small>{{ $message }}</small> @enderror
+                            <small data-user-form-error="country_code">@error('country_code') {{ $message }} @enderror</small>
                         </label>
                         <label>
                             <span>Phone</span>
                             <input type="tel" name="phone" value="{{ old('phone') }}" inputmode="numeric" maxlength="15" pattern="[0-9]{6,15}" placeholder="9876543210" @class(['is-invalid' => $errors->has('phone')]) @disabled(! $canCreateUser)>
-                            @error('phone') <small>{{ $message }}</small> @enderror
+                            <small data-user-form-error="phone">@error('phone') {{ $message }} @enderror</small>
                         </label>
                         <label>
                             <span>Role</span>
@@ -92,22 +93,22 @@
                                     <option value="{{ $roleId }}" @selected((int) old('role', \App\Models\User::ROLE_MANAGER) === (int) $roleId)>{{ $roleLabel }}</option>
                                 @endforeach
                             </select>
-                            @error('role') <small>{{ $message }}</small> @enderror
+                            <small data-user-form-error="role">@error('role') {{ $message }} @enderror</small>
                         </label>
                     </div>
                     <div class="field-grid">
                         <label>
                             <span>Password</span>
                             <input type="password" name="password" @class(['is-invalid' => $errors->has('password')]) required @disabled(! $canCreateUser)>
-                            @error('password') <small>{{ $message }}</small> @enderror
+                            <small data-user-form-error="password">@error('password') {{ $message }} @enderror</small>
                         </label>
                         <label>
                             <span>Confirm password</span>
                             <input type="password" name="password_confirmation" @class(['is-invalid' => $errors->has('password_confirmation')]) required @disabled(! $canCreateUser)>
-                            @error('password_confirmation') <small>{{ $message }}</small> @enderror
+                            <small data-user-form-error="password_confirmation">@error('password_confirmation') {{ $message }} @enderror</small>
                         </label>
                     </div>
-                    <button class="product-save-button" type="submit" data-product-save-button @disabled(! $canCreateUser)>
+                    <button class="product-save-button" type="submit" data-user-create-button @disabled(! $canCreateUser)>
                         <span class="product-save-button__idle">Create user</span>
                         <span class="product-save-button__loading" aria-hidden="true">
                             <i></i>
@@ -226,6 +227,83 @@
                                 field.disabled = true;
                             }
                         });
+                    });
+                });
+
+                document.querySelectorAll('[data-user-create-form]').forEach(function (form) {
+                    var summary = form.querySelector('[data-user-form-summary]');
+                    var button = form.querySelector('[data-user-create-button]');
+
+                    function clearErrors() {
+                        form.querySelectorAll('[data-user-form-error]').forEach(function (error) {
+                            error.textContent = '';
+                        });
+
+                        form.querySelectorAll('.is-invalid').forEach(function (field) {
+                            field.classList.remove('is-invalid');
+                            field.removeAttribute('aria-invalid');
+                        });
+
+                        summary.hidden = true;
+                        summary.textContent = '';
+                    }
+
+                    function showErrors(errors, message) {
+                        var hasFieldError = false;
+
+                        Object.keys(errors || {}).forEach(function (fieldName) {
+                            var field = form.elements.namedItem(fieldName);
+                            var error = form.querySelector('[data-user-form-error="' + fieldName + '"]');
+                            var fieldMessage = errors[fieldName][0];
+
+                            if (field && error) {
+                                field.classList.add('is-invalid');
+                                field.setAttribute('aria-invalid', 'true');
+                                error.textContent = fieldMessage;
+                                hasFieldError = true;
+                            }
+                        });
+
+                        if (!hasFieldError && message) {
+                            summary.textContent = message;
+                            summary.hidden = false;
+                        }
+                    }
+
+                    form.addEventListener('submit', async function (event) {
+                        event.preventDefault();
+                        clearErrors();
+
+                        button.disabled = true;
+                        button.classList.add('is-loading');
+                        button.setAttribute('aria-busy', 'true');
+
+                        try {
+                            var requestUrl = new URL(form.getAttribute('action'), window.App.baseUrl);
+                            var response = await fetch(requestUrl, {
+                                method: form.method,
+                                headers: {
+                                    Accept: 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                },
+                                body: new FormData(form)
+                            });
+                            var payload = await response.json();
+
+                            if (!response.ok) {
+                                showErrors(payload.errors, payload.message);
+                                return;
+                            }
+
+                            window.location.assign(payload.redirect || '{{ route('users.index') }}');
+                        } catch (error) {
+                            summary.textContent = 'Unable to create the user. Please try again.';
+                            summary.hidden = false;
+                        } finally {
+                            button.disabled = false;
+                            button.classList.remove('is-loading');
+                            button.removeAttribute('aria-busy');
+                        }
                     });
                 });
             });

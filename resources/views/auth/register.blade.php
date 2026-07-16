@@ -3,14 +3,15 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Business Sign-up - StockPilot</title>
+    <title>Business Sign-up - InvestRivo</title>
+    @include('partials.app-base-url')
     <link rel="stylesheet" href="{{ asset('css/register.css') }}">
 </head>
 <body class="auth-ui register-page">
     <main class="register-shell">
         <section class="brand-panel">
             <nav class="topbar">
-                <a class="brand-mark" href="{{ route('login') }}"><span class="brand-icon">SP</span> StockPilot</a>
+                <a class="brand-mark" href="{{ route('login') }}"><span class="brand-logo" role="img" aria-label="InvestRivo logo"></span> InvestRivo</a>
                 <span class="status-pill">Multi-tenant SaaS</span>
             </nav>
             <div class="brand-copy">

@@ -67,7 +67,6 @@
         .return-table td {
             height: auto;
             padding: 9px 10px;
-            font-size: 12px;
         }
 
         .return-type-badge {

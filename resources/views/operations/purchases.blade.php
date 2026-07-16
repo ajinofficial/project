@@ -65,7 +65,7 @@
 
                     <label class="is-wide">
                         <span>Supplier invoice no.</span>
-                        <input type="text" name="supplier_invoice_number" value="{{ old('supplier_invoice_number') }}" maxlength="120" placeholder="Bill / invoice number from supplier">
+                        <input type="text" name="supplier_invoice_number" value="{{ old('supplier_invoice_number') }}" maxlength="120" placeholder="Bill / invoice number from supplier" required @if ($errors->has('supplier_invoice_number')) aria-invalid="true" @endif>
                         @error('supplier_invoice_number') <small>{{ $message }}</small> @enderror
                     </label>
 

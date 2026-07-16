@@ -56,13 +56,14 @@ class OperationsController extends Controller
     {
         $supplier = Supplier::create($request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'contact_information' => ['nullable', 'string', 'max:255'],
+            'contact_information' => ['required', 'string', 'max:255'],
             'gst_number' => ['nullable', 'string', 'max:30'],
             'payment_terms' => ['nullable', 'string', 'max:120'],
             'outstanding_balance' => ['required', 'numeric', 'min:0'],
         ], [
             'name.required' => 'Enter the supplier name.',
             'name.max' => 'Supplier name cannot exceed 255 characters.',
+            'contact_information.required' => 'Enter the contact information.',
             'contact_information.max' => 'Contact information cannot exceed 255 characters.',
             'gst_number.max' => 'GST number cannot exceed 30 characters.',
             'payment_terms.max' => 'Payment terms cannot exceed 120 characters.',
@@ -114,12 +115,13 @@ class OperationsController extends Controller
     {
         $customer = Customer::create($request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'mobile' => ['nullable', 'string', 'max:30'],
+            'mobile' => ['required', 'string', 'max:30'],
             'credit_limit' => ['required', 'numeric', 'min:0'],
             'outstanding_balance' => ['required', 'numeric', 'min:0'],
         ], [
             'name.required' => 'Enter the customer name.',
             'name.max' => 'Customer name cannot exceed 255 characters.',
+            'mobile.required' => 'Enter the mobile number.',
             'mobile.max' => 'Mobile number cannot exceed 30 characters.',
             'credit_limit.required' => 'Enter the credit limit.',
             'credit_limit.numeric' => 'Credit limit must be a valid number.',
@@ -185,7 +187,7 @@ class OperationsController extends Controller
                 Rule::exists('suppliers', 'id')->where('tenant_id', $tenantId),
             ],
             'supplier_invoice_number' => [
-                'nullable',
+                'required',
                 'string',
                 'max:120',
                 Rule::unique('purchase_orders', 'supplier_invoice_number')->where('tenant_id', $tenantId),
@@ -195,6 +197,7 @@ class OperationsController extends Controller
             'total_amount' => ['required', 'numeric', 'min:0.01', 'max:99999999.99'],
         ], [
             'supplier_id.exists' => 'Select a supplier from your business.',
+            'supplier_invoice_number.required' => 'Enter the supplier invoice number.',
             'supplier_invoice_number.max' => 'Supplier invoice number cannot exceed 120 characters.',
             'supplier_invoice_number.unique' => 'This supplier invoice number is already recorded.',
             'bill_date.required' => 'Select the bill date.',

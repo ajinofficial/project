@@ -67,12 +67,10 @@
         .customer-table td {
             height: auto;
             padding: 9px 10px;
-            font-size: 12px;
+           
         }
 
-        .customer-table td strong {
-            font-size: 12px;
-        }
+        
     </style>
 
     <section class="ops-grid">
@@ -96,7 +94,7 @@
 
                 <label class="customer-field">
                     <span>Mobile number</span>
-                    <input class="customer-form-control" name="mobile" value="{{ old('mobile') }}" placeholder="Phone number">
+                    <input class="customer-form-control" type="tel" name="mobile" value="{{ old('mobile') }}" placeholder="Phone number" autocomplete="tel" required @if ($errors->has('mobile')) aria-invalid="true" @endif>
                     @error('mobile') <small>{{ $message }}</small> @enderror
                 </label>
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Support\ActivityNotifier;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -61,7 +62,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $request->merge([
             'email' => Str::lower(trim((string) $request->input('email'))),
@@ -73,6 +74,13 @@ class UserController extends Controller
         $userCount = User::where('tenant_id', $tenant->id)->count();
 
         if (! is_null($userLimit) && $userCount >= $userLimit) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Your current plan allows '.$userLimit.' users. Upgrade the plan or remove an account before creating another user.',
+                    'errors' => ['limit' => ['Your current plan allows '.$userLimit.' users. Upgrade the plan or remove an account before creating another user.']],
+                ], 422);
+            }
+
             return back()
                 ->withInput($request->except(['password', 'password_confirmation']))
                 ->withErrors(['limit' => 'Your current plan allows '.$userLimit.' users. Upgrade the plan or remove an account before creating another user.']);
@@ -113,6 +121,13 @@ class UserController extends Controller
             'User account created',
             $request->user()->name.' created '.$createdUser->name.' as '.$createdUser->role_label.'.'
         );
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'User account created.',
+                'redirect' => route('users.index'),
+            ], 201);
+        }
 
         return redirect()->route('users.index')->with('status', 'User account created.');
     }
