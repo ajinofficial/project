@@ -27,7 +27,7 @@ class RolePermissionTest extends TestCase
         $response->assertSee('Save permissions');
         $response->assertDontSee('data-permission-save-button', false);
         $response->assertSee('data-summary-meter="owner"', false);
-        $response->assertSee('/ 12', false);
+        $response->assertSee('/ 13', false);
         $response->assertDontSee('role-permissions.index');
         $response->assertDontSee('Vendor Dashboard');
         $response->assertDontSee('Clients');

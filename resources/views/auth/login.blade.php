@@ -80,8 +80,12 @@
                         <span>Keep this device signed in</span>
                     </label>
 
+                    <a class="forgot-password-link" href="{{ route('password.request') }}">Forgot password?</a>
                     <button type="submit">Login</button>
                 </form>
+                @if (session('status'))
+                    <p class="auth-status" role="status">{{ session('status') }}</p>
+                @endif
                 <p class="auth-switch">New business? <a href="{{ route('register') }}">Create an account</a></p>
                 <!-- <div class="auth-footnote">
                     <span>Tenant isolated</span>

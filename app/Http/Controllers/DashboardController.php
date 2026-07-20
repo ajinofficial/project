@@ -7,6 +7,7 @@ use App\Models\PurchaseOrder;
 use App\Models\SalesItem;
 use App\Models\SalesOrder;
 use App\Models\StockMovement;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -90,13 +91,8 @@ class DashboardController extends Controller
             ->take(6)
             ->get();
 
-        $topProducts = SalesItem::with('product')
-            ->whereHas('product', fn ($query) => $query->where('tenant_id', $user->tenant_id))
-            ->selectRaw('product_id, SUM(quantity) as sold')
-            ->groupBy('product_id')
-            ->orderByDesc('sold')
-            ->take(5)
-            ->get();
+        $topProductMetric = 'units';
+        $topProducts = $this->topProducts($user->tenant_id, $topProductMetric);
 
         $recentSales = SalesOrder::with('customer')
             ->where('tenant_id', $user->tenant_id)
@@ -129,6 +125,34 @@ class DashboardController extends Controller
 
         $trendMax = max(1, $trend->max(fn ($day) => max($day['sales'], $day['purchases'])));
 
-        return view('dashboard', compact('tenant', 'stats', 'recentProducts', 'lowStockProducts', 'categoryBreakdown', 'statusBreakdown', 'recentMovements', 'topProducts', 'recentSales', 'trend', 'trendMax'));
+        return view('dashboard', compact('tenant', 'stats', 'recentProducts', 'lowStockProducts', 'categoryBreakdown', 'statusBreakdown', 'recentMovements', 'topProducts', 'topProductMetric', 'recentSales', 'trend', 'trendMax'));
+    }
+
+    public function bestSellers(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'metric' => ['nullable', 'in:units,profit'],
+        ]);
+        $metric = $validated['metric'] ?? 'units';
+        $topProducts = $this->topProducts($request->user()->tenant_id, $metric);
+
+        return response()->json([
+            'html' => view('dashboard.partials.best-sellers', compact('topProducts', 'metric'))->render(),
+        ]);
+    }
+
+    private function topProducts(int $tenantId, string $metric)
+    {
+        $orderColumn = $metric === 'profit' ? 'profit' : 'sold';
+
+        return SalesItem::with('product')
+            ->join('products', 'sales_items.product_id', '=', 'products.id')
+            ->where('products.tenant_id', $tenantId)
+            ->where('products.deleted_status', 0)
+            ->selectRaw('sales_items.product_id, SUM(sales_items.quantity) as sold, COALESCE(SUM((sales_items.selling_price - products.purchase_price) * sales_items.quantity), 0) as profit')
+            ->groupBy('sales_items.product_id')
+            ->orderByDesc($orderColumn)
+            ->take(5)
+            ->get();
     }
 }

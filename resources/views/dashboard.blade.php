@@ -164,16 +164,14 @@
                 @endforelse
             </article>
 
-            <article class="dashboard-panel">
-                <div class="section-title"><div><p class="eyebrow">Top products</p><h2>Best sellers</h2></div></div>
-                @forelse ($topProducts as $item)
-                    <div class="stock-row">
-                        <div><strong>{{ $item->product->name ?? 'Product' }}</strong><span>{{ $item->product->category ?? 'Uncategorized' }}</span></div>
-                        <span>{{ number_format($item->sold) }} sold</span>
-                    </div>
-                @empty
-                    <div class="empty-state tight-empty">No sales yet.</div>
-                @endforelse
+            <article class="dashboard-panel" data-best-sellers data-best-sellers-url="{{ route('dashboard.best-sellers') }}">
+                <div class="section-title">
+                    <div><p class="eyebrow">Top products</p><h2>Best sellers</h2></div>
+                    <label class="best-seller-filter"><span class="sr-only">Rank best sellers by</span><select data-best-seller-metric aria-label="Rank best sellers by"><option value="units" @selected($topProductMetric === 'units')>Units sold</option><option value="profit" @selected($topProductMetric === 'profit')>Profit earned</option></select></label>
+                </div>
+                <div data-best-seller-results aria-live="polite">
+                    @include('dashboard.partials.best-sellers', ['metric' => $topProductMetric])
+                </div>
             </article>
 
             <article class="dashboard-panel">
@@ -191,3 +189,32 @@
         </section>
     </section>
 @endsection
+
+@push('scripts')
+<script>
+    document.querySelectorAll('[data-best-sellers]').forEach((panel) => {
+        const select = panel.querySelector('[data-best-seller-metric]');
+        const results = panel.querySelector('[data-best-seller-results]');
+
+        select?.addEventListener('change', async () => {
+            const url = new URL(panel.dataset.bestSellersUrl, window.location.origin);
+            url.searchParams.set('metric', select.value);
+            panel.classList.add('is-loading');
+            select.disabled = true;
+
+            try {
+                const response = await fetch(url, { headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+                const data = await response.json();
+
+                if (! response.ok) throw new Error('Unable to load best sellers.');
+                results.innerHTML = data.html;
+            } catch (error) {
+                results.insertAdjacentHTML('afterbegin', '<p class="best-seller-error">Unable to update best sellers. Please try again.</p>');
+            } finally {
+                panel.classList.remove('is-loading');
+                select.disabled = false;
+            }
+        });
+    });
+</script>
+@endpush

@@ -563,6 +563,103 @@ small,
     font-weight: 800;
 }
 
+.forgot-password-link {
+    justify-self: start;
+    margin-top: -6px;
+    color: var(--primary);
+    font-size: 14px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.auth-status {
+    margin: 0;
+    border: 1px solid #b7e3c4;
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--primary-strong);
+    background: #eaf8ee;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.best-seller-filter select {
+    min-height: 36px;
+    border-radius: 8px;
+    padding: 6px 28px 6px 10px;
+    color: var(--primary-strong);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.best-seller-value { font-weight: 800; }
+.dashboard-panel[data-best-sellers].is-loading [data-best-seller-results] { opacity: 0.55; }
+.best-seller-error { margin: 0 0 10px; color: var(--danger); font-size: 12px; font-weight: 700; }
+
+.password-page {
+    background: linear-gradient(135deg, #eff6ef, #f8fafc);
+}
+
+.password-shell {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 28px;
+}
+
+.password-brand {
+    position: fixed;
+    top: 28px;
+    left: 32px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink);
+    font-size: 18px;
+    text-decoration: none;
+}
+
+.password-card {
+    width: min(100%, 480px);
+    display: grid;
+    gap: 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: clamp(26px, 5vw, 42px);
+    background: #ffffff;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
+}
+
+.password-card h1,
+.password-card p {
+    margin: 0;
+}
+
+.password-card h1 {
+    margin-top: -12px;
+    font-size: clamp(28px, 5vw, 38px);
+    line-height: 1.1;
+}
+
+.password-card > p:not(.eyebrow):not(.auth-status):not(.auth-switch) {
+    margin-top: -10px;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.otp-input {
+    letter-spacing: 0.45em;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+@media (max-width: 640px) {
+    .password-shell { padding: 86px 18px 24px; }
+    .password-brand { top: 20px; left: 20px; }
+}
+
 .login-card {
     display: grid;
     gap: 14px;

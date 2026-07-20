@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OperationsController;
 use App\Http\Controllers\ProductController;
@@ -33,6 +35,12 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::get('/login/businesses', [LoginController::class, 'businesses'])->name('login.businesses');
     Route::post('/login', [LoginController::class, 'store'])->name('login.store');
+    Route::get('/forgot-password', [PasswordResetController::class, 'create'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendOtp'])->middleware('throttle:5,1')->name('password.email');
+    Route::get('/forgot-password/verify', [PasswordResetController::class, 'showOtpForm'])->name('password.otp.form');
+    Route::post('/forgot-password/verify', [PasswordResetController::class, 'verifyOtp'])->middleware('throttle:10,1')->name('password.otp.verify');
+    Route::get('/reset-password', [PasswordResetController::class, 'showResetForm'])->name('password.reset.form');
+    Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.update');
     Route::get('/register', [RegisterController::class, 'create'])->name('register');
     Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
 });
@@ -40,6 +48,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/vendor-dashboard', [VendorDashboardController::class, 'index'])->middleware('menu:vendor_dashboard')->name('vendor.dashboard');
     Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('menu:dashboard')->name('dashboard');
+    Route::get('/dashboard/best-sellers', [DashboardController::class, 'bestSellers'])->middleware('menu:dashboard')->name('dashboard.best-sellers');
     Route::get('/clients', [ClientController::class, 'index'])->middleware('menu:clients')->name('clients.index');
     Route::get('/setup', [SetupController::class, 'index'])->middleware('menu:setup')->name('setup.index');
     Route::put('/setup', [SetupController::class, 'update'])->middleware('menu:setup')->name('setup.update');
@@ -64,6 +73,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/returns', [OperationsController::class, 'returns'])->middleware('menu:returns')->name('returns.index');
     Route::post('/returns', [OperationsController::class, 'storeReturn'])->middleware('menu:returns')->name('returns.store');
     Route::get('/reports', [OperationsController::class, 'reports'])->middleware('menu:reports')->name('reports.index');
+    Route::resource('expenses', ExpenseController::class)->only(['index', 'store', 'update', 'destroy'])->middleware('menu:expenses');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::patch('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
     Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
