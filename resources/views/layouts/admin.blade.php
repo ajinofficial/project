@@ -502,16 +502,16 @@
                 submitButton.focus();
             }
 
-            document.querySelectorAll('form[data-confirm]').forEach(function (form) {
-                form.addEventListener('submit', function (event) {
-                    if (form.dataset.confirmed === 'true') {
-                        delete form.dataset.confirmed;
-                        return;
-                    }
+            document.addEventListener('submit', function (event) {
+                var form = event.target;
+                if (! form.matches('form[data-confirm]')) return;
+                if (form.dataset.confirmed === 'true') {
+                    delete form.dataset.confirmed;
+                    return;
+                }
 
-                    event.preventDefault();
-                    openModal(form, event.submitter);
-                });
+                event.preventDefault();
+                openModal(form, event.submitter);
             });
 
             submitButton.addEventListener('click', function () {

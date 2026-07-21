@@ -53,6 +53,7 @@ class ProductController extends Controller
                 $query->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
                         ->orWhere('sku', 'like', "%{$search}%")
+                        ->orWhere('brand', 'like', "%{$search}%")
                         ->orWhere('category', 'like', "%{$search}%");
                 });
             })
@@ -60,8 +61,6 @@ class ProductController extends Controller
                 match ((string) $request->string('sort')) {
                     'stock_low' => $query->orderBy('inventory'),
                     'stock_high' => $query->orderByDesc('inventory'),
-                    'price_high' => $query->orderByDesc('price'),
-                    'price_low' => $query->orderBy('price'),
                     'name' => $query->orderBy('name'),
                     default => $query->latest(),
                 };
@@ -88,11 +87,11 @@ class ProductController extends Controller
         $data['tenant_id'] = $request->user()->tenant_id;
         $data['image_url'] = $this->storeCroppedImage($request) ?: ($data['image_url'] ?? null);
         $data['inventory'] = 0;
+        $data['purchase_price'] = 0;
+        $data['price'] = 0;
         $data['tax_percentage'] = $request->user()->tenant->default_tax_percentage ?? 0;
         $data['compare_at_price'] = null;
-        $this->applyProfitPricing($data);
         unset($data['cropped_image']);
-        unset($data['profit_percentage']);
 
         $product = Product::create($data);
         StockNotifier::sync($product);
@@ -131,9 +130,7 @@ class ProductController extends Controller
         unset($data['inventory']);
         unset($data['tax_percentage']);
         unset($data['compare_at_price']);
-        $this->applyProfitPricing($data);
         unset($data['cropped_image']);
-        unset($data['profit_percentage']);
 
         $product->update($data);
         StockNotifier::sync($product);
@@ -173,7 +170,7 @@ class ProductController extends Controller
 
     private function validated(Request $request, ?Product $product = null): array
     {
-        return $request->validate([
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'sku' => [
                 'nullable',
@@ -186,11 +183,6 @@ class ProductController extends Controller
             'barcode' => ['nullable', 'string', 'max:120'],
             'category' => ['nullable', 'string', 'max:120'],
             'brand' => ['nullable', 'string', 'max:120'],
-            'purchase_price' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
-            'profit_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
-            'compare_at_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
-            'tax_percentage' => ['nullable', 'numeric', 'min:0', 'max:99.99'],
             'inventory' => ['nullable', 'integer', 'min:0', 'max:999999'],
             'minimum_stock_level' => ['required', 'integer', 'min:0', 'max:999999'],
             'reserved_stock' => ['nullable', 'integer', 'min:0', 'max:999999'],
@@ -200,19 +192,9 @@ class ProductController extends Controller
             'image_url' => ['nullable', 'string', 'max:2048'],
             'cropped_image' => ['nullable', 'string'],
             'description' => ['nullable', 'string', 'max:5000'],
-        ]);
-    }
+        ];
 
-    private function applyProfitPricing(array &$data): void
-    {
-        if (! array_key_exists('profit_percentage', $data) || $data['profit_percentage'] === null || $data['profit_percentage'] === '') {
-            return;
-        }
-
-        $purchasePrice = (float) $data['purchase_price'];
-        $profitPercentage = (float) $data['profit_percentage'];
-
-        $data['price'] = round($purchasePrice + ($purchasePrice * ($profitPercentage / 100)), 2);
+        return $request->validate($rules);
     }
 
     private function authorizeProduct(Request $request, Product $product): void

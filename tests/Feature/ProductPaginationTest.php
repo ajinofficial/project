@@ -70,6 +70,11 @@ class ProductPaginationTest extends TestCase
         $response->assertSee('per_page=25', false);
         $response->assertSee('sort=name', false);
         $response->assertDontSee('Quick Stock');
+        $response->assertSee('<th>Brand</th>', false);
+        $response->assertSee('<th>Category</th>', false);
+        $response->assertDontSee('<th>Price</th>', false);
+        $response->assertDontSee('Price high');
+        $response->assertDontSee('Price low');
         $response->assertDontSee('inline-stock-form', false);
         $response->assertDontSee('/products/1/stock', false);
     }
@@ -268,9 +273,10 @@ class ProductPaginationTest extends TestCase
         $response->assertDontSee('Stock on hand');
         $response->assertDontSee('name="tax_percentage"', false);
         $response->assertDontSee('Tax percentage');
-        $response->assertSee('name="profit_percentage"', false);
-        $response->assertSee('name="profit_percentage" value="0" min="0" max="100"', false);
-        $response->assertSee('Profit percentage');
+        $response->assertDontSee('name="purchase_price"', false);
+        $response->assertDontSee('Purchase price');
+        $response->assertDontSee('name="profit_percentage"', false);
+        $response->assertDontSee('Profit percentage');
         $response->assertDontSee('name="price"', false);
         $response->assertDontSee('Selling price</span>', false);
         $response->assertDontSee('name="compare_at_price"', false);
@@ -307,9 +313,10 @@ class ProductPaginationTest extends TestCase
         $response->assertDontSee('Stock on hand');
         $response->assertDontSee('name="tax_percentage"', false);
         $response->assertDontSee('Tax percentage');
-        $response->assertSee('name="profit_percentage"', false);
-        $response->assertSee('value="100"', false);
-        $response->assertSee('max="100"', false);
+        $response->assertDontSee('name="purchase_price"', false);
+        $response->assertDontSee('Purchase price');
+        $response->assertDontSee('name="profit_percentage"', false);
+        $response->assertDontSee('Profit percentage');
         $response->assertDontSee('name="price"', false);
         $response->assertDontSee('Selling price</span>', false);
         $response->assertDontSee('name="compare_at_price"', false);
@@ -346,13 +353,13 @@ class ProductPaginationTest extends TestCase
         ]);
     }
 
-    public function test_product_store_calculates_selling_price_from_profit_percentage(): void
+    public function test_product_store_ignores_price_and_profit_percentage(): void
     {
         [$owner, $tenant] = $this->tenantOwner();
 
         $payload = $this->productPayload([
             'purchase_price' => 80,
-            'price' => null,
+            'price' => 100,
             'profit_percentage' => 25,
         ]);
 
@@ -362,12 +369,12 @@ class ProductPaginationTest extends TestCase
         $this->assertDatabaseHas('products', [
             'tenant_id' => $tenant->id,
             'name' => 'Stored Product',
-            'purchase_price' => 80,
-            'price' => 100,
+            'purchase_price' => 0,
+            'price' => 0,
         ]);
     }
 
-    public function test_product_store_rejects_profit_percentage_above_100(): void
+    public function test_product_store_does_not_validate_removed_profit_percentage(): void
     {
         [$owner] = $this->tenantOwner();
 
@@ -378,8 +385,8 @@ class ProductPaginationTest extends TestCase
                 'profit_percentage' => 100.01,
             ]));
 
-        $response->assertRedirect(route('products.create'));
-        $response->assertSessionHasErrors('profit_percentage');
+        $response->assertRedirect(route('products.index'));
+        $response->assertSessionDoesntHaveErrors('profit_percentage');
     }
 
     public function test_product_update_keeps_inventory_owned_by_stock_flow(): void
@@ -398,6 +405,9 @@ class ProductPaginationTest extends TestCase
             ->put(route('products.update', $product), $this->productPayload([
                 'name' => 'Updated Product',
                 'inventory' => 99,
+                'purchase_price' => 999,
+                'price' => 999,
+                'profit_percentage' => 25,
                 'tax_percentage' => 5,
                 'compare_at_price' => 80,
             ]));
@@ -406,6 +416,8 @@ class ProductPaginationTest extends TestCase
         $this->assertSame(12, $product->fresh()->inventory);
         $this->assertSame('18.00', $product->fresh()->tax_percentage);
         $this->assertSame('150.00', $product->fresh()->compare_at_price);
+        $this->assertSame('50.00', $product->fresh()->purchase_price);
+        $this->assertSame('100.00', $product->fresh()->price);
         $this->assertSame('Updated Product', $product->fresh()->name);
     }
 

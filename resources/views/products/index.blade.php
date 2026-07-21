@@ -60,8 +60,6 @@
                         <option value="name" @selected(request('sort') === 'name')>Name</option>
                         <option value="stock_low" @selected(request('sort') === 'stock_low')>Stock low</option>
                         <option value="stock_high" @selected(request('sort') === 'stock_high')>Stock high</option>
-                        <option value="price_high" @selected(request('sort') === 'price_high')>Price high</option>
-                        <option value="price_low" @selected(request('sort') === 'price_low')>Price low</option>
                     </select>
                     <select name="per_page" aria-label="Products per page" data-auto-filter>
                         @foreach ($perPageOptions as $option)
@@ -96,7 +94,8 @@
                             <tr>
                                 <th>Product</th>
                                 <th>Product ID</th>
-                                <th>Price</th>
+                                <th>Brand</th>
+                                <th>Category</th>
                                 <th>Qty</th>
                                 <th>Health</th>
                                 <th>Status</th>
@@ -122,17 +121,13 @@
                                             </span>
                                             <div>
                                                 <strong>{{ $product->name }}</strong>
-                                                <small>{{ $product->brand ?: $product->category ?: 'Uncategorized' }}</small>
+                                                <small>{{ $product->barcode ?: 'No barcode' }}</small>
                                             </div>
                                         </div>
                                     </td>
                                     <td>{{ $product->sku ?: 'SKU-'.$product->id }}</td>
-                                    <td>
-                                        <strong>&#8377;{{ number_format($product->price, 2) }}</strong>
-                                        @if ($product->compare_at_price)
-                                            <small class="muted-line">&#8377;{{ number_format($product->compare_at_price, 2) }}</small>
-                                        @endif
-                                    </td>
+                                    <td>{{ $product->brand ?: '—' }}</td>
+                                    <td>{{ $product->category ?: 'Uncategorized' }}</td>
                                     <td>
                                         <strong>{{ number_format($product->inventory) }}</strong>
                                         <span class="stock-meter"><i style="width: {{ $stockWidth }}%"></i></span>
@@ -150,8 +145,6 @@
                                                 <input type="hidden" name="barcode" value="{{ $product->barcode }}">
                                                 <input type="hidden" name="category" value="{{ $product->category }}">
                                                 <input type="hidden" name="brand" value="{{ $product->brand }}">
-                                                <input type="hidden" name="purchase_price" value="{{ $product->purchase_price }}">
-                                                <input type="hidden" name="price" value="{{ $product->price }}">
                                                 <input type="hidden" name="minimum_stock_level" value="{{ $product->minimum_stock_level }}">
                                                 <input type="hidden" name="reserved_stock" value="{{ $product->reserved_stock }}">
                                                 <input type="hidden" name="damaged_stock" value="{{ $product->damaged_stock }}">

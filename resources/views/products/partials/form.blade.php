@@ -52,27 +52,6 @@
 </div>
 
 <div class="field-grid">
-    @php
-        $purchasePriceValue = (float) old('purchase_price', $product->purchase_price ?? 0);
-        $sellingPriceValue = (float) old('price', $product->price ?? 0);
-        $profitPercentageValue = $purchasePriceValue > 0
-            ? round((($sellingPriceValue - $purchasePriceValue) / $purchasePriceValue) * 100, 2)
-            : 0;
-    @endphp
-    <label>
-        <span>Purchase price</span>
-        <input type="number" name="purchase_price" value="{{ old('purchase_price', $product->purchase_price ?? 0) }}" min="0" step="0.01" required data-replace-on-focus>
-        @error('purchase_price') <small>{{ $message }}</small> @enderror
-    </label>
-
-    <label>
-        <span>Profit percentage</span>
-        <input type="number" name="profit_percentage" value="{{ old('profit_percentage', $profitPercentageValue) }}" min="0" max="100" step="0.01" required data-profit-percentage data-replace-on-focus>
-        @error('profit_percentage') <small>{{ $message }}</small> @enderror
-    </label>
-</div>
-
-<div class="field-grid">
     <label>
         <span>Minimum stock level</span>
         <input type="number" name="minimum_stock_level" value="{{ old('minimum_stock_level', $product->minimum_stock_level ?? auth()->user()->tenant->low_stock_threshold) }}" min="0" step="1" required data-replace-on-focus>
@@ -134,8 +113,6 @@
 @once
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            var currency = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
-
             document.querySelectorAll('[data-replace-on-focus]').forEach(function (field) {
                 field.addEventListener('focus', function () {
                     field.select();
@@ -150,31 +127,6 @@
                     event.preventDefault();
                     delete field.dataset.valueSelected;
                 });
-            });
-
-            document.querySelectorAll('[data-product-save-form]').forEach(function (form) {
-                var purchasePrice = form.querySelector('[name="purchase_price"]');
-                var profitPercentage = form.querySelector('[data-profit-percentage]');
-
-                if (!purchasePrice || !profitPercentage) {
-                    return;
-                }
-
-                var preview = document.createElement('small');
-                preview.setAttribute('aria-live', 'polite');
-                profitPercentage.insertAdjacentElement('afterend', preview);
-
-                function updateSellingPreview() {
-                    var purchase = parseFloat(purchasePrice.value || '0');
-                    var profit = parseFloat(profitPercentage.value || '0');
-                    var selling = purchase + (purchase * (profit / 100));
-
-                    preview.textContent = 'Selling price: ' + currency.format(Number.isFinite(selling) ? selling : 0);
-                }
-
-                purchasePrice.addEventListener('input', updateSellingPreview);
-                profitPercentage.addEventListener('input', updateSellingPreview);
-                updateSellingPreview();
             });
 
             document.querySelectorAll('[data-product-save-form]').forEach(function (form) {

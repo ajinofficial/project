@@ -14,6 +14,11 @@ class ExpenseController extends Controller
     public function index(Request $request): View
     {
         $tenantId = $request->user()->tenant_id;
+        $editingExpense = null;
+        $editingExpenseId = (int) $request->old('expense_id');
+        if ($editingExpenseId > 0) {
+            $editingExpense = Expense::where('tenant_id', $tenantId)->find($editingExpenseId);
+        }
         $perPageOptions = [10, 25, 50, 100];
         $perPage = in_array((int) $request->input('per_page', 10), $perPageOptions, true)
             ? (int) $request->input('per_page', 10) : 10;
@@ -42,6 +47,7 @@ class ExpenseController extends Controller
             'paymentMethods' => Expense::PAYMENT_METHODS,
             'perPage' => $perPage,
             'perPageOptions' => $perPageOptions,
+            'editingExpense' => $editingExpense,
         ]);
     }
 
@@ -84,6 +90,13 @@ class ExpenseController extends Controller
             'payment_method' => ['required', Rule::in(array_keys(Expense::PAYMENT_METHODS))],
             'reference_number' => ['nullable', 'string', 'max:120'],
             'notes' => ['nullable', 'string', 'max:2000'],
+        ], [
+            'title.required' => 'Enter the expense title.',
+            'category.required' => 'Select an expense category.',
+            'amount.required' => 'Enter the expense amount.',
+            'amount.min' => 'Expense amount must be greater than zero.',
+            'expense_date.required' => 'Select the expense date.',
+            'payment_method.required' => 'Select a payment method.',
         ]);
     }
 
