@@ -399,11 +399,11 @@ class OperationsController extends Controller
 
         $movements = StockMovement::with('product')
             ->where('tenant_id', $request->user()->tenant_id)
-            ->whereIn('type', ['sales_return', 'purchase_return'])
+            ->whereIn('type', ['sales_return', 'purchase_return', 'damaged_return'])
             ->when($request->filled('type'), function ($query) use ($request) {
                 $type = (string) $request->string('type');
 
-                if (in_array($type, ['sales_return', 'purchase_return'], true)) {
+                if (in_array($type, ['sales_return', 'purchase_return', 'damaged_return'], true)) {
                     $query->where('type', $type);
                 }
             })
@@ -440,7 +440,7 @@ class OperationsController extends Controller
                 Rule::exists('products', 'id')->where('tenant_id', $tenantId),
             ],
             'quantity' => ['required', 'integer', 'min:1', 'max:999999'],
-            'return_type' => ['required', 'in:sales_return,purchase_return'],
+            'return_type' => ['required', 'in:sales_return,purchase_return,damaged_return'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ], [
             'product_id.required' => 'Select a product for the return.',
@@ -456,7 +456,7 @@ class OperationsController extends Controller
 
         $returnSummary = DB::transaction(function () use ($data, $request, $tenantId) {
             $product = Product::where('tenant_id', $tenantId)->lockForUpdate()->findOrFail($data['product_id']);
-            $delta = $data['return_type'] === 'sales_return' ? $data['quantity'] : -$data['quantity'];
+            $delta = $data['return_type'] === 'purchase_return' ? -$data['quantity'] : $data['quantity'];
 
             if ($product->inventory + $delta < 0) {
                 throw ValidationException::withMessages([
@@ -465,7 +465,8 @@ class OperationsController extends Controller
             }
 
             $product->inventory += $delta;
-            $product->returned_stock += $data['return_type'] === 'sales_return' ? $data['quantity'] : 0;
+            $product->returned_stock += in_array($data['return_type'], ['sales_return', 'damaged_return'], true) ? $data['quantity'] : 0;
+            $product->damaged_stock += $data['return_type'] === 'damaged_return' ? $data['quantity'] : 0;
             $product->save();
             StockNotifier::sync($product);
 

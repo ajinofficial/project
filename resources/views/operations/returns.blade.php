@@ -88,6 +88,11 @@
             color: #92400e;
             background: #fef3c7;
         }
+
+        .return-type-badge.is-damaged {
+            color: #991b1b;
+            background: #fee2e2;
+        }
     </style>
 
     <section class="ops-grid">
@@ -121,6 +126,7 @@
                             <option value="">Select return type</option>
                             <option value="sales_return" @selected(old('return_type', 'sales_return') === 'sales_return')>Sales return: stock increases</option>
                             <option value="purchase_return" @selected(old('return_type') === 'purchase_return')>Purchase return: stock decreases</option>
+                            <option value="damaged_return" @selected(old('return_type') === 'damaged_return')>Damaged return: added to damaged stock</option>
                         </select>
                         @error('return_type') <small>{{ $message }}</small> @enderror
                     </label>
@@ -157,6 +163,7 @@
                         <option value="">All returns</option>
                         <option value="sales_return" @selected(request('type') === 'sales_return')>Sales return</option>
                         <option value="purchase_return" @selected(request('type') === 'purchase_return')>Purchase return</option>
+                        <option value="damaged_return" @selected(request('type') === 'damaged_return')>Damaged return</option>
                     </select>
                     <select name="per_page" aria-label="Returns per page" data-return-search>
                         @foreach ($perPageOptions as $option)
@@ -175,7 +182,12 @@
                         <tr>
                             <td><strong>{{ $movement->product->name ?? 'Product' }}</strong></td>
                             <td>
-                                <span class="return-type-badge {{ $movement->type === 'sales_return' ? 'is-sales' : 'is-purchase' }}">
+                                <span @class([
+                                    'return-type-badge',
+                                    'is-sales' => $movement->type === 'sales_return',
+                                    'is-purchase' => $movement->type === 'purchase_return',
+                                    'is-damaged' => $movement->type === 'damaged_return',
+                                ])>
                                     {{ str_replace('_', ' ', ucfirst($movement->type)) }}
                                 </span>
                             </td>

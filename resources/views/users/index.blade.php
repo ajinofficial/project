@@ -99,12 +99,24 @@
                     <div class="field-grid">
                         <label>
                             <span>Password</span>
-                            <input type="password" name="password" @class(['is-invalid' => $errors->has('password')]) required @disabled(! $canCreateUser)>
+                            <span class="users-password-control">
+                                <input type="password" name="password" @class(['is-invalid' => $errors->has('password')]) required @disabled(! $canCreateUser)>
+                                <button type="button" data-password-toggle aria-label="Show password" aria-pressed="false" @disabled(! $canCreateUser)>
+                                    <svg class="users-password-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <svg class="users-password-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 18"/><path d="M10.6 6.2A11.8 11.8 0 0 1 12 6c6.5 0 10 6 10 6a16.7 16.7 0 0 1-3 3.8M6.2 6.2C3.5 8 2 12 2 12s3.5 6 10 6c1.5 0 2.8-.3 4-.8"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+                                </button>
+                            </span>
                             <small data-user-form-error="password">@error('password') {{ $message }} @enderror</small>
                         </label>
                         <label>
                             <span>Confirm password</span>
-                            <input type="password" name="password_confirmation" @class(['is-invalid' => $errors->has('password_confirmation')]) required @disabled(! $canCreateUser)>
+                            <span class="users-password-control">
+                                <input type="password" name="password_confirmation" @class(['is-invalid' => $errors->has('password_confirmation')]) required @disabled(! $canCreateUser)>
+                                <button type="button" data-password-toggle aria-label="Show password" aria-pressed="false" @disabled(! $canCreateUser)>
+                                    <svg class="users-password-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <svg class="users-password-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 18"/><path d="M10.6 6.2A11.8 11.8 0 0 1 12 6c6.5 0 10 6 10 6a16.7 16.7 0 0 1-3 3.8M6.2 6.2C3.5 8 2 12 2 12s3.5 6 10 6c1.5 0 2.8-.3 4-.8"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+                                </button>
+                            </span>
                             <small data-user-form-error="password_confirmation">@error('password_confirmation') {{ $message }} @enderror</small>
                         </label>
                     </div>
@@ -121,7 +133,7 @@
                 </form>
             </article>
 
-            <article class="users-card">
+            <article class="users-card users-listing-card" data-users-listing>
                 <div class="section-title">
                     <div>
                         <p class="eyebrow">Tenant users</p>
@@ -143,12 +155,18 @@
                                 <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }} / page</option>
                             @endforeach
                         </select>
-                        <a class="product-clear-filter" href="{{ route('users.index') }}">Clear</a>
+                        <a class="product-clear-filter" href="{{ route('users.index') }}" data-users-listing-link>Clear</a>
                     </form>
                 </div>
 
-                <div class="table-wrap">
-                    <table class="admin-table users-table">
+                <div class="users-listing-results">
+                    <div class="product-listing-loader" data-users-listing-loader aria-live="polite" aria-hidden="true">
+                        <span aria-hidden="true"></span>
+                        <strong>Loading users</strong>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table class="admin-table users-table">
                         <thead>
                             <tr>
                                 <th>User</th>
@@ -196,9 +214,10 @@
                                 </tr>
                             @endforelse
                         </tbody>
-                    </table>
+                        </table>
+                    </div>
+                    @include('products.partials.pagination', ['paginator' => $users, 'itemLabel' => 'users'])
                 </div>
-                @include('products.partials.pagination', ['paginator' => $users, 'itemLabel' => 'users'])
             </article>
         </section>
     </section>
@@ -206,8 +225,34 @@
     @once
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll('[data-password-toggle]').forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        var input = button.closest('.users-password-control').querySelector('input');
+                        var isVisible = input.type === 'text';
+
+                        input.type = isVisible ? 'password' : 'text';
+                        button.setAttribute('aria-label', isVisible ? 'Show password' : 'Hide password');
+                        button.setAttribute('aria-pressed', isVisible ? 'false' : 'true');
+                    });
+                });
+
                 document.querySelectorAll('[data-users-filter-form]').forEach(function (form) {
+                    var listing = form.closest('[data-users-listing]');
+                    var loader = listing ? listing.querySelector('[data-users-listing-loader]') : null;
+
+                    function showUsersListingLoader() {
+                        if (!listing || !loader) {
+                            return;
+                        }
+
+                        listing.classList.add('is-loading');
+                        listing.setAttribute('aria-busy', 'true');
+                        loader.setAttribute('aria-hidden', 'false');
+                    }
+
                     function submitFilters() {
+                        showUsersListingLoader();
+
                         if (typeof form.requestSubmit === 'function') {
                             form.requestSubmit();
                             return;
@@ -222,12 +267,26 @@
                     });
 
                     form.addEventListener('submit', function () {
+                        showUsersListingLoader();
+
                         form.querySelectorAll('input, select').forEach(function (field) {
                             if (field.value === '') {
                                 field.disabled = true;
                             }
                         });
                     });
+
+                    if (listing) {
+                        listing.querySelectorAll('[data-users-listing-link], .product-pagination a').forEach(function (link) {
+                            link.addEventListener('click', function (event) {
+                                if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                                    return;
+                                }
+
+                                showUsersListingLoader();
+                            });
+                        });
+                    }
                 });
 
                 document.querySelectorAll('[data-user-create-form]').forEach(function (form) {

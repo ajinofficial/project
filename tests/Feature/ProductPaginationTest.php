@@ -697,6 +697,46 @@ class ProductPaginationTest extends TestCase
         $this->assertSame(0, StockMovement::where('tenant_id', $tenant->id)->count());
     }
 
+    public function test_damaged_return_tracks_returned_and_damaged_stock_without_increasing_sellable_stock(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+
+        $product = Product::create($this->productPayload([
+            'tenant_id' => $tenant->id,
+            'user_id' => $owner->id,
+            'name' => 'Damaged Return Product',
+            'inventory' => 10,
+            'damaged_stock' => 1,
+            'returned_stock' => 0,
+        ]));
+
+        $sellableStock = $product->available_stock;
+
+        $this->actingAs($owner)
+            ->from(route('returns.index'))
+            ->post(route('returns.store'), [
+                'product_id' => $product->id,
+                'return_type' => 'damaged_return',
+                'quantity' => 2,
+                'notes' => 'Customer returned damaged units.',
+            ])
+            ->assertRedirect(route('returns.index'));
+
+        $product->refresh();
+
+        $this->assertSame(12, $product->inventory);
+        $this->assertSame(3, $product->damaged_stock);
+        $this->assertSame(2, $product->returned_stock);
+        $this->assertSame($sellableStock, $product->available_stock);
+        $this->assertDatabaseHas('stock_movements', [
+            'tenant_id' => $tenant->id,
+            'product_id' => $product->id,
+            'type' => 'damaged_return',
+            'quantity' => 2,
+            'stock_after' => 12,
+        ]);
+    }
+
     public function test_reports_filter_by_date_range_and_tenant(): void
     {
         [$owner, $tenant] = $this->tenantOwner();
