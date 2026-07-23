@@ -33,10 +33,10 @@
                 <strong>&#8377;{{ number_format($stats['monthly_revenue'], 0) }}</strong>
                 <small>Gross profit &#8377;{{ number_format($stats['gross_profit'], 0) }}</small>
             </a>
-            <a class="dashboard-kpi is-amber" href="{{ route('purchases.index') }}">
-                <span>Monthly purchase</span>
-                <strong>&#8377;{{ number_format($stats['monthly_purchase'], 0) }}</strong>
-                <small>Inventory value &#8377;{{ number_format($stats['inventory_value'], 0) }}</small>
+            <a class="dashboard-kpi {{ $stats['net_profit'] >= 0 ? 'is-amber' : 'is-red' }}" href="{{ route('expenses.index') }}">
+                <span>Net profit</span>
+                <strong>{{ $stats['net_profit'] < 0 ? '−' : '' }}&#8377;{{ number_format(abs($stats['net_profit']), 0) }}</strong>
+                <small>After all recorded expenses</small>
             </a>
             <a class="dashboard-kpi is-red" href="{{ route('customers.index') }}">
                 <span>Outstanding</span>

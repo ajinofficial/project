@@ -98,10 +98,10 @@
                 <strong>&#8377;{{ number_format($rangePurchases, 0) }}</strong>
                 <small>Stock received in range</small>
             </article>
-            <article class="reports-kpi is-red">
-                <div class="reports-kpi-head"><span>Returns</span><i aria-hidden="true">↩</i></div>
-                <strong>{{ number_format($rangeReturns) }}</strong>
-                <small>{{ number_format($unitsSold) }} units sold in range</small>
+            <article class="reports-kpi {{ $netProfit >= 0 ? 'is-green' : 'is-red' }}">
+                <div class="reports-kpi-head"><span>Net profit</span><i aria-hidden="true">&#8377;</i></div>
+                <strong>{{ $netProfit < 0 ? '−' : '' }}&#8377;{{ number_format(abs($netProfit), 0) }}</strong>
+                <small>After expenses in selected period</small>
             </article>
         </section>
 

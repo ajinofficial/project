@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\EmailIntegrationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OperationsController;
 use App\Http\Controllers\ProductController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\SetupController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VendorDashboardController;
+use App\Http\Controllers\WhatsAppController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -46,6 +48,18 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::middleware('vendor.account')->prefix('email')->name('email.')->group(function () {
+        Route::get('/', [EmailIntegrationController::class, 'index'])->name('index');
+        Route::put('/connection', [EmailIntegrationController::class, 'update'])->name('update');
+        Route::post('/messages', [EmailIntegrationController::class, 'send'])->middleware('throttle:20,1')->name('send');
+    });
+
+    Route::middleware('growth.plan')->prefix('whatsapp')->name('whatsapp.')->group(function () {
+        Route::get('/', [WhatsAppController::class, 'index'])->name('index');
+        Route::put('/connection', [WhatsAppController::class, 'update'])->name('update');
+        Route::post('/messages', [WhatsAppController::class, 'send'])->middleware('throttle:20,1')->name('send');
+    });
+
     Route::get('/vendor-dashboard', [VendorDashboardController::class, 'index'])->middleware('menu:vendor_dashboard')->name('vendor.dashboard');
     Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('menu:dashboard')->name('dashboard');
     Route::get('/dashboard/best-sellers', [DashboardController::class, 'bestSellers'])->middleware('menu:dashboard')->name('dashboard.best-sellers');

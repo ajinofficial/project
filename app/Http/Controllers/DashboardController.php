@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Expense;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\SalesItem;
@@ -19,6 +20,11 @@ class DashboardController extends Controller
         $tenant = $user->tenant;
 
         $products = Product::where('tenant_id', $user->tenant_id);
+        $grossProfit = SalesItem::whereHas('product', fn ($query) => $query->where('tenant_id', $user->tenant_id))
+            ->join('products', 'sales_items.product_id', '=', 'products.id')
+            ->selectRaw('COALESCE(SUM((sales_items.selling_price - products.purchase_price) * sales_items.quantity), 0) as value')
+            ->value('value');
+        $overallExpenses = Expense::where('tenant_id', $user->tenant_id)->sum('amount');
 
         $stats = [
             'products' => (clone $products)->count(),
@@ -36,10 +42,9 @@ class DashboardController extends Controller
             'monthly_purchase' => PurchaseOrder::where('tenant_id', $user->tenant_id)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->sum('total_amount'),
             'today_orders' => SalesOrder::where('tenant_id', $user->tenant_id)->whereDate('created_at', today())->count(),
             'outstanding' => SalesOrder::where('tenant_id', $user->tenant_id)->selectRaw('COALESCE(SUM(total_amount - paid_amount), 0) as value')->value('value'),
-            'gross_profit' => SalesItem::whereHas('product', fn ($query) => $query->where('tenant_id', $user->tenant_id))
-                ->join('products', 'sales_items.product_id', '=', 'products.id')
-                ->selectRaw('COALESCE(SUM((sales_items.selling_price - products.purchase_price) * sales_items.quantity), 0) as value')
-                ->value('value'),
+            'gross_profit' => $grossProfit,
+            'overall_expenses' => $overallExpenses,
+            'net_profit' => $grossProfit - $overallExpenses,
         ];
 
         $recentProducts = (clone $products)

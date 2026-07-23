@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Expense;
 use App\Models\Plan;
 use App\Models\Product;
 use App\Models\PurchaseItem;
@@ -776,6 +777,36 @@ class ProductPaginationTest extends TestCase
             'tax_percentage' => 0,
         ]);
 
+        Expense::create([
+            'tenant_id' => $tenant->id,
+            'created_by' => $owner->id,
+            'title' => 'Range expense',
+            'category' => 'Other',
+            'amount' => 20,
+            'expense_date' => '2026-06-20',
+            'payment_method' => 'cash',
+        ]);
+
+        Expense::create([
+            'tenant_id' => $tenant->id,
+            'created_by' => $owner->id,
+            'title' => 'Old expense',
+            'category' => 'Other',
+            'amount' => 500,
+            'expense_date' => '2026-05-20',
+            'payment_method' => 'cash',
+        ]);
+
+        Expense::create([
+            'tenant_id' => $otherTenant->id,
+            'created_by' => $otherOwner->id,
+            'title' => 'Other tenant range expense',
+            'category' => 'Other',
+            'amount' => 1000,
+            'expense_date' => '2026-06-20',
+            'payment_method' => 'cash',
+        ]);
+
         $outOfRangeOrder = SalesOrder::create([
             'tenant_id' => $tenant->id,
             'invoice_number' => 'RANGE-OLD',
@@ -860,6 +891,11 @@ class ProductPaginationTest extends TestCase
         $response->assertSee('&#8377;200', false);
         $response->assertSee('1 invoices');
         $response->assertSee('&#8377;120', false);
+        $response->assertSee('Net profit');
+        $response->assertSee('&#8377;100', false);
+        $response->assertSee('After expenses in selected period');
+        $response->assertViewHas('rangeExpenses', fn ($value) => (float) $value === 20.0);
+        $response->assertViewHas('netProfit', fn ($value) => (float) $value === 100.0);
         $response->assertSee('&#8377;80', false);
         $response->assertSee('Range Report Product');
         $response->assertSee('2 sold');

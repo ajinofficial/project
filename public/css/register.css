@@ -9055,3 +9055,456 @@ button.ghost-button {
         min-width: 0;
     }
 }
+/* WhatsApp Growth-plan integration */
+.whatsapp-page {
+    display: grid;
+    gap: 18px;
+}
+
+.whatsapp-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    border: 1px solid #d9e8df;
+    border-radius: 10px;
+    padding: clamp(22px, 4vw, 34px);
+    background:
+        radial-gradient(circle at 88% 15%, rgba(37, 211, 102, .13), transparent 240px),
+        linear-gradient(135deg, #f8fffa, #ffffff);
+}
+
+.whatsapp-hero h1 {
+    margin-bottom: 9px;
+    color: #17201a;
+    font-size: clamp(28px, 4vw, 42px);
+}
+
+.whatsapp-hero p:last-child {
+    max-width: 680px;
+    margin: 0;
+    color: #667066;
+    line-height: 1.6;
+}
+
+.whatsapp-status {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #e4e7ec;
+    border-radius: 999px;
+    padding: 9px 13px;
+    color: #667085;
+    background: #fff;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.whatsapp-status i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #98a2b3;
+}
+
+.whatsapp-status.is-connected {
+    border-color: #abefc6;
+    color: #067647;
+    background: #ecfdf3;
+}
+
+.whatsapp-status.is-connected i {
+    background: #12b76a;
+    box-shadow: 0 0 0 4px rgba(18, 183, 106, .12);
+}
+
+.whatsapp-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.whatsapp-card {
+    min-width: 0;
+    border: 1px solid #e4eaf1;
+    border-radius: 10px;
+    padding: clamp(20px, 3vw, 28px);
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .05);
+}
+
+.whatsapp-form {
+    display: grid;
+    gap: 17px;
+}
+
+.whatsapp-form label > span:not(.field-error) {
+    display: block;
+    margin-bottom: 7px;
+    color: #344054;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.whatsapp-form input:not([type="checkbox"]),
+.whatsapp-form textarea {
+    width: 100%;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    padding: 11px 12px;
+    color: #182230;
+    background: #fff;
+    outline: 0;
+}
+
+.whatsapp-form textarea {
+    resize: vertical;
+    line-height: 1.55;
+}
+
+.whatsapp-form input:focus,
+.whatsapp-form textarea:focus {
+    border-color: #12b76a;
+    box-shadow: 0 0 0 3px rgba(18, 183, 106, .12);
+}
+
+.whatsapp-form label > small,
+.whatsapp-form > small {
+    display: block;
+    margin-top: 6px;
+    color: #667085;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.whatsapp-form .field-error {
+    color: #b42318;
+}
+
+.whatsapp-send-button {
+    min-height: 46px;
+    border: 0;
+    border-radius: 8px;
+    color: #fff;
+    background: #128c4a;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.whatsapp-send-button:hover {
+    background: #0d703b;
+}
+
+.whatsapp-send-button:disabled {
+    cursor: not-allowed;
+    opacity: .48;
+}
+
+.whatsapp-alert,
+.whatsapp-owner-note {
+    border: 1px solid #fecdca;
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: #b42318;
+    background: #fff6f5;
+    font-size: 13px;
+}
+
+.whatsapp-owner-note {
+    border-color: #e4e7ec;
+    color: #475467;
+    background: #f9fafb;
+}
+
+.whatsapp-table-wrap {
+    overflow-x: auto;
+}
+
+.whatsapp-history table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.whatsapp-history th,
+.whatsapp-history td {
+    padding: 13px 12px;
+    border-bottom: 1px solid #edf1f5;
+    color: #344054;
+    text-align: left;
+    font-size: 12px;
+}
+
+.whatsapp-history th {
+    color: #667085;
+    background: #f9fafb;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.whatsapp-message-copy {
+    max-width: 360px;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.whatsapp-message-status {
+    display: inline-flex;
+    border-radius: 999px;
+    padding: 5px 9px;
+    color: #475467;
+    background: #f2f4f7;
+    font-weight: 800;
+}
+
+.whatsapp-message-status.is-sent {
+    color: #067647;
+    background: #ecfdf3;
+}
+
+.whatsapp-message-status.is-failed {
+    color: #b42318;
+    background: #fff1f0;
+}
+
+@media (max-width: 850px) {
+    .whatsapp-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .whatsapp-hero {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+/* Vendor-only email integration */
+.email-module-page {
+    display: grid;
+    gap: 18px;
+}
+
+.email-module-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    border: 1px solid #dbe5ef;
+    border-radius: 10px;
+    padding: clamp(22px, 4vw, 34px);
+    background:
+        radial-gradient(circle at 88% 10%, rgba(37, 99, 235, .13), transparent 250px),
+        linear-gradient(135deg, #f8fbff, #fff);
+}
+
+.email-module-hero h1 {
+    margin-bottom: 9px;
+    color: #17201a;
+    font-size: clamp(28px, 4vw, 42px);
+}
+
+.email-module-hero p:last-child {
+    max-width: 680px;
+    margin: 0;
+    color: #667085;
+    line-height: 1.6;
+}
+
+.email-connection-status {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #e4e7ec;
+    border-radius: 999px;
+    padding: 9px 13px;
+    color: #667085;
+    background: #fff;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.email-connection-status i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #98a2b3;
+}
+
+.email-connection-status.is-connected {
+    border-color: #b2ddff;
+    color: #175cd3;
+    background: #eff8ff;
+}
+
+.email-connection-status.is-connected i {
+    background: #2e90fa;
+    box-shadow: 0 0 0 4px rgba(46, 144, 250, .12);
+}
+
+.email-module-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.email-module-card {
+    min-width: 0;
+    border: 1px solid #e4eaf1;
+    border-radius: 10px;
+    padding: clamp(20px, 3vw, 28px);
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .05);
+}
+
+.email-module-form {
+    display: grid;
+    gap: 17px;
+}
+
+.email-module-field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px;
+}
+
+.email-module-form label > span:not(.field-error) {
+    display: block;
+    margin-bottom: 7px;
+    color: #344054;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.email-module-form input:not([type="checkbox"]),
+.email-module-form select,
+.email-module-form textarea {
+    width: 100%;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    padding: 11px 12px;
+    color: #182230;
+    background: #fff;
+    outline: 0;
+}
+
+.email-module-form textarea {
+    resize: vertical;
+    line-height: 1.55;
+}
+
+.email-module-form input:focus,
+.email-module-form select:focus,
+.email-module-form textarea:focus {
+    border-color: #2e90fa;
+    box-shadow: 0 0 0 3px rgba(46, 144, 250, .12);
+}
+
+.email-module-form label > small {
+    display: block;
+    margin-top: 6px;
+    color: #667085;
+    font-size: 11px;
+}
+
+.email-module-form .field-error {
+    color: #b42318;
+}
+
+.email-send-button {
+    min-height: 46px;
+    border: 0;
+    border-radius: 8px;
+    color: #fff;
+    background: #2563eb;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.email-send-button:hover {
+    background: #1d4ed8;
+}
+
+.email-send-button:disabled {
+    cursor: not-allowed;
+    opacity: .48;
+}
+
+.email-module-alert {
+    border: 1px solid #fecdca;
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: #b42318;
+    background: #fff6f5;
+    font-size: 13px;
+}
+
+.email-module-table-wrap {
+    overflow-x: auto;
+}
+
+.email-module-history table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.email-module-history th,
+.email-module-history td {
+    padding: 13px 12px;
+    border-bottom: 1px solid #edf1f5;
+    color: #344054;
+    text-align: left;
+    font-size: 12px;
+}
+
+.email-module-history th {
+    color: #667085;
+    background: #f9fafb;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.email-subject-copy {
+    max-width: 360px;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.email-message-status {
+    display: inline-flex;
+    border-radius: 999px;
+    padding: 5px 9px;
+    color: #475467;
+    background: #f2f4f7;
+    font-weight: 800;
+}
+
+.email-message-status.is-sent {
+    color: #067647;
+    background: #ecfdf3;
+}
+
+.email-message-status.is-failed {
+    color: #b42318;
+    background: #fff1f0;
+}
+
+@media (max-width: 850px) {
+    .email-module-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .email-module-hero {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 560px) {
+    .email-module-field-grid {
+        grid-template-columns: 1fr;
+    }
+}

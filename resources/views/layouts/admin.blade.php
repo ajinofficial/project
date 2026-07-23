@@ -56,6 +56,33 @@
                     @endif
                 @endforeach
 
+                @if (
+                    (int) auth()->user()->tenant?->tenant_type === \App\Models\Tenant::TYPE_CLIENT
+                    && auth()->user()->tenant?->plan?->name === 'growth'
+                )
+                    <a href="{{ route('whatsapp.index') }}" @class(['active' => request()->routeIs('whatsapp.*')])>
+                        <span aria-hidden="true">
+                            <svg viewBox="0 0 24 24" role="img">
+                                <path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5Z" />
+                                <path d="M8.5 8.5c.5 3 2 4.5 5 5" />
+                            </svg>
+                        </span>
+                        WhatsApp
+                    </a>
+                @endif
+
+                @if ((int) auth()->user()->tenant?->tenant_type === \App\Models\Tenant::TYPE_VENDOR)
+                    <a href="{{ route('email.index') }}" @class(['active' => request()->routeIs('email.*')])>
+                        <span aria-hidden="true">
+                            <svg viewBox="0 0 24 24" role="img">
+                                <path d="M3 5h18v14H3V5Z" />
+                                <path d="m3 7 9 6 9-6" />
+                            </svg>
+                        </span>
+                        Email
+                    </a>
+                @endif
+
                 <small>Account</small>
                 <form
                     method="POST"

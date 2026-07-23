@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Expense;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\SalesItem;
@@ -517,6 +518,10 @@ class OperationsController extends Controller
             ->whereBetween('sales_orders.created_at', [$startDate, $endDate])
             ->selectRaw('COALESCE(SUM((sales_items.selling_price - products.purchase_price) * sales_items.quantity), 0) as value')
             ->value('value');
+        $rangeExpenses = (float) Expense::where('tenant_id', $tenantId)
+            ->whereBetween('expense_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->sum('amount');
+        $netProfit = $profit - $rangeExpenses;
         $unitsSold = (int) SalesItem::query()
             ->join('sales_orders', 'sales_items.sales_order_id', '=', 'sales_orders.id')
             ->where('sales_orders.tenant_id', $tenantId)
@@ -574,6 +579,8 @@ class OperationsController extends Controller
             'rangePurchases' => (clone $purchaseQuery)->sum('total_amount'),
             'rangeReturns' => (clone $returnQuery)->count(),
             'profit' => $profit,
+            'rangeExpenses' => $rangeExpenses,
+            'netProfit' => $netProfit,
             'topProducts' => SalesItem::with('product')
                 ->join('sales_orders', 'sales_items.sales_order_id', '=', 'sales_orders.id')
                 ->where('sales_orders.tenant_id', $tenantId)
