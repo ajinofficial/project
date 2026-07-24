@@ -9508,3 +9508,54 @@ button.ghost-button {
         grid-template-columns: 1fr;
     }
 }
+.forgot-password-submit__loading,
+.verify-code-submit__loading,
+.reset-password-submit__loading {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+}
+
+.forgot-password-submit__spinner,
+.verify-code-submit__spinner,
+.reset-password-submit__spinner {
+    width: 17px;
+    height: 17px;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: forgot-password-spin 0.7s linear infinite;
+}
+
+[data-forgot-password-submit].is-loading .forgot-password-submit__idle {
+    display: none;
+}
+
+[data-verify-code-submit].is-loading .verify-code-submit__idle {
+    display: none;
+}
+
+[data-reset-password-submit].is-loading .reset-password-submit__idle {
+    display: none;
+}
+
+[data-forgot-password-submit].is-loading .forgot-password-submit__loading,
+[data-verify-code-submit].is-loading .verify-code-submit__loading,
+[data-reset-password-submit].is-loading .reset-password-submit__loading {
+    display: inline-flex;
+}
+
+@keyframes forgot-password-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .forgot-password-submit__spinner,
+    .verify-code-submit__spinner,
+    .reset-password-submit__spinner {
+        animation-duration: 1.4s;
+    }
+}

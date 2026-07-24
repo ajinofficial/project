@@ -68,6 +68,7 @@
                 </form>
             </div>
 
+            <div data-expense-results>
             <div class="table-wrap"><table class="admin-table"><thead><tr><th>Date</th><th>Expense</th><th>Category</th><th>Payment</th><th>Amount</th><th>Actions</th></tr></thead><tbody>
                 @forelse($expenses as $expense)
                     <tr>
@@ -81,6 +82,7 @@
                 @endforelse
             </tbody></table></div>
             @include('products.partials.pagination', ['paginator' => $expenses, 'itemLabel' => 'expenses'])
+            </div>
         </article>
     </section>
 
@@ -204,25 +206,29 @@
                 var form = document.querySelector('[data-expense-filter-form]');
                 if (!form) return;
 
-                form.addEventListener('submit', function (event) {
-                    event.preventDefault();
-                    loadExpenses(new URLSearchParams(new FormData(form)).toString());
-                });
+                if (!form.dataset.filtersBound) {
+                    form.dataset.filtersBound = 'true';
+                    form.addEventListener('submit', function (event) {
+                        event.preventDefault();
+                        loadExpenses(new URLSearchParams(new FormData(form)).toString());
+                    });
 
-                form.querySelectorAll('select, input[type="date"]').forEach(function (field) {
-                    field.addEventListener('change', function () { form.requestSubmit(); });
-                });
+                    form.querySelectorAll('select, input[type="date"]').forEach(function (field) {
+                        field.addEventListener('change', function () { form.requestSubmit(); });
+                    });
 
-                var search = form.querySelector('input[type="search"]');
-                search.addEventListener('input', function () {
-                    clearTimeout(searchTimer);
-                    searchTimer = setTimeout(function () { form.requestSubmit(); }, 350);
-                });
+                    var search = form.querySelector('input[type="search"]');
+                    search.addEventListener('input', function () {
+                        clearTimeout(searchTimer);
+                        searchTimer = setTimeout(function () { form.requestSubmit(); }, 350);
+                    });
 
-                form.querySelector('.product-clear-filter').addEventListener('click', function (event) {
-                    event.preventDefault();
-                    loadExpenses('');
-                });
+                    form.querySelector('.product-clear-filter').addEventListener('click', function (event) {
+                        event.preventDefault();
+                        form.reset();
+                        loadExpenses('');
+                    });
+                }
 
                 document.querySelectorAll('[data-expense-history] .product-pagination a').forEach(function (link) {
                     link.addEventListener('click', function (event) {
@@ -238,23 +244,27 @@
                 activeRequest = new AbortController();
                 var url = '{{ route('expenses.index') }}' + (query ? '?' + query : '');
                 var history = document.querySelector('[data-expense-history]');
-                history.style.opacity = '.55';
-                history.setAttribute('aria-busy', 'true');
+                var results = history.querySelector('[data-expense-results]');
+                results.style.opacity = '.55';
+                results.setAttribute('aria-busy', 'true');
 
                 fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, signal: activeRequest.signal })
                     .then(function (response) { if (!response.ok) throw new Error('Request failed'); return response.text(); })
                     .then(function (html) {
                         var page = new DOMParser().parseFromString(html, 'text/html');
+                        var nextResults = page.querySelector('[data-expense-results]');
+                        if (!nextResults) throw new Error('Expense results missing');
                         document.querySelector('[data-expense-stats]').innerHTML = page.querySelector('[data-expense-stats]').innerHTML;
-                        history.innerHTML = page.querySelector('[data-expense-history]').innerHTML;
-                        history.style.opacity = '';
-                        history.removeAttribute('aria-busy');
+                        results.innerHTML = nextResults.innerHTML;
+                        results.style.opacity = '';
+                        results.removeAttribute('aria-busy');
                         if (updateUrl) window.history.pushState({}, '', url);
-                        bindExpenseActions(history, true);
-                        bindExpenseValidation(history);
+                        bindExpenseActions(results, true);
                         bindFilters();
                     })
                     .catch(function (error) {
+                        results.style.opacity = '';
+                        results.removeAttribute('aria-busy');
                         if (error.name !== 'AbortError') window.location.assign(url);
                     });
             }

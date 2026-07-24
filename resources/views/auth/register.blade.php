@@ -155,7 +155,9 @@
                             <span>Password</span>
                             <div class="password-field">
                                 <input class="@error('password') is-invalid @enderror" type="password" name="password" placeholder="Minimum 8 characters" autocomplete="new-password" minlength="8" required data-register-field="password">
-                                <button type="button" class="password-toggle" data-toggle-password aria-label="Show password">Show</button>
+                                <button type="button" class="password-toggle" data-toggle-password aria-label="Show password" aria-pressed="false">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                </button>
                             </div>
                             <div class="password-meter" aria-hidden="true"><i></i></div>
                             <small class="field-hint" data-password-hint>Use at least 8 characters.</small>
@@ -165,7 +167,9 @@
                             <span>Confirm password</span>
                             <div class="password-field">
                                 <input class="@error('password_confirmation') is-invalid @enderror" type="password" name="password_confirmation" placeholder="Repeat password" autocomplete="new-password" minlength="8" required data-register-field="password_confirmation">
-                                <button type="button" class="password-toggle" data-toggle-password aria-label="Show password confirmation">Show</button>
+                                <button type="button" class="password-toggle" data-toggle-password aria-label="Show password confirmation" aria-pressed="false">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                </button>
                             </div>
                             <small class="field-hint" data-confirm-hint>Both passwords must match.</small>
                             <small data-register-error="password_confirmation" @if (! $errors->has('password_confirmation')) hidden @endif>{{ $errors->first('password_confirmation') }}</small>
@@ -186,10 +190,12 @@
     <script>
         document.querySelectorAll('[data-toggle-password]').forEach((button) => {
             button.addEventListener('click', () => {
-                const input = button.previousElementSibling;
+                const input = button.closest('.password-field')?.querySelector('input');
+                if (!input) return;
                 const isHidden = input.type === 'password';
                 input.type = isHidden ? 'text' : 'password';
-                button.textContent = isHidden ? 'Hide' : 'Show';
+                button.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+                button.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
             });
         });
 
@@ -306,6 +312,14 @@
             if (password?.value && confirmation?.value && password.value !== confirmation.value) {
                 showRegisterError(form, 'password_confirmation', 'Passwords do not match.');
                 firstInvalid = firstInvalid || confirmation;
+            }
+
+            if (password?.value && password.value.length < 8) {
+                showRegisterError(form, 'password', 'Password must be at least 8 characters.');
+                firstInvalid = firstInvalid || password;
+            } else if (password?.value && (!/[A-Za-z]/.test(password.value) || !/\d/.test(password.value))) {
+                showRegisterError(form, 'password', 'Password must include at least one letter and one number.');
+                firstInvalid = firstInvalid || password;
             }
 
             if (firstInvalid) {

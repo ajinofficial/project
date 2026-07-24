@@ -2,7 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Mail\ImportantEventMail;
 use App\Models\Notification;
+use App\Support\ActivityNotifier;
+use Illuminate\Support\Facades\Mail;
 use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\User;
@@ -173,6 +176,33 @@ class NotificationTest extends TestCase
         $followUp->assertOk();
         $followUp->assertSee('All caught up');
         $followUp->assertDontSee('notification-read-all-button', false);
+    }
+
+    public function test_common_activity_notifier_creates_in_app_and_owner_email_notifications(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+        Mail::fake();
+
+        ActivityNotifier::notify(
+            $tenant->id,
+            'sale_billed',
+            'Sale billed',
+            'Invoice INV-100 was created.'
+        );
+
+        $this->assertDatabaseHas('notifications', [
+            'tenant_id' => $tenant->id,
+            'type' => 'sale_billed',
+            'channel' => 'in_app',
+            'title' => 'Sale billed',
+            'message' => 'Invoice INV-100 was created.',
+        ]);
+
+        Mail::assertSent(ImportantEventMail::class, function (ImportantEventMail $mail) use ($owner) {
+            return $mail->hasTo($owner->email)
+                && $mail->eventTitle === 'Sale billed'
+                && $mail->eventType === 'sale_billed';
+        });
     }
 
     private function tenantOwner(): array

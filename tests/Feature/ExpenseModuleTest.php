@@ -64,6 +64,7 @@ class ExpenseModuleTest extends TestCase
         $this->actingAs($owner)->get(route('expenses.index', ['category' => 'Rent', 'from' => '2026-07-01']))
             ->assertSee('Office rent')->assertDontSee('Online ads')
             ->assertSee('data-expense-filter-form', false)
+            ->assertSee('data-expense-results', false)
             ->assertSee('fetch(url', false)
             ->assertDontSee('>Filter</button>', false)
             ->assertViewHas('filteredTotal', fn ($total) => (float) $total === 5000.0);

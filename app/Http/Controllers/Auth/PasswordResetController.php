@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 use Throwable;
 
@@ -27,7 +28,12 @@ class PasswordResetController extends Controller
 
     public function sendOtp(Request $request): RedirectResponse
     {
-        $validated = $request->validate(['email' => ['required', 'email']]);
+        $validated = $request->validate([
+            'email' => ['required', 'email'],
+        ], [
+            'email.required' => 'Email address is required.',
+            'email.email' => 'Enter a valid email address.',
+        ]);
         $email = strtolower($validated['email']);
         $user = User::query()->where('email', $email)->first();
 
@@ -74,7 +80,12 @@ class PasswordResetController extends Controller
 
     public function verifyOtp(Request $request): RedirectResponse
     {
-        $validated = $request->validate(['otp' => ['required', 'digits:6']]);
+        $validated = $request->validate([
+            'otp' => ['required', 'digits:6'],
+        ], [
+            'otp.required' => 'Verification code is required.',
+            'otp.digits' => 'Enter a valid six-digit verification code.',
+        ]);
         $email = $request->session()->get('password_reset_email');
         $otpData = $email ? Cache::get($this->cacheKey($email)) : null;
 
@@ -115,7 +126,13 @@ class PasswordResetController extends Controller
         }
 
         $validated = $request->validate([
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'string', Password::min(8)->letters()->numbers(), 'confirmed'],
+        ], [
+            'password.required' => 'New password is required.',
+            'password.min' => 'New password must be at least 8 characters.',
+            'password.letters' => 'New password must include at least one letter.',
+            'password.numbers' => 'New password must include at least one number.',
+            'password.confirmed' => 'The password confirmation does not match.',
         ]);
 
         $email = $request->session()->get('password_reset_email');
