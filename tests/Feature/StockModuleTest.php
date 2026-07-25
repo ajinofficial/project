@@ -49,6 +49,7 @@ class StockModuleTest extends TestCase
         $response->assertSee('Opening purchase.');
         $response->assertSee('Low stock watchlist');
         $response->assertSee('data-stock-listing', false);
+        $response->assertSee('data-stock-listing-results', false);
         $response->assertSee('data-stock-listing-loader', false);
         $response->assertSee('Loading movements');
         $response->assertSee(route('stock.create'), false);
@@ -207,6 +208,10 @@ class StockModuleTest extends TestCase
         $response->assertOk();
         $response->assertSee('data-stock-search-form', false);
         $response->assertSee('data-stock-search', false);
+        $response->assertSee('window.stockListingAjaxBound', false);
+        $response->assertSee('fetch(url', false);
+        $response->assertSee("'X-Requested-With': 'XMLHttpRequest'", false);
+        $response->assertSee("window.addEventListener('popstate'", false);
         $response->assertSee('Filtered Widget');
         $response->assertSee('Filter target note.');
         $response->assertDontSee('Other Widget');

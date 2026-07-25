@@ -212,6 +212,10 @@ class UserManagementTest extends TestCase
         $response->assertOk();
         $response->assertSee('Alpha Sales');
         $response->assertDontSee('Beta Manager');
+        $response->assertSee('data-users-listing-results', false);
+        $response->assertSee('data-users-listing-loader', false);
+        $response->assertSee('loadUsersListing', false);
+        $response->assertSee("'X-Requested-With': 'XMLHttpRequest'", false);
     }
 
     public function test_users_listing_supports_per_page_pagination(): void

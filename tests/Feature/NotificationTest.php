@@ -51,6 +51,8 @@ class NotificationTest extends TestCase
         $response->assertSee('data-notification-filter-form', false);
         $response->assertSee('data-notification-search', false);
         $response->assertSee('data-notification-type', false);
+        $response->assertSee('data-notification-back', false);
+        $response->assertSee('window.history.back()', false);
         $response->assertSee('setTimeout(submitFilters, 400)', false);
         $response->assertSee('notification-read-all-button', false);
         $response->assertSee('Mark all notifications as read?', false);

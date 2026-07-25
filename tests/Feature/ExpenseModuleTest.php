@@ -65,6 +65,8 @@ class ExpenseModuleTest extends TestCase
             ->assertSee('Office rent')->assertDontSee('Online ads')
             ->assertSee('data-expense-filter-form', false)
             ->assertSee('data-expense-results', false)
+            ->assertSee('data-expense-listing-loader', false)
+            ->assertSee('Loading expenses')
             ->assertSee('fetch(url', false)
             ->assertDontSee('>Filter</button>', false)
             ->assertViewHas('filteredTotal', fn ($total) => (float) $total === 5000.0);

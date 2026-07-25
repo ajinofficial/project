@@ -21,6 +21,25 @@
             gap: 4px;
         }
 
+        .purchase-listing-panel.is-loading .table-wrap,
+        .purchase-listing-panel.is-loading .product-pagination {
+            opacity: 0.38;
+            pointer-events: none;
+        }
+
+        .purchase-listing-results {
+            position: relative;
+            min-height: 160px;
+        }
+
+        .purchase-listing-results .product-listing-loader {
+            inset: 0;
+        }
+
+        .purchase-listing-panel.is-loading .product-listing-loader {
+            display: grid;
+        }
+
         @media (max-width: 700px) {
             .purchase-bill-grid {
                 grid-template-columns: 1fr;
@@ -92,7 +111,7 @@
             </form>
         </article>
 
-        <article class="admin-section">
+        <article class="admin-section purchase-listing-panel" data-purchase-listing>
             <div class="section-title"><div><p class="eyebrow">Purchase history</p><h2>Recent purchase orders</h2></div></div>
             <div class="product-toolbar">
                 <form class="product-filter-form billing-search-form purchase-filter-form" method="GET" action="{{ route('purchases.index') }}" data-purchase-search-form>
@@ -102,48 +121,153 @@
                             <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }} / page</option>
                         @endforeach
                     </select>
-                    <a class="product-clear-filter" href="{{ route('purchases.index') }}">Clear</a>
+                    <a class="product-clear-filter" href="{{ route('purchases.index') }}" data-purchase-listing-link>Clear</a>
                 </form>
             </div>
 
-            <div class="table-wrap"><table class="admin-table"><thead><tr><th>PO</th><th>Bill date</th><th>Invoice No.</th><th>Supplier</th><th>Tax</th><th>Total</th></tr></thead><tbody>
-                @forelse ($orders as $order)
-                    <tr><td>{{ $order->order_number }}</td><td>{{ $order->received_at?->format('d M Y') ?? '-' }}</td><td>{{ $order->supplier_invoice_number ?: '-' }}</td><td>{{ $order->supplier->name ?? '-' }}</td><td>&#8377;{{ number_format($order->tax_amount, 2) }}</td><td>&#8377;{{ number_format($order->total_amount, 2) }}</td></tr>
-                @empty
-                    <tr><td colspan="6">{{ request()->filled('search') ? 'No purchase orders match the current search.' : 'No purchase orders yet.' }}</td></tr>
-                @endforelse
-            </tbody></table></div>
-            @include('products.partials.pagination', ['paginator' => $orders, 'itemLabel' => 'purchase orders'])
+            <div class="purchase-listing-results" data-purchase-listing-results>
+                <div class="product-listing-loader" data-purchase-listing-loader aria-live="polite" aria-hidden="true">
+                    <span aria-hidden="true"></span>
+                    <strong>Loading purchase orders</strong>
+                </div>
+                <div class="table-wrap"><table class="admin-table"><thead><tr><th>PO</th><th>Bill date</th><th>Invoice No.</th><th>Supplier</th><th>Tax</th><th>Total</th></tr></thead><tbody>
+                    @forelse ($orders as $order)
+                        <tr><td>{{ $order->order_number }}</td><td>{{ $order->received_at?->format('d M Y') ?? '-' }}</td><td>{{ $order->supplier_invoice_number ?: '-' }}</td><td>{{ $order->supplier->name ?? '-' }}</td><td>&#8377;{{ number_format($order->tax_amount, 2) }}</td><td>&#8377;{{ number_format($order->total_amount, 2) }}</td></tr>
+                    @empty
+                        <tr><td colspan="6">{{ request()->filled('search') ? 'No purchase orders match the current search.' : 'No purchase orders yet.' }}</td></tr>
+                    @endforelse
+                </tbody></table></div>
+                @include('products.partials.pagination', ['paginator' => $orders, 'itemLabel' => 'purchase orders'])
+            </div>
         </article>
     </section>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('[data-purchase-search-form]').forEach(function (form) {
-                var search = form.querySelector('[data-purchase-search]');
-                var fields = form.querySelectorAll('[data-purchase-search]');
+            var purchaseListingRequest = null;
+            var purchaseSearchTimer = null;
+
+            function purchaseUrl(form) {
+                var params = new URLSearchParams(new FormData(form));
+
+                Array.from(params.keys()).forEach(function (key) {
+                    if (params.get(key) === '') {
+                        params.delete(key);
+                    }
+                });
+
+                var query = params.toString();
+                return form.action + (query ? '?' + query : '');
+            }
+
+            function showPurchaseListingLoader() {
+                var listing = document.querySelector('[data-purchase-listing]');
+                var loader = document.querySelector('[data-purchase-listing-loader]');
+
+                if (listing && loader) {
+                    listing.classList.add('is-loading');
+                    loader.setAttribute('aria-hidden', 'false');
+                }
+            }
+
+            function loadPurchaseListing(url, pushState) {
+                var listing = document.querySelector('[data-purchase-listing]');
+
+                if (!listing) {
+                    window.location.href = url;
+                    return;
+                }
+
+                if (purchaseListingRequest) {
+                    purchaseListingRequest.abort();
+                }
+
+                var requestController = new AbortController();
+                purchaseListingRequest = requestController;
+                showPurchaseListingLoader();
+
+                fetch(url, {
+                    headers: {
+                        'Accept': 'text/html',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    signal: requestController.signal
+                }).then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('Unable to load purchase orders.');
+                    }
+
+                    return response.text();
+                }).then(function (html) {
+                    var page = new DOMParser().parseFromString(html, 'text/html');
+                    var nextListing = page.querySelector('[data-purchase-listing]');
+
+                    if (!nextListing) {
+                        throw new Error('Purchase listing was not found.');
+                    }
+
+                    listing.replaceWith(nextListing);
+                    document.title = page.title || document.title;
+
+                    if (pushState !== false) {
+                        window.history.pushState({ purchaseListing: true }, '', url);
+                    }
+                }).catch(function (error) {
+                    if (error.name !== 'AbortError') {
+                        window.location.href = url;
+                    }
+                }).finally(function () {
+                    if (purchaseListingRequest === requestController) {
+                        purchaseListingRequest = null;
+                    }
+                });
+            }
+
+            document.addEventListener('submit', function (event) {
+                var form = event.target.closest('[data-purchase-search-form]');
+
+                if (form) {
+                    event.preventDefault();
+                    loadPurchaseListing(purchaseUrl(form), true);
+                }
+            });
+
+            document.addEventListener('change', function (event) {
+                var select = event.target.closest('[data-purchase-search-form] select[data-purchase-search]');
+
+                if (select) {
+                    loadPurchaseListing(purchaseUrl(select.form), true);
+                }
+            });
+
+            document.addEventListener('input', function (event) {
+                var search = event.target.closest('[data-purchase-search-form] input[type="search"]');
 
                 if (!search) {
                     return;
                 }
 
-                function submitSearch() {
-                    if (search.value.trim() === '') {
-                        search.disabled = true;
-                    }
+                window.clearTimeout(purchaseSearchTimer);
+                purchaseSearchTimer = window.setTimeout(function () {
+                    loadPurchaseListing(purchaseUrl(search.form), true);
+                }, 350);
+            });
 
-                    if (typeof form.requestSubmit === 'function') {
-                        form.requestSubmit();
-                        return;
-                    }
+            document.addEventListener('click', function (event) {
+                var link = event.target.closest('[data-purchase-listing-link], [data-purchase-listing] .product-pagination a');
 
-                    form.submit();
+                if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                    return;
                 }
 
-                fields.forEach(function (field) {
-                    field.addEventListener('change', submitSearch);
-                    field.addEventListener('search', submitSearch);
-                });
+                event.preventDefault();
+                loadPurchaseListing(link.href, true);
+            });
+
+            window.addEventListener('popstate', function () {
+                if (window.location.pathname === new URL('{{ route('purchases.index') }}').pathname) {
+                    loadPurchaseListing(window.location.href, false);
+                }
             });
 
             document.querySelectorAll('[data-purchase-form]').forEach(function (form) {

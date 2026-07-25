@@ -205,6 +205,10 @@ class ProductPaginationTest extends TestCase
         $response->assertSee('href="'.route('products.index').'"', false);
         $response->assertSee('Clear');
         $response->assertDontSee('>Filter</button>', false);
+        $response->assertSee('window.productListingAjaxBound', false);
+        $response->assertSee('fetch(url', false);
+        $response->assertSee("'X-Requested-With': 'XMLHttpRequest'", false);
+        $response->assertSee("window.addEventListener('popstate'", false);
     }
 
     public function test_empty_catalog_prompts_user_to_add_product(): void
@@ -480,6 +484,10 @@ class ProductPaginationTest extends TestCase
         $response->assertOk();
         $response->assertSee('data-supplier-search-form', false);
         $response->assertSee('data-supplier-search', false);
+        $response->assertSee('data-supplier-listing-results', false);
+        $response->assertSee('data-supplier-listing-loader', false);
+        $response->assertSee('loadSupplierListing', false);
+        $response->assertSee("'X-Requested-With': 'XMLHttpRequest'", false);
         $response->assertSee('10 / page');
         $response->assertSee('Showing 11-14 of 14 suppliers');
         $response->assertSee('per_page=10', false);
@@ -546,6 +554,9 @@ class ProductPaginationTest extends TestCase
         $response->assertOk();
         $response->assertSee('data-customer-search-form', false);
         $response->assertSee('data-customer-search', false);
+        $response->assertSee('data-customer-listing-results', false);
+        $response->assertSee('data-customer-listing-loader', false);
+        $response->assertSee('loadCustomers', false);
         $response->assertSee('10 / page');
         $response->assertSee('Showing 11-14 of 14 customers');
         $response->assertSee('per_page=10', false);
@@ -637,6 +648,9 @@ class ProductPaginationTest extends TestCase
         $response->assertOk();
         $response->assertSee('data-return-search-form', false);
         $response->assertSee('data-return-search', false);
+        $response->assertSee('data-return-listing-results', false);
+        $response->assertSee('data-return-listing-loader', false);
+        $response->assertSee('loadReturns', false);
         $response->assertSee('10 / page');
         $response->assertSee('Showing 11-12 of 12 returns');
         $response->assertSee('per_page=10', false);
@@ -967,6 +981,10 @@ class ProductPaginationTest extends TestCase
         $response->assertOk();
         $response->assertSee('data-purchase-search-form', false);
         $response->assertSee('data-purchase-search', false);
+        $response->assertSee('data-purchase-listing-results', false);
+        $response->assertSee('data-purchase-listing-loader', false);
+        $response->assertSee('loadPurchaseListing', false);
+        $response->assertSee("'X-Requested-With': 'XMLHttpRequest'", false);
         $response->assertSee('10 / page');
         $response->assertSee('Showing 11-12 of 12 purchase orders');
         $response->assertSee('per_page=10', false);
@@ -1316,8 +1334,12 @@ class ProductPaginationTest extends TestCase
 
         $listing->assertOk();
         $listing->assertSee('data-billing-listing', false);
+        $listing->assertSee('data-billing-listing-results', false);
         $listing->assertSee('data-billing-listing-loader', false);
         $listing->assertSee('Loading invoices');
+        $listing->assertSee('loadBillingListing', false);
+        $listing->assertSee("'X-Requested-With': 'XMLHttpRequest'", false);
+        $listing->assertSee("window.addEventListener('popstate'", false);
         $listing->assertSee('data-invoice-view', false);
         $listing->assertSee('invoice-drawer', false);
         $listing->assertSee('Invoice details');

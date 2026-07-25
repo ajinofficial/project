@@ -37,6 +37,8 @@
         .stock-filter-form { grid-template-columns: minmax(190px, 1fr) minmax(130px, 170px) minmax(100px, 130px) 70px; }
         .stock-movement-table { min-width: 940px; }
         .stock-flow-row { margin-bottom: 16px; }
+        .stock-listing-results { position: relative; min-height: 160px; }
+        .stock-listing-results .product-listing-loader { inset: 0; }
         @media (max-width: 1280px) {
             .stock-workspace .product-stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
@@ -55,8 +57,8 @@
                 <span>Track stock on hand and audit purchase, billing, return, and adjustment movement.</span>
             </div>
             <div class="product-head-actions">
-                <a class="ghost-button" href="{{ route('products.index') }}" data-stock-listing-link>Inventory</a>
-                <a class="primary-link" href="{{ route('stock.create') }}" data-stock-listing-link>Add stock</a>
+                <a class="ghost-button" href="{{ route('products.index') }}">Inventory</a>
+                <a class="primary-link" href="{{ route('stock.create') }}">Add stock</a>
             </div>
         </header>
 
@@ -94,11 +96,6 @@
                     <span>Every operation writes to this ledger with quantity, stock after, and reference notes.</span>
                 </div>
             </div>
-            <div class="product-listing-loader" data-stock-listing-loader aria-live="polite" aria-hidden="true">
-                <span aria-hidden="true"></span>
-                <strong>Loading movements</strong>
-            </div>
-
             <div class="product-toolbar">
                 <form class="product-filter-form stock-filter-form" method="GET" action="{{ route('stock.index') }}" data-stock-search-form>
                     <input type="search" name="search" value="{{ request('search') }}" placeholder="Search product, SKU, notes" data-stock-search>
@@ -115,55 +112,70 @@
                             <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }} / page</option>
                         @endforeach
                     </select>
-                    <a class="product-clear-filter" href="{{ route('stock.index') }}">Clear</a>
+                    <a class="product-clear-filter" href="{{ route('stock.index') }}" data-stock-listing-link>Clear</a>
                 </form>
             </div>
 
-            <div class="table-wrap">
-                <table class="inventory-table stock-movement-table">
-                    <thead><tr><th>Date</th><th>Product</th><th>Type</th><th>Quantity</th><th>Stock after</th><th>Notes</th></tr></thead>
-                    <tbody>
-                        @forelse ($movements as $movement)
-                            @php $typeClass = $movement->quantity > 0 ? 'is-in' : ($movement->quantity < 0 ? 'is-out' : 'is-neutral'); @endphp
-                            <tr>
-                                <td>{{ $movement->created_at->format('d M Y') }}</td>
-                                <td>
-                                    <div class="inventory-product-cell">
-                                        <span class="item-thumb">
-                                            @if ($movement->product?->image_url)
-                                                <img src="{{ $movement->product->image_url }}" alt="">
-                                            @else
-                                                {{ strtoupper(substr($movement->product->name ?? 'P', 0, 1)) }}
-                                            @endif
-                                        </span>
-                                        <div>
-                                            <strong>{{ $movement->product->name ?? 'Product' }}</strong>
-                                            <small>{{ $movement->product->sku ?? 'No SKU' }}</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td><span class="stock-type-pill {{ $typeClass }}">{{ str_replace('_', ' ', ucfirst($movement->type)) }}</span></td>
-                                <td>{{ $movement->quantity > 0 ? '+' : '' }}{{ number_format($movement->quantity) }}</td>
-                                <td>{{ number_format($movement->stock_after) }}</td>
-                                <td>{{ $movement->notes ?: '-' }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="6">{{ request()->filled('search') || request()->filled('type') ? 'No stock movements match the current filters.' : 'No stock movements yet.' }}</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+            <div class="stock-listing-results" data-stock-listing-results>
+                <div class="product-listing-loader" data-stock-listing-loader aria-live="polite" aria-hidden="true">
+                    <span aria-hidden="true"></span>
+                    <strong>Loading movements</strong>
+                </div>
 
-            @include('products.partials.pagination', ['paginator' => $movements, 'itemLabel' => 'movements'])
+                <div class="table-wrap">
+                    <table class="inventory-table stock-movement-table">
+                        <thead><tr><th>Date</th><th>Product</th><th>Type</th><th>Quantity</th><th>Stock after</th><th>Notes</th></tr></thead>
+                        <tbody>
+                            @forelse ($movements as $movement)
+                                @php $typeClass = $movement->quantity > 0 ? 'is-in' : ($movement->quantity < 0 ? 'is-out' : 'is-neutral'); @endphp
+                                <tr>
+                                    <td>{{ $movement->created_at->format('d M Y') }}</td>
+                                    <td>
+                                        <div class="inventory-product-cell">
+                                            <span class="item-thumb">
+                                                @if ($movement->product?->image_url)
+                                                    <img src="{{ $movement->product->image_url }}" alt="">
+                                                @else
+                                                    {{ strtoupper(substr($movement->product->name ?? 'P', 0, 1)) }}
+                                                @endif
+                                            </span>
+                                            <div>
+                                                <strong>{{ $movement->product->name ?? 'Product' }}</strong>
+                                                <small>{{ $movement->product->sku ?? 'No SKU' }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="stock-type-pill {{ $typeClass }}">{{ str_replace('_', ' ', ucfirst($movement->type)) }}</span></td>
+                                    <td>{{ $movement->quantity > 0 ? '+' : '' }}{{ number_format($movement->quantity) }}</td>
+                                    <td>{{ number_format($movement->stock_after) }}</td>
+                                    <td>{{ $movement->notes ?: '-' }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="6">{{ request()->filled('search') || request()->filled('type') ? 'No stock movements match the current filters.' : 'No stock movements yet.' }}</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                @include('products.partials.pagination', ['paginator' => $movements, 'itemLabel' => 'movements'])
+            </div>
         </section>
     </section>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var listing = document.querySelector('[data-stock-listing]');
-            var loader = document.querySelector('[data-stock-listing-loader]');
+        (function () {
+            if (window.stockListingAjaxBound) {
+                return;
+            }
+
+            window.stockListingAjaxBound = true;
+            var activeRequest = null;
+            var searchTimer = null;
 
             function showStockListingLoader() {
+                var listing = document.querySelector('[data-stock-listing]');
+                var loader = document.querySelector('[data-stock-listing-loader]');
+
                 if (! listing || ! loader) {
                     return;
                 }
@@ -172,54 +184,120 @@
                 loader.setAttribute('aria-hidden', 'false');
             }
 
-            document.querySelectorAll('[data-stock-search-form]').forEach(function (form) {
-                var search = form.querySelector('input[name="search"]');
-                var fields = form.querySelectorAll('[data-stock-search]');
-                var timer = null;
+            function filterUrl(form) {
+                var params = new URLSearchParams(new FormData(form));
 
-                function submitFilters() {
-                    showStockListingLoader();
-
-                    if (search && search.value.trim() === '') {
-                        search.disabled = true;
+                Array.from(params.keys()).forEach(function (key) {
+                    if (params.get(key) === '') {
+                        params.delete(key);
                     }
+                });
 
-                    if (typeof form.requestSubmit === 'function') {
-                        form.requestSubmit();
-                        return;
-                    }
+                var query = params.toString();
+                return form.action + (query ? '?' + query : '');
+            }
 
-                    form.submit();
+            function loadStockListing(url, pushState) {
+                var workspace = document.querySelector('.stock-workspace');
+
+                if (! workspace) {
+                    window.location.href = url;
+                    return;
                 }
 
-                fields.forEach(function (field) {
-                    if (field.matches('input[type="search"]')) {
-                        field.addEventListener('input', function () {
-                            window.clearTimeout(timer);
-                            timer = window.setTimeout(submitFilters, 350);
-                        });
+                if (activeRequest) {
+                    activeRequest.abort();
+                }
 
-                        field.addEventListener('search', submitFilters);
-                        return;
+                var requestController = new AbortController();
+                activeRequest = requestController;
+                showStockListingLoader();
+
+                fetch(url, {
+                    headers: {
+                        'Accept': 'text/html',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    signal: requestController.signal
+                }).then(function (response) {
+                    if (! response.ok) {
+                        throw new Error('Unable to load stock movements.');
                     }
 
-                    field.addEventListener('change', submitFilters);
-                });
+                    return response.text();
+                }).then(function (html) {
+                    var page = new DOMParser().parseFromString(html, 'text/html');
+                    var nextWorkspace = page.querySelector('.stock-workspace');
 
-                form.addEventListener('submit', function () {
-                    showStockListingLoader();
-                });
-            });
-
-            document.querySelectorAll('[data-stock-listing-link], .product-pagination a').forEach(function (link) {
-                link.addEventListener('click', function (event) {
-                    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
-                        return;
+                    if (! nextWorkspace) {
+                        throw new Error('Stock listing was not found.');
                     }
 
-                    showStockListingLoader();
+                    workspace.replaceWith(nextWorkspace);
+                    document.title = page.title || document.title;
+
+                    if (pushState !== false) {
+                        window.history.pushState({ stockListing: true }, '', url);
+                    }
+                }).catch(function (error) {
+                    if (error.name !== 'AbortError') {
+                        window.location.href = url;
+                    }
+                }).finally(function () {
+                    if (activeRequest === requestController) {
+                        activeRequest = null;
+                    }
                 });
+            }
+
+            document.addEventListener('submit', function (event) {
+                var form = event.target.closest('[data-stock-search-form]');
+
+                if (! form) {
+                    return;
+                }
+
+                event.preventDefault();
+                loadStockListing(filterUrl(form), true);
             });
-        });
+
+            document.addEventListener('change', function (event) {
+                var field = event.target.closest('[data-stock-search-form] select[data-stock-search]');
+
+                if (field) {
+                    loadStockListing(filterUrl(field.form), true);
+                }
+            });
+
+            document.addEventListener('input', function (event) {
+                var search = event.target.closest('[data-stock-search-form] input[type="search"]');
+
+                if (! search) {
+                    return;
+                }
+
+                window.clearTimeout(searchTimer);
+                searchTimer = window.setTimeout(function () {
+                    loadStockListing(filterUrl(search.form), true);
+                }, 350);
+            });
+
+            document.addEventListener('click', function (event) {
+                var link = event.target.closest('[data-stock-listing-link], [data-stock-listing] .product-pagination a');
+
+                if (! link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                    return;
+                }
+
+                event.preventDefault();
+                loadStockListing(link.href, true);
+            });
+
+            window.addEventListener('popstate', function () {
+                if (window.location.pathname === new URL('{{ route('stock.index') }}').pathname) {
+                    loadStockListing(window.location.href, false);
+                }
+            });
+        })();
     </script>
 @endsection

@@ -3356,7 +3356,7 @@ button.ghost-button {
     align-items: center;
     gap: 7px;
     min-height: 34px;
-    margin-bottom: 10px;
+    margin: 0;
     border: 1px solid var(--inapp-line);
     border-radius: 8px;
     padding: 7px 12px;

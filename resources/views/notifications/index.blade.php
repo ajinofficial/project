@@ -7,20 +7,15 @@
     <section class="admin-section notification-page" data-notification-page>
         <div class="section-title notification-page-head">
             <div>
-                <a class="notification-back-button" href="{{ url()->previous() === url()->current() ? route(\App\Support\RolePermission::firstAccessibleRoute(auth()->user())) : url()->previous() }}">
-                    <span aria-hidden="true">&lt;</span> Back
-                </a>
                 <h2 class="notification-title">
-                    <span class="notification-title-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" role="img">
-                            <path d="M15 17H9m9-2V10a6 6 0 0 0-12 0v5l-2 2h16l-2-2Zm-7 5a2 2 0 0 0 2-2H9a2 2 0 0 0 2 2Z" />
-                        </svg>
-                    </span>
                     Notifications
                 </h2>
                 <p>Stock and activity alerts for this tenant.</p>
             </div>
             <div class="notification-page-actions">
+                <a class="notification-back-button" href="{{ route(\App\Support\RolePermission::firstAccessibleRoute(auth()->user())) }}" data-notification-back>
+                    <span aria-hidden="true">&larr;</span> Back
+                </a>
                 <nav class="notification-filter-tabs" aria-label="Notification filters">
                     <a href="{{ route('notifications.index', array_filter(['search' => $search, 'type' => $type])) }}" @class(['active' => $filter === 'all'])>
                         All <span>{{ $allCount }}</span>
@@ -182,6 +177,23 @@
     </section>
 
     <script>
+        (function initialiseNotificationBackButton() {
+            var backButton = document.querySelector('[data-notification-back]');
+
+            if (!backButton) {
+                return;
+            }
+
+            backButton.addEventListener('click', function (event) {
+                if (window.history.length <= 1) {
+                    return;
+                }
+
+                event.preventDefault();
+                window.history.back();
+            });
+        })();
+
         document.addEventListener('submit', function (event) {
             var form = event.target.closest('[data-notification-action]');
 

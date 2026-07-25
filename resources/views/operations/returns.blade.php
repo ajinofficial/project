@@ -2,6 +2,11 @@
 
 @section('content')
     <style>
+        .return-listing-results { position: relative; min-height: 160px; }
+        .return-listing-results .product-listing-loader { inset: 0; }
+        .return-listing-panel.is-loading .table-wrap,
+        .return-listing-panel.is-loading .product-pagination { opacity: .38; pointer-events: none; }
+        .return-listing-panel.is-loading .product-listing-loader { display: grid; }
         .return-form {
             gap: 12px;
         }
@@ -154,7 +159,7 @@
             </form>
         </article>
 
-        <article class="admin-section">
+        <article class="admin-section return-listing-panel" data-return-listing>
             <div class="section-title"><div><p class="eyebrow">Audit log</p><h2>Return movements</h2></div></div>
             <div class="product-toolbar">
                 <form class="product-filter-form return-filter-form" method="GET" action="{{ route('returns.index') }}" data-return-search-form>
@@ -170,12 +175,13 @@
                             <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }} / page</option>
                         @endforeach
                     </select>
-                    <a class="product-clear-filter" href="{{ route('returns.index') }}">Clear</a>
+                    <a class="product-clear-filter" href="{{ route('returns.index') }}" data-return-listing-link>Clear</a>
                 </form>
             </div>
 
-            <div class="table-wrap">
-                <table class="admin-table return-table">
+            <div class="return-listing-results" data-return-listing-results>
+                <div class="product-listing-loader" data-return-listing-loader aria-live="polite" aria-hidden="true"><span aria-hidden="true"></span><strong>Loading returns</strong></div>
+                <div class="table-wrap"><table class="admin-table return-table">
                     <thead><tr><th>Product</th><th>Type</th><th>Quantity</th><th>Stock after</th><th>Notes</th></tr></thead>
                     <tbody>
                     @forelse ($movements as $movement)
@@ -199,39 +205,68 @@
                         <tr><td colspan="5">{{ request()->filled('search') || request()->filled('type') ? 'No return movements match the current filters.' : 'No returns processed yet.' }}</td></tr>
                     @endforelse
                     </tbody>
-                </table>
+                </table></div>
+                @include('products.partials.pagination', ['paginator' => $movements, 'itemLabel' => 'returns'])
             </div>
-            @include('products.partials.pagination', ['paginator' => $movements, 'itemLabel' => 'returns'])
         </article>
     </section>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('[data-return-search-form]').forEach(function (form) {
-                var search = form.querySelector('[data-return-search]');
-                var fields = form.querySelectorAll('[data-return-search]');
+            var returnRequest = null;
+            var returnTimer = null;
 
-                if (!search) {
-                    return;
-                }
+            function returnUrl(form) {
+                var params = new URLSearchParams(new FormData(form));
+                Array.from(params.keys()).forEach(function (key) { if (params.get(key) === '') params.delete(key); });
+                return form.action + (params.toString() ? '?' + params.toString() : '');
+            }
 
-                function submitSearch() {
-                    if (search.value.trim() === '') {
-                        search.disabled = true;
-                    }
+            function loadReturns(url, pushState) {
+                var listing = document.querySelector('[data-return-listing]');
+                if (!listing) { window.location.href = url; return; }
+                if (returnRequest) returnRequest.abort();
+                var controller = new AbortController();
+                returnRequest = controller;
+                listing.classList.add('is-loading');
+                listing.querySelector('[data-return-listing-loader]')?.setAttribute('aria-hidden', 'false');
 
-                    if (typeof form.requestSubmit === 'function') {
-                        form.requestSubmit();
-                        return;
-                    }
+                fetch(url, { headers: { 'Accept': 'text/html', 'X-Requested-With': 'XMLHttpRequest' }, signal: controller.signal })
+                    .then(function (response) { if (!response.ok) throw new Error('Unable to load returns.'); return response.text(); })
+                    .then(function (html) {
+                        var page = new DOMParser().parseFromString(html, 'text/html');
+                        var next = page.querySelector('[data-return-listing]');
+                        if (!next) throw new Error('Return listing was not found.');
+                        listing.replaceWith(next);
+                        document.title = page.title || document.title;
+                        if (pushState !== false) window.history.pushState({ returnListing: true }, '', url);
+                    })
+                    .catch(function (error) { if (error.name !== 'AbortError') window.location.href = url; })
+                    .finally(function () { if (returnRequest === controller) returnRequest = null; });
+            }
 
-                    form.submit();
-                }
-
-                fields.forEach(function (field) {
-                    field.addEventListener('change', submitSearch);
-                    field.addEventListener('search', submitSearch);
-                });
+            document.addEventListener('submit', function (event) {
+                var form = event.target.closest('[data-return-search-form]');
+                if (form) { event.preventDefault(); loadReturns(returnUrl(form), true); }
+            });
+            document.addEventListener('change', function (event) {
+                var select = event.target.closest('[data-return-search-form] select');
+                if (select) loadReturns(returnUrl(select.form), true);
+            });
+            document.addEventListener('input', function (event) {
+                var search = event.target.closest('[data-return-search-form] input[type="search"]');
+                if (!search) return;
+                clearTimeout(returnTimer);
+                returnTimer = setTimeout(function () { loadReturns(returnUrl(search.form), true); }, 350);
+            });
+            document.addEventListener('click', function (event) {
+                var link = event.target.closest('[data-return-listing-link], [data-return-listing] .product-pagination a');
+                if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                event.preventDefault();
+                loadReturns(link.href, true);
+            });
+            window.addEventListener('popstate', function () {
+                if (window.location.pathname === new URL('{{ route('returns.index') }}').pathname) loadReturns(window.location.href, false);
             });
 
             document.querySelectorAll('[data-return-form]').forEach(function (form) {

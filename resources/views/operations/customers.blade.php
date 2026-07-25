@@ -2,6 +2,11 @@
 
 @section('content')
     <style>
+        .customer-listing-results { position: relative; min-height: 160px; }
+        .customer-listing-results .product-listing-loader { inset: 0; }
+        .customer-listing-panel.is-loading .table-wrap,
+        .customer-listing-panel.is-loading .product-pagination { opacity: .38; pointer-events: none; }
+        .customer-listing-panel.is-loading .product-listing-loader { display: grid; }
         .customer-form {
             gap: 12px;
         }
@@ -122,7 +127,7 @@
             </form>
         </article>
 
-        <article class="admin-section">
+        <article class="admin-section customer-listing-panel" data-customer-listing>
             <div class="section-title"><div><p class="eyebrow">Sales accounts</p><h2>Customers</h2></div></div>
             <div class="product-toolbar">
                 <form class="product-filter-form billing-search-form customer-filter-form" method="GET" action="{{ route('customers.index') }}" data-customer-search-form>
@@ -132,12 +137,13 @@
                             <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }} / page</option>
                         @endforeach
                     </select>
-                    <a class="product-clear-filter" href="{{ route('customers.index') }}">Clear</a>
+                    <a class="product-clear-filter" href="{{ route('customers.index') }}" data-customer-listing-link>Clear</a>
                 </form>
             </div>
 
-            <div class="table-wrap">
-                <table class="admin-table customer-table">
+            <div class="customer-listing-results" data-customer-listing-results>
+                <div class="product-listing-loader" data-customer-listing-loader aria-live="polite" aria-hidden="true"><span aria-hidden="true"></span><strong>Loading customers</strong></div>
+                <div class="table-wrap"><table class="admin-table customer-table">
                     <thead><tr><th>Name</th><th>Mobile</th><th>Credit limit</th><th>Outstanding</th></tr></thead>
                     <tbody>
                     @forelse ($customers as $customer)
@@ -146,39 +152,68 @@
                         <tr><td colspan="4">{{ request()->filled('search') ? 'No customers match the current search.' : 'No customers yet.' }}</td></tr>
                     @endforelse
                     </tbody>
-                </table>
+                </table></div>
+                @include('products.partials.pagination', ['paginator' => $customers, 'itemLabel' => 'customers'])
             </div>
-            @include('products.partials.pagination', ['paginator' => $customers, 'itemLabel' => 'customers'])
         </article>
     </section>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('[data-customer-search-form]').forEach(function (form) {
-                var search = form.querySelector('[data-customer-search]');
-                var fields = form.querySelectorAll('[data-customer-search]');
+            var customerRequest = null;
+            var customerTimer = null;
 
-                if (!search) {
-                    return;
-                }
+            function customerUrl(form) {
+                var params = new URLSearchParams(new FormData(form));
+                Array.from(params.keys()).forEach(function (key) { if (params.get(key) === '') params.delete(key); });
+                return form.action + (params.toString() ? '?' + params.toString() : '');
+            }
 
-                function submitSearch() {
-                    if (search.value.trim() === '') {
-                        search.disabled = true;
-                    }
+            function loadCustomers(url, pushState) {
+                var listing = document.querySelector('[data-customer-listing]');
+                if (!listing) { window.location.href = url; return; }
+                if (customerRequest) customerRequest.abort();
+                var controller = new AbortController();
+                customerRequest = controller;
+                listing.classList.add('is-loading');
+                listing.querySelector('[data-customer-listing-loader]')?.setAttribute('aria-hidden', 'false');
 
-                    if (typeof form.requestSubmit === 'function') {
-                        form.requestSubmit();
-                        return;
-                    }
+                fetch(url, { headers: { 'Accept': 'text/html', 'X-Requested-With': 'XMLHttpRequest' }, signal: controller.signal })
+                    .then(function (response) { if (!response.ok) throw new Error('Unable to load customers.'); return response.text(); })
+                    .then(function (html) {
+                        var page = new DOMParser().parseFromString(html, 'text/html');
+                        var next = page.querySelector('[data-customer-listing]');
+                        if (!next) throw new Error('Customer listing was not found.');
+                        listing.replaceWith(next);
+                        document.title = page.title || document.title;
+                        if (pushState !== false) window.history.pushState({ customerListing: true }, '', url);
+                    })
+                    .catch(function (error) { if (error.name !== 'AbortError') window.location.href = url; })
+                    .finally(function () { if (customerRequest === controller) customerRequest = null; });
+            }
 
-                    form.submit();
-                }
-
-                fields.forEach(function (field) {
-                    field.addEventListener('change', submitSearch);
-                    field.addEventListener('search', submitSearch);
-                });
+            document.addEventListener('submit', function (event) {
+                var form = event.target.closest('[data-customer-search-form]');
+                if (form) { event.preventDefault(); loadCustomers(customerUrl(form), true); }
+            });
+            document.addEventListener('change', function (event) {
+                var select = event.target.closest('[data-customer-search-form] select');
+                if (select) loadCustomers(customerUrl(select.form), true);
+            });
+            document.addEventListener('input', function (event) {
+                var search = event.target.closest('[data-customer-search-form] input[type="search"]');
+                if (!search) return;
+                clearTimeout(customerTimer);
+                customerTimer = setTimeout(function () { loadCustomers(customerUrl(search.form), true); }, 350);
+            });
+            document.addEventListener('click', function (event) {
+                var link = event.target.closest('[data-customer-listing-link], [data-customer-listing] .product-pagination a');
+                if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                event.preventDefault();
+                loadCustomers(link.href, true);
+            });
+            window.addEventListener('popstate', function () {
+                if (window.location.pathname === new URL('{{ route('customers.index') }}').pathname) loadCustomers(window.location.href, false);
             });
 
             document.querySelectorAll('[data-customer-form]').forEach(function (form) {

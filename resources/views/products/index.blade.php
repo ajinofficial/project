@@ -188,15 +188,18 @@
 
     <script>
         (function () {
-            var form = document.querySelector('[data-product-filters]');
-            var listing = document.querySelector('[data-product-listing]');
-            var loader = document.querySelector('[data-product-listing-loader]');
-
-            if (! form) {
+            if (window.productListingAjaxBound) {
                 return;
             }
 
+            window.productListingAjaxBound = true;
+            var activeRequest = null;
+            var searchTimer = null;
+
             function showListingLoader() {
+                var listing = document.querySelector('[data-product-listing]');
+                var loader = document.querySelector('[data-product-listing-loader]');
+
                 if (! listing || ! loader) {
                     return;
                 }
@@ -205,46 +208,120 @@
                 loader.setAttribute('aria-hidden', 'false');
             }
 
-            function submitFilters() {
-                showListingLoader();
+            function filterUrl(form) {
+                var params = new URLSearchParams(new FormData(form));
 
-                if (typeof form.requestSubmit === 'function') {
-                    form.requestSubmit();
+                Array.from(params.keys()).forEach(function (key) {
+                    if (params.get(key) === '') {
+                        params.delete(key);
+                    }
+                });
+
+                var query = params.toString();
+                return form.action + (query ? '?' + query : '');
+            }
+
+            function loadListing(url, pushState) {
+                var workspace = document.querySelector('.product-workspace');
+
+                if (! workspace) {
+                    window.location.href = url;
                     return;
                 }
 
-                form.submit();
-            }
+                if (activeRequest) {
+                    activeRequest.abort();
+                }
 
-            form.querySelectorAll('[data-auto-filter]').forEach(function (field) {
-                field.addEventListener('change', submitFilters);
-            });
-
-            form.addEventListener('submit', function () {
+                var requestController = new AbortController();
+                activeRequest = requestController;
                 showListingLoader();
 
-                form.querySelectorAll('input, select').forEach(function (field) {
-                    if (field.value === '') {
-                        field.disabled = true;
-                    }
-                });
-            });
-
-            document.querySelectorAll('[data-product-listing-link], .product-pagination a').forEach(function (link) {
-                link.addEventListener('click', function (event) {
-                    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
-                        return;
+                fetch(url, {
+                    headers: {
+                        'Accept': 'text/html',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    signal: requestController.signal
+                }).then(function (response) {
+                    if (! response.ok) {
+                        throw new Error('Unable to load products.');
                     }
 
-                    showListingLoader();
-                });
-            });
+                    return response.text();
+                }).then(function (html) {
+                    var page = new DOMParser().parseFromString(html, 'text/html');
+                    var nextWorkspace = page.querySelector('.product-workspace');
 
-            if (listing) {
-                listing.querySelectorAll('form:not([data-confirm])').forEach(function (listingForm) {
-                    listingForm.addEventListener('submit', showListingLoader);
+                    if (! nextWorkspace) {
+                        throw new Error('Product listing was not found.');
+                    }
+
+                    workspace.replaceWith(nextWorkspace);
+                    document.title = page.title || document.title;
+
+                    if (pushState !== false) {
+                        window.history.pushState({ productListing: true }, '', url);
+                    }
+                }).catch(function (error) {
+                    if (error.name !== 'AbortError') {
+                        window.location.href = url;
+                    }
+                }).finally(function () {
+                    if (activeRequest === requestController) {
+                        activeRequest = null;
+                    }
                 });
             }
+
+            document.addEventListener('submit', function (event) {
+                var form = event.target.closest('[data-product-filters]');
+
+                if (! form) {
+                    return;
+                }
+
+                event.preventDefault();
+                loadListing(filterUrl(form), true);
+            });
+
+            document.addEventListener('change', function (event) {
+                var field = event.target.closest('[data-product-filters] [data-auto-filter]');
+
+                if (! field || field.type === 'search') {
+                    return;
+                }
+
+                loadListing(filterUrl(field.form), true);
+            });
+
+            document.addEventListener('input', function (event) {
+                var search = event.target.closest('[data-product-filters] input[type="search"]');
+
+                if (! search) {
+                    return;
+                }
+
+                window.clearTimeout(searchTimer);
+                searchTimer = window.setTimeout(function () {
+                    loadListing(filterUrl(search.form), true);
+                }, 350);
+            });
+
+            document.addEventListener('click', function (event) {
+                var link = event.target.closest('[data-product-listing-link], .product-pagination a');
+
+                if (! link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                    return;
+                }
+
+                event.preventDefault();
+                loadListing(link.href, true);
+            });
+
+            window.addEventListener('popstate', function () {
+                loadListing(window.location.href, false);
+            });
         })();
     </script>
 @endsection

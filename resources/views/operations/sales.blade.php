@@ -401,8 +401,9 @@
             pointer-events: none;
         }
 
-        .billing-invoice-listing {
+        .billing-invoice-results {
             position: relative;
+            min-height: 180px;
         }
 
         .billing-listing-loader {
@@ -767,12 +768,13 @@
                     <a class="product-clear-filter" href="{{ route('sales.index') }}" data-billing-listing-link>Clear</a>
                 </form>
             </div>
-            <div class="table-wrap billing-invoice-listing">
+            <div class="billing-invoice-results" data-billing-listing-results>
                 <div class="billing-listing-loader" data-billing-listing-loader aria-live="polite" aria-hidden="true">
                     <span aria-hidden="true"></span>
                     <strong>Loading invoices</strong>
                 </div>
-                <table class="admin-table billing-invoice-table"><thead><tr><th>Invoice</th><th>Customer</th><th>Items</th><th>Total</th><th>Paid</th><th>Action</th></tr></thead><tbody>
+                <div class="table-wrap billing-invoice-listing">
+                    <table class="admin-table billing-invoice-table"><thead><tr><th>Invoice</th><th>Customer</th><th>Items</th><th>Total</th><th>Paid</th><th>Action</th></tr></thead><tbody>
                 @forelse ($orders as $order)
                     @php
                         $invoiceItems = $order->items->map(function ($item) {
@@ -827,8 +829,10 @@
                 @empty
                     <tr><td colspan="6">No invoices yet.</td></tr>
                 @endforelse
-            </tbody></table></div>
-            @include('products.partials.pagination', ['paginator' => $orders, 'itemLabel' => 'invoices'])
+                    </tbody></table>
+                </div>
+                @include('products.partials.pagination', ['paginator' => $orders, 'itemLabel' => 'invoices'])
+            </div>
         </article>
     </section>
 
@@ -896,10 +900,13 @@
             var productData = @json($productPayload);
             var invoiceDrawer = document.querySelector('[data-invoice-drawer]');
             var invoiceBackdrop = document.querySelector('[data-invoice-backdrop]');
-            var billingListing = document.querySelector('[data-billing-listing]');
-            var billingListingLoader = document.querySelector('[data-billing-listing-loader]');
+            var billingListingRequest = null;
+            var billingSearchTimer = null;
 
             function showBillingListingLoader() {
+                var billingListing = document.querySelector('[data-billing-listing]');
+                var billingListingLoader = document.querySelector('[data-billing-listing-loader]');
+
                 if (!billingListing || !billingListingLoader) {
                     return;
                 }
@@ -918,8 +925,10 @@
                 invoiceBackdrop?.classList.remove('is-open');
             }
 
-            document.querySelectorAll('[data-invoice-view]').forEach(function (button) {
-                button.addEventListener('click', function () {
+            document.addEventListener('click', function (event) {
+                var button = event.target.closest('[data-invoice-view]');
+
+                if (button) {
                     var items = [];
 
                     try {
@@ -960,7 +969,7 @@
                     invoiceDrawer?.classList.add('is-open');
                     invoiceDrawer?.setAttribute('aria-hidden', 'false');
                     invoiceBackdrop?.classList.add('is-open');
-                });
+                }
             });
 
             document.querySelectorAll('[data-close-invoice], [data-invoice-backdrop]').forEach(function (button) {
@@ -973,44 +982,109 @@
                 }
             });
 
-            document.querySelectorAll('[data-billing-search-form]').forEach(function (form) {
-                var search = form.querySelector('[data-billing-search]');
+            function billingUrl(form) {
+                var params = new URLSearchParams(new FormData(form));
+
+                Array.from(params.keys()).forEach(function (key) {
+                    if (params.get(key) === '') {
+                        params.delete(key);
+                    }
+                });
+
+                var query = params.toString();
+                return form.action + (query ? '?' + query : '');
+            }
+
+            function loadBillingListing(url, pushState) {
+                var listing = document.querySelector('[data-billing-listing]');
+
+                if (!listing) {
+                    window.location.href = url;
+                    return;
+                }
+
+                if (billingListingRequest) {
+                    billingListingRequest.abort();
+                }
+
+                var requestController = new AbortController();
+                billingListingRequest = requestController;
+                showBillingListingLoader();
+
+                fetch(url, {
+                    headers: {
+                        'Accept': 'text/html',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    signal: requestController.signal
+                }).then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('Unable to load invoices.');
+                    }
+
+                    return response.text();
+                }).then(function (html) {
+                    var page = new DOMParser().parseFromString(html, 'text/html');
+                    var nextListing = page.querySelector('[data-billing-listing]');
+
+                    if (!nextListing) {
+                        throw new Error('Invoice listing was not found.');
+                    }
+
+                    listing.replaceWith(nextListing);
+                    document.title = page.title || document.title;
+
+                    if (pushState !== false) {
+                        window.history.pushState({ billingListing: true }, '', url);
+                    }
+                }).catch(function (error) {
+                    if (error.name !== 'AbortError') {
+                        window.location.href = url;
+                    }
+                }).finally(function () {
+                    if (billingListingRequest === requestController) {
+                        billingListingRequest = null;
+                    }
+                });
+            }
+
+            document.addEventListener('submit', function (event) {
+                var form = event.target.closest('[data-billing-search-form]');
+
+                if (form) {
+                    event.preventDefault();
+                    loadBillingListing(billingUrl(form), true);
+                }
+            });
+
+            document.addEventListener('input', function (event) {
+                var search = event.target.closest('[data-billing-search-form] [data-billing-search]');
 
                 if (!search) {
                     return;
                 }
 
-                function submitSearch() {
-                    showBillingListingLoader();
-
-                    if (search.value.trim() === '') {
-                        search.disabled = true;
-                    }
-
-                    if (typeof form.requestSubmit === 'function') {
-                        form.requestSubmit();
-                        return;
-                    }
-
-                    form.submit();
-                }
-
-                search.addEventListener('change', submitSearch);
-                search.addEventListener('search', submitSearch);
-
-                form.addEventListener('submit', function () {
-                    showBillingListingLoader();
-                });
+                window.clearTimeout(billingSearchTimer);
+                billingSearchTimer = window.setTimeout(function () {
+                    loadBillingListing(billingUrl(search.form), true);
+                }, 350);
             });
 
-            document.querySelectorAll('[data-billing-listing-link], .billing-invoice-panel .product-pagination a').forEach(function (link) {
-                link.addEventListener('click', function (event) {
-                    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
-                        return;
-                    }
+            document.addEventListener('click', function (event) {
+                var link = event.target.closest('[data-billing-listing-link], [data-billing-listing] .product-pagination a');
 
-                    showBillingListingLoader();
-                });
+                if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                    return;
+                }
+
+                event.preventDefault();
+                loadBillingListing(link.href, true);
+            });
+
+            window.addEventListener('popstate', function () {
+                if (window.location.pathname === new URL('{{ route('sales.index') }}').pathname) {
+                    loadBillingListing(window.location.href, false);
+                }
             });
 
             document.querySelectorAll('[data-billing-form]').forEach(function (form) {

@@ -58,6 +58,25 @@
             font-size: 12px;
             font-weight: 700;
         }
+
+        .supplier-listing-panel.is-loading .table-wrap,
+        .supplier-listing-panel.is-loading .product-pagination {
+            opacity: 0.38;
+            pointer-events: none;
+        }
+
+        .supplier-listing-results {
+            position: relative;
+            min-height: 160px;
+        }
+
+        .supplier-listing-results .product-listing-loader {
+            inset: 0;
+        }
+
+        .supplier-listing-panel.is-loading .product-listing-loader {
+            display: grid;
+        }
     </style>
 
     <section class="ops-grid">
@@ -115,7 +134,7 @@
             </form>
         </article>
 
-        <article class="admin-section">
+        <article class="admin-section supplier-listing-panel" data-supplier-listing>
             <div class="section-title"><div><p class="eyebrow">Purchase partners</p><h2>Suppliers</h2></div></div>
             <div class="product-toolbar">
                 <form class="product-filter-form billing-search-form supplier-filter-form" method="GET" action="{{ route('suppliers.index') }}" data-supplier-search-form>
@@ -125,53 +144,158 @@
                             <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }} / page</option>
                         @endforeach
                     </select>
-                    <a class="product-clear-filter" href="{{ route('suppliers.index') }}">Clear</a>
+                    <a class="product-clear-filter" href="{{ route('suppliers.index') }}" data-supplier-listing-link>Clear</a>
                 </form>
             </div>
 
-            <div class="table-wrap">
-                <table class="admin-table">
-                    <thead><tr><th>Name</th><th>GST</th><th>Terms</th><th>Outstanding</th></tr></thead>
-                    <tbody>
-                    @forelse ($suppliers as $supplier)
-                        <tr><td><strong>{{ $supplier->name }}</strong><span>{{ $supplier->contact_information }}</span></td><td>{{ $supplier->gst_number ?: '-' }}</td><td>{{ $supplier->payment_terms ?: '-' }}</td><td>&#8377;{{ number_format($supplier->outstanding_balance, 2) }}</td></tr>
-                    @empty
-                        <tr><td colspan="4">{{ request()->filled('search') ? 'No suppliers match the current search.' : 'No suppliers yet.' }}</td></tr>
-                    @endforelse
-                    </tbody>
-                </table>
+            <div class="supplier-listing-results" data-supplier-listing-results>
+                <div class="product-listing-loader" data-supplier-listing-loader aria-live="polite" aria-hidden="true">
+                    <span aria-hidden="true"></span>
+                    <strong>Loading suppliers</strong>
+                </div>
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead><tr><th>Name</th><th>GST</th><th>Terms</th><th>Outstanding</th></tr></thead>
+                        <tbody>
+                        @forelse ($suppliers as $supplier)
+                            <tr><td><strong>{{ $supplier->name }}</strong><span>{{ $supplier->contact_information }}</span></td><td>{{ $supplier->gst_number ?: '-' }}</td><td>{{ $supplier->payment_terms ?: '-' }}</td><td>&#8377;{{ number_format($supplier->outstanding_balance, 2) }}</td></tr>
+                        @empty
+                            <tr><td colspan="4">{{ request()->filled('search') ? 'No suppliers match the current search.' : 'No suppliers yet.' }}</td></tr>
+                        @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                @include('products.partials.pagination', ['paginator' => $suppliers, 'itemLabel' => 'suppliers'])
             </div>
-            @include('products.partials.pagination', ['paginator' => $suppliers, 'itemLabel' => 'suppliers'])
         </article>
     </section>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('[data-supplier-search-form]').forEach(function (form) {
-                var search = form.querySelector('[data-supplier-search]');
-                var fields = form.querySelectorAll('[data-supplier-search]');
+            var supplierListingRequest = null;
+            var supplierSearchTimer = null;
+
+            function supplierUrl(form) {
+                var params = new URLSearchParams(new FormData(form));
+
+                Array.from(params.keys()).forEach(function (key) {
+                    if (params.get(key) === '') {
+                        params.delete(key);
+                    }
+                });
+
+                var query = params.toString();
+                return form.action + (query ? '?' + query : '');
+            }
+
+            function showSupplierListingLoader() {
+                var listing = document.querySelector('[data-supplier-listing]');
+                var loader = document.querySelector('[data-supplier-listing-loader]');
+
+                if (listing && loader) {
+                    listing.classList.add('is-loading');
+                    loader.setAttribute('aria-hidden', 'false');
+                }
+            }
+
+            function loadSupplierListing(url, pushState) {
+                var listing = document.querySelector('[data-supplier-listing]');
+
+                if (!listing) {
+                    window.location.href = url;
+                    return;
+                }
+
+                if (supplierListingRequest) {
+                    supplierListingRequest.abort();
+                }
+
+                var requestController = new AbortController();
+                supplierListingRequest = requestController;
+                showSupplierListingLoader();
+
+                fetch(url, {
+                    headers: {
+                        'Accept': 'text/html',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    signal: requestController.signal
+                }).then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('Unable to load suppliers.');
+                    }
+
+                    return response.text();
+                }).then(function (html) {
+                    var page = new DOMParser().parseFromString(html, 'text/html');
+                    var nextListing = page.querySelector('[data-supplier-listing]');
+
+                    if (!nextListing) {
+                        throw new Error('Supplier listing was not found.');
+                    }
+
+                    listing.replaceWith(nextListing);
+                    document.title = page.title || document.title;
+
+                    if (pushState !== false) {
+                        window.history.pushState({ supplierListing: true }, '', url);
+                    }
+                }).catch(function (error) {
+                    if (error.name !== 'AbortError') {
+                        window.location.href = url;
+                    }
+                }).finally(function () {
+                    if (supplierListingRequest === requestController) {
+                        supplierListingRequest = null;
+                    }
+                });
+            }
+
+            document.addEventListener('submit', function (event) {
+                var form = event.target.closest('[data-supplier-search-form]');
+
+                if (form) {
+                    event.preventDefault();
+                    loadSupplierListing(supplierUrl(form), true);
+                }
+            });
+
+            document.addEventListener('change', function (event) {
+                var select = event.target.closest('[data-supplier-search-form] select[data-supplier-search]');
+
+                if (select) {
+                    loadSupplierListing(supplierUrl(select.form), true);
+                }
+            });
+
+            document.addEventListener('input', function (event) {
+                var search = event.target.closest('[data-supplier-search-form] input[type="search"]');
 
                 if (!search) {
                     return;
                 }
 
-                function submitSearch() {
-                    if (search.value.trim() === '') {
-                        search.disabled = true;
-                    }
+                window.clearTimeout(supplierSearchTimer);
+                supplierSearchTimer = window.setTimeout(function () {
+                    loadSupplierListing(supplierUrl(search.form), true);
+                }, 350);
+            });
 
-                    if (typeof form.requestSubmit === 'function') {
-                        form.requestSubmit();
-                        return;
-                    }
+            document.addEventListener('click', function (event) {
+                var link = event.target.closest('[data-supplier-listing-link], [data-supplier-listing] .product-pagination a');
 
-                    form.submit();
+                if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                    return;
                 }
 
-                fields.forEach(function (field) {
-                    field.addEventListener('change', submitSearch);
-                    field.addEventListener('search', submitSearch);
-                });
+                event.preventDefault();
+                loadSupplierListing(link.href, true);
+            });
+
+            window.addEventListener('popstate', function () {
+                if (window.location.pathname === new URL('{{ route('suppliers.index') }}').pathname) {
+                    loadSupplierListing(window.location.href, false);
+                }
             });
 
             document.querySelectorAll('[data-supplier-form]').forEach(function (form) {

@@ -21,6 +21,11 @@
         .expense-edit-button:hover { background:#edf4ff; border-color:#9db8e8; }
         .expense-delete-button { color:#b42318; border-color:#f0c9c5; background:#fff8f7; }
         .expense-delete-button:hover { color:#981b12; background:#fff0ee; border-color:#e7aaa4; }
+        [data-expense-results] { position:relative; min-height:160px; }
+        [data-expense-results] .product-listing-loader { inset:0; }
+        [data-expense-history].is-loading .table-wrap,
+        [data-expense-history].is-loading .product-pagination { opacity:.38; pointer-events:none; }
+        [data-expense-history].is-loading .product-listing-loader { display:grid; }
         @media(max-width:1100px) { .expense-filters { grid-template-columns:repeat(2,minmax(0,1fr)); } }
         @media(max-width:800px) { .expense-filters,.expense-form-grid,.expense-stats { grid-template-columns:1fr; } .expense-form-grid .wide { grid-column:auto; } }
     </style>
@@ -69,19 +74,23 @@
             </div>
 
             <div data-expense-results>
-            <div class="table-wrap"><table class="admin-table"><thead><tr><th>Date</th><th>Expense</th><th>Category</th><th>Payment</th><th>Amount</th><th>Actions</th></tr></thead><tbody>
-                @forelse($expenses as $expense)
-                    <tr>
-                        <td>{{ $expense->expense_date->format('d M Y') }}</td>
-                        <td><strong>{{ $expense->title }}</strong>@if($expense->reference_number)<br><small>Ref: {{ $expense->reference_number }}</small>@endif</td>
-                        <td>{{ $expense->category }}</td><td>{{ $expense->payment_method_label }}</td><td>&#8377;{{ number_format($expense->amount, 2) }}</td>
-                        <td><div class="expense-actions"><button type="button" class="expense-action-button expense-edit-button" data-expense-edit="{{ $expense->id }}" data-title="{{ $expense->title }}" data-category="{{ $expense->category }}" data-amount="{{ $expense->amount }}" data-date="{{ $expense->expense_date->toDateString() }}" data-payment="{{ $expense->payment_method }}" data-reference="{{ $expense->reference_number }}" data-notes="{{ $expense->notes }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>Edit</button><form method="POST" action="{{ route('expenses.destroy', $expense) }}" data-confirm data-confirm-title="Delete expense" data-confirm-message="Are you sure you want to delete {{ $expense->title }}? This action cannot be undone." data-confirm-button="Delete expense">@csrf @method('DELETE')<button class="expense-action-button expense-delete-button" type="submit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>Delete</button></form></div></td>
-                    </tr>
-                @empty
-                    <tr><td colspan="6">{{ request()->hasAny(['search','from','to']) ? 'No expenses match the current filters.' : 'No expenses recorded yet.' }}</td></tr>
-                @endforelse
-            </tbody></table></div>
-            @include('products.partials.pagination', ['paginator' => $expenses, 'itemLabel' => 'expenses'])
+                <div class="product-listing-loader" data-expense-listing-loader aria-live="polite" aria-hidden="true">
+                    <span aria-hidden="true"></span>
+                    <strong>Loading expenses</strong>
+                </div>
+                <div class="table-wrap"><table class="admin-table"><thead><tr><th>Date</th><th>Expense</th><th>Category</th><th>Payment</th><th>Amount</th><th>Actions</th></tr></thead><tbody>
+                    @forelse($expenses as $expense)
+                        <tr>
+                            <td>{{ $expense->expense_date->format('d M Y') }}</td>
+                            <td><strong>{{ $expense->title }}</strong>@if($expense->reference_number)<br><small>Ref: {{ $expense->reference_number }}</small>@endif</td>
+                            <td>{{ $expense->category }}</td><td>{{ $expense->payment_method_label }}</td><td>&#8377;{{ number_format($expense->amount, 2) }}</td>
+                            <td><div class="expense-actions"><button type="button" class="expense-action-button expense-edit-button" data-expense-edit="{{ $expense->id }}" data-title="{{ $expense->title }}" data-category="{{ $expense->category }}" data-amount="{{ $expense->amount }}" data-date="{{ $expense->expense_date->toDateString() }}" data-payment="{{ $expense->payment_method }}" data-reference="{{ $expense->reference_number }}" data-notes="{{ $expense->notes }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>Edit</button><form method="POST" action="{{ route('expenses.destroy', $expense) }}" data-confirm data-confirm-title="Delete expense" data-confirm-message="Are you sure you want to delete {{ $expense->title }}? This action cannot be undone." data-confirm-button="Delete expense">@csrf @method('DELETE')<button class="expense-action-button expense-delete-button" type="submit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>Delete</button></form></div></td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="6">{{ request()->hasAny(['search','from','to']) ? 'No expenses match the current filters.' : 'No expenses recorded yet.' }}</td></tr>
+                    @endforelse
+                </tbody></table></div>
+                @include('products.partials.pagination', ['paginator' => $expenses, 'itemLabel' => 'expenses'])
             </div>
         </article>
     </section>
@@ -241,14 +250,17 @@
             function loadExpenses(query, updateUrl) {
                 if (typeof updateUrl === 'undefined') updateUrl = true;
                 if (activeRequest) activeRequest.abort();
-                activeRequest = new AbortController();
+                var requestController = new AbortController();
+                activeRequest = requestController;
                 var url = '{{ route('expenses.index') }}' + (query ? '?' + query : '');
                 var history = document.querySelector('[data-expense-history]');
                 var results = history.querySelector('[data-expense-results]');
-                results.style.opacity = '.55';
+                var loader = history.querySelector('[data-expense-listing-loader]');
+                history.classList.add('is-loading');
                 results.setAttribute('aria-busy', 'true');
+                if (loader) loader.setAttribute('aria-hidden', 'false');
 
-                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, signal: activeRequest.signal })
+                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, signal: requestController.signal })
                     .then(function (response) { if (!response.ok) throw new Error('Request failed'); return response.text(); })
                     .then(function (html) {
                         var page = new DOMParser().parseFromString(html, 'text/html');
@@ -256,15 +268,18 @@
                         if (!nextResults) throw new Error('Expense results missing');
                         document.querySelector('[data-expense-stats]').innerHTML = page.querySelector('[data-expense-stats]').innerHTML;
                         results.innerHTML = nextResults.innerHTML;
-                        results.style.opacity = '';
+                        history.classList.remove('is-loading');
                         results.removeAttribute('aria-busy');
                         if (updateUrl) window.history.pushState({}, '', url);
                         bindExpenseActions(results, true);
                         bindFilters();
+                        if (activeRequest === requestController) activeRequest = null;
                     })
                     .catch(function (error) {
-                        results.style.opacity = '';
-                        results.removeAttribute('aria-busy');
+                        if (activeRequest === requestController) {
+                            history.classList.remove('is-loading');
+                            results.removeAttribute('aria-busy');
+                        }
                         if (error.name !== 'AbortError') window.location.assign(url);
                     });
             }

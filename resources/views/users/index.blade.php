@@ -159,7 +159,7 @@
                     </form>
                 </div>
 
-                <div class="users-listing-results">
+                <div class="users-listing-results" data-users-listing-results>
                     <div class="product-listing-loader" data-users-listing-loader aria-live="polite" aria-hidden="true">
                         <span aria-hidden="true"></span>
                         <strong>Loading users</strong>
@@ -236,56 +236,75 @@
                     });
                 });
 
-                document.querySelectorAll('[data-users-filter-form]').forEach(function (form) {
-                    var listing = form.closest('[data-users-listing]');
-                    var loader = listing ? listing.querySelector('[data-users-listing-loader]') : null;
+                var usersListingRequest = null;
+                var usersSearchTimer = null;
 
-                    function showUsersListingLoader() {
-                        if (!listing || !loader) {
-                            return;
-                        }
-
-                        listing.classList.add('is-loading');
-                        listing.setAttribute('aria-busy', 'true');
-                        loader.setAttribute('aria-hidden', 'false');
-                    }
-
-                    function submitFilters() {
-                        showUsersListingLoader();
-
-                        if (typeof form.requestSubmit === 'function') {
-                            form.requestSubmit();
-                            return;
-                        }
-
-                        form.submit();
-                    }
-
-                    form.querySelectorAll('[data-users-filter]').forEach(function (field) {
-                        field.addEventListener('change', submitFilters);
-                        field.addEventListener('search', submitFilters);
+                function usersUrl(form) {
+                    var params = new URLSearchParams(new FormData(form));
+                    Array.from(params.keys()).forEach(function (key) {
+                        if (params.get(key) === '') params.delete(key);
                     });
+                    return form.action + (params.toString() ? '?' + params.toString() : '');
+                }
 
-                    form.addEventListener('submit', function () {
-                        showUsersListingLoader();
+                function loadUsersListing(url, pushState) {
+                    var listing = document.querySelector('[data-users-listing]');
+                    if (!listing) { window.location.href = url; return; }
+                    if (usersListingRequest) usersListingRequest.abort();
 
-                        form.querySelectorAll('input, select').forEach(function (field) {
-                            if (field.value === '') {
-                                field.disabled = true;
-                            }
-                        });
+                    var controller = new AbortController();
+                    usersListingRequest = controller;
+                    listing.classList.add('is-loading');
+                    listing.setAttribute('aria-busy', 'true');
+                    listing.querySelector('[data-users-listing-loader]')?.setAttribute('aria-hidden', 'false');
+
+                    fetch(url, {
+                        headers: { 'Accept': 'text/html', 'X-Requested-With': 'XMLHttpRequest' },
+                        signal: controller.signal
+                    }).then(function (response) {
+                        if (!response.ok) throw new Error('Unable to load users.');
+                        return response.text();
+                    }).then(function (html) {
+                        var page = new DOMParser().parseFromString(html, 'text/html');
+                        var next = page.querySelector('[data-users-listing]');
+                        if (!next) throw new Error('User listing was not found.');
+                        listing.replaceWith(next);
+                        document.title = page.title || document.title;
+                        if (pushState !== false) window.history.pushState({ usersListing: true }, '', url);
+                    }).catch(function (error) {
+                        if (error.name !== 'AbortError') window.location.href = url;
+                    }).finally(function () {
+                        if (usersListingRequest === controller) usersListingRequest = null;
                     });
+                }
 
-                    if (listing) {
-                        listing.querySelectorAll('[data-users-listing-link], .product-pagination a').forEach(function (link) {
-                            link.addEventListener('click', function (event) {
-                                if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
-                                    return;
-                                }
+                document.addEventListener('submit', function (event) {
+                    var form = event.target.closest('[data-users-filter-form]');
+                    if (form) { event.preventDefault(); loadUsersListing(usersUrl(form), true); }
+                });
 
-                                showUsersListingLoader();
-                            });
-                        });
+                document.addEventListener('change', function (event) {
+                    var select = event.target.closest('[data-users-filter-form] select[data-users-filter]');
+                    if (select) loadUsersListing(usersUrl(select.form), true);
+                });
+
+                document.addEventListener('input', function (event) {
+                    var search = event.target.closest('[data-users-filter-form] input[type="search"]');
+                    if (!search) return;
+                    clearTimeout(usersSearchTimer);
+                    usersSearchTimer = setTimeout(function () { loadUsersListing(usersUrl(search.form), true); }, 350);
+                });
+
+                document.addEventListener('click', function (event) {
+                    var link = event.target.closest('[data-users-listing-link], [data-users-listing] .product-pagination a');
+                    if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                    event.preventDefault();
+                    loadUsersListing(link.href, true);
+                });
+
+                window.addEventListener('popstate', function () {
+                    if (window.location.pathname === new URL('{{ route('users.index') }}').pathname) {
+                        loadUsersListing(window.location.href, false);
                     }
                 });
 
