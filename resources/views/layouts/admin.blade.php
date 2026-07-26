@@ -178,6 +178,31 @@
 
     @include('partials.confirm-modal')
 
+    @if (auth()->user() && ! auth()->user()->hasVerifiedEmail())
+        <aside class="email-verification-popup" data-email-verification-popup aria-label="Email verification reminder">
+            <button type="button" class="email-verification-popup__close" data-email-verification-close aria-label="Dismiss">&times;</button>
+            <span class="email-verification-popup__icon" aria-hidden="true">&#9993;</span>
+            <div>
+                <strong>Verify your email</strong>
+                <p>Send a six-digit OTP to {{ auth()->user()->email }}.</p>
+                <form method="POST" action="{{ route('verification.send') }}" data-email-verification-form>
+                    @csrf
+                    <button type="submit">Verify</button>
+                    <small data-email-verification-message aria-live="polite"></small>
+                </form>
+                <form method="POST" action="{{ route('verification.verify') }}" data-email-otp-form hidden novalidate>
+                    @csrf
+                    <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="Enter 6-digit OTP" required>
+                    <div class="email-verification-popup__actions">
+                        <button type="submit">Verify OTP</button>
+                        <button type="button" data-email-otp-resend hidden>Resend OTP</button>
+                    </div>
+                    <small data-email-otp-message aria-live="polite"></small>
+                </form>
+            </div>
+        </aside>
+    @endif
+
     <div class="page-loader" data-page-loader aria-live="polite" aria-hidden="true">
         <div class="page-loader__panel">
             <span class="page-loader__spinner" aria-hidden="true"></span>
@@ -187,6 +212,108 @@
 
     <script>
         (function () {
+            var verificationPopup = document.querySelector('[data-email-verification-popup]');
+            var verificationForm = document.querySelector('[data-email-verification-form]');
+            var otpForm = document.querySelector('[data-email-otp-form]');
+            var resendButton = document.querySelector('[data-email-otp-resend]');
+
+            if (verificationPopup && sessionStorage.getItem('emailVerificationDismissed') === 'true') {
+                verificationPopup.hidden = true;
+            }
+
+            document.querySelector('[data-email-verification-close]')?.addEventListener('click', function () {
+                verificationPopup.hidden = true;
+                sessionStorage.setItem('emailVerificationDismissed', 'true');
+            });
+
+            verificationForm?.addEventListener('submit', function (event) {
+                event.preventDefault();
+                var button = verificationForm.querySelector('button[type="submit"]');
+                var message = verificationForm.querySelector('[data-email-verification-message]');
+                var activeMessage = otpForm.hidden
+                    ? message
+                    : otpForm.querySelector('[data-email-otp-message]');
+                button.disabled = true;
+                resendButton.disabled = true;
+                button.textContent = 'Sending...';
+
+                fetch(verificationForm.action, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: new FormData(verificationForm)
+                }).then(function (response) {
+                    return response.json().then(function (payload) {
+                        if (!response.ok) throw new Error(payload.message || 'Unable to send verification link.');
+                        return payload;
+                    });
+                }).then(function (payload) {
+                    activeMessage.textContent = payload.message;
+                    activeMessage.classList.remove('is-error');
+                    verificationForm.hidden = true;
+                    otpForm.hidden = false;
+                    resendButton.hidden = false;
+                    otpForm.querySelector('input[name="otp"]').focus();
+                }).catch(function (error) {
+                    activeMessage.textContent = error.message;
+                    activeMessage.classList.add('is-error');
+                }).finally(function () {
+                    button.disabled = false;
+                    resendButton.disabled = false;
+                    button.textContent = 'Resend OTP';
+                });
+            });
+
+            resendButton?.addEventListener('click', function () {
+                verificationForm.requestSubmit();
+            });
+
+            otpForm?.addEventListener('submit', function (event) {
+                event.preventDefault();
+                var button = otpForm.querySelector('button[type="submit"]');
+                var message = otpForm.querySelector('[data-email-otp-message]');
+                var otpInput = otpForm.querySelector('input[name="otp"]');
+                var otp = otpInput.value.trim();
+
+                if (! otp) {
+                    message.textContent = 'Verification code is required.';
+                    message.classList.add('is-error');
+                    otpInput.focus();
+                    return;
+                }
+
+                if (! /^\d{6}$/.test(otp)) {
+                    message.textContent = 'Enter a valid six-digit verification code.';
+                    message.classList.add('is-error');
+                    otpInput.focus();
+                    return;
+                }
+
+                button.disabled = true;
+                button.textContent = 'Verifying...';
+
+                fetch(otpForm.action, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: new FormData(otpForm)
+                }).then(function (response) {
+                    return response.json().then(function (payload) {
+                        if (!response.ok) throw new Error(payload.message || 'Unable to verify OTP.');
+                        return payload;
+                    });
+                }).then(function (payload) {
+                    message.textContent = payload.message;
+                    message.classList.remove('is-error');
+                    verificationPopup.hidden = true;
+                    sessionStorage.removeItem('emailVerificationDismissed');
+                }).catch(function (error) {
+                    message.textContent = error.message;
+                    message.classList.add('is-error');
+                }).finally(function () {
+                    button.disabled = false;
+                    button.textContent = 'Verify OTP';
+                });
+            });
+
             var pageLoader = document.querySelector('[data-page-loader]');
 
             function showPageLoader() {

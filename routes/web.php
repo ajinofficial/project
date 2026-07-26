@@ -17,6 +17,10 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VendorDashboardController;
 use App\Http\Controllers\WhatsAppController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Auth\Events\Verified;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use App\Notifications\EmailVerificationOtp;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,6 +52,45 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::post('/email/verification-notification', function (Request $request) {
+        if ($request->user()->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Your email is already verified.']);
+        }
+
+        $otp = (string) random_int(100000, 999999);
+        Cache::put('email-verification-otp:'.$request->user()->id, hash('sha256', $otp), now()->addMinutes(10));
+        $request->user()->notify(new EmailVerificationOtp($otp));
+
+        return response()->json(['message' => 'Verification OTP sent. Check your inbox.']);
+    })->middleware('throttle:6,1')->name('verification.send');
+
+    Route::post('/email/verify-otp', function (Request $request) {
+        $data = $request->validate([
+            'otp' => ['required', 'digits:6'],
+        ], [
+            'otp.required' => 'Enter the verification OTP.',
+            'otp.digits' => 'Enter a valid six-digit OTP.',
+        ]);
+
+        $cacheKey = 'email-verification-otp:'.$request->user()->id;
+        $storedOtp = Cache::get($cacheKey);
+
+        if (! is_string($storedOtp) || ! hash_equals($storedOtp, hash('sha256', $data['otp']))) {
+            return response()->json([
+                'message' => 'The OTP is incorrect or has expired.',
+                'errors' => ['otp' => ['The OTP is incorrect or has expired.']],
+            ], 422);
+        }
+
+        if (! $request->user()->hasVerifiedEmail() && $request->user()->markEmailAsVerified()) {
+            event(new Verified($request->user()));
+        }
+
+        Cache::forget($cacheKey);
+
+        return response()->json(['message' => 'Email address verified.']);
+    })->middleware('throttle:10,1')->name('verification.verify');
+
     Route::middleware('vendor.account')->prefix('email')->name('email.')->group(function () {
         Route::get('/', [EmailIntegrationController::class, 'index'])->name('index');
         Route::put('/connection', [EmailIntegrationController::class, 'update'])->name('update');

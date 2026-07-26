@@ -58,9 +58,11 @@
                     </div>
                 @endif
 
-                <label>
+                <label class="searchable-select" data-searchable-select>
                     <span>Product</span>
-                    <select name="product_id" required data-stock-product>
+                    <input type="search" class="searchable-select__search" placeholder="Search or select product" autocomplete="off" role="combobox" aria-label="Search products" aria-expanded="false" data-searchable-select-input>
+                    <div class="searchable-select__menu" role="listbox" data-searchable-select-menu hidden></div>
+                    <select class="searchable-select__native" name="product_id" required data-stock-product tabindex="-1" aria-hidden="true">
                         <option value="">Select product</option>
                         @foreach ($products as $product)
                             <option
@@ -73,6 +75,7 @@
                             </option>
                         @endforeach
                     </select>
+                    <small class="searchable-select__status" data-searchable-select-status aria-live="polite"></small>
                     @error('product_id') <small>{{ $message }}</small> @enderror
                 </label>
 
@@ -298,4 +301,6 @@
             });
         });
     </script>
+
+    @include('partials.searchable-select-script')
 @endsection

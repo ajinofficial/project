@@ -71,6 +71,10 @@ class StockModuleTest extends TestCase
         $response->assertOk();
         $response->assertSee('Stock add form');
         $response->assertSee('Add Form Product');
+        $response->assertSee('data-searchable-select', false);
+        $response->assertSee('data-searchable-select-input', false);
+        $response->assertSee('data-searchable-select-menu', false);
+        $response->assertSee('Search or select product');
         $response->assertSee('name="adjustment"', false);
         $response->assertSee('name="stock_date"', false);
         $response->assertSee('max="'.now()->toDateString().'"', false);

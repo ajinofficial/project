@@ -7,6 +7,9 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Support\RolePermission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Notifications\EmailVerificationOtp;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class SetupTest extends TestCase
@@ -67,6 +70,27 @@ class SetupTest extends TestCase
 
         $response->assertRedirect(route('setup.index'));
         $response->assertSessionHasErrors('invoice_prefix');
+    }
+
+    public function test_unverified_user_can_send_and_complete_email_verification(): void
+    {
+        Notification::fake();
+        [$owner] = $this->tenantOwner();
+
+        $this->actingAs($owner)
+            ->postJson(route('verification.send'))
+            ->assertOk()
+            ->assertJson(['message' => 'Verification OTP sent. Check your inbox.']);
+
+        Notification::assertSentTo($owner, EmailVerificationOtp::class);
+
+        Cache::put('email-verification-otp:'.$owner->id, hash('sha256', '123456'), now()->addMinutes(10));
+
+        $this->actingAs($owner)->postJson(route('verification.verify'), ['otp' => '123456'])
+            ->assertOk()
+            ->assertJson(['message' => 'Email address verified.']);
+
+        $this->assertTrue($owner->fresh()->email_verified);
     }
 
     private function tenantOwner(): array
