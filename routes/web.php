@@ -3,12 +3,14 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\AccountEmailController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\EmailIntegrationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OperationsController;
+use App\Http\Controllers\PlanUpgradeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\SetupController;
@@ -48,10 +50,13 @@ Route::middleware('guest')->group(function () {
     Route::get('/reset-password', [PasswordResetController::class, 'showResetForm'])->name('password.reset.form');
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.update');
     Route::get('/register', [RegisterController::class, 'create'])->name('register');
+    Route::post('/register/check-availability', [RegisterController::class, 'availability'])->middleware('throttle:30,1')->name('register.availability');
     Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
 });
 
 Route::middleware('auth')->group(function () {
+    Route::patch('/account/email', [AccountEmailController::class, 'update'])->name('account.email.update');
+    Route::post('/plan/upgrade', [PlanUpgradeController::class, 'update'])->name('plan.upgrade');
     Route::post('/email/verification-notification', function (Request $request) {
         if ($request->user()->hasVerifiedEmail()) {
             return response()->json(['message' => 'Your email is already verified.']);

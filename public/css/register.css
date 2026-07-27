@@ -2552,6 +2552,10 @@ button.ghost-button {
     color: var(--danger);
 }
 
+.auth-ui small.is-success {
+    color: #15803d;
+}
+
 .auth-ui button[type="submit"] {
     background: linear-gradient(135deg, var(--auth-primary), var(--auth-green));
     box-shadow: 0 14px 30px rgba(37, 99, 235, 0.20);
@@ -8804,6 +8808,120 @@ button.ghost-button {
     box-shadow: 0 18px 48px rgba(16, 24, 40, 0.18);
 }
 
+.trial-upgrade-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1300;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+}
+
+.trial-upgrade-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(6px);
+}
+
+.trial-upgrade-modal__dialog {
+    position: relative;
+    z-index: 1;
+    width: min(720px, 100%);
+    max-height: calc(100vh - 48px);
+    overflow: auto;
+    border-radius: 16px;
+    padding: 28px;
+    background: #fff;
+    box-shadow: 0 30px 80px rgba(15, 23, 42, 0.32);
+}
+
+.trial-upgrade-modal__dialog h2 {
+    margin: 4px 0 8px;
+    color: #101828;
+}
+
+.trial-upgrade-modal__dialog > p:not(.eyebrow) {
+    margin: 0 0 22px;
+    color: #667085;
+}
+
+.trial-upgrade-plans {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.trial-upgrade-plans label {
+    cursor: pointer;
+}
+
+.trial-upgrade-plans input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.trial-upgrade-plans span {
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid #d0d5dd;
+    border-radius: 12px;
+    padding: 18px;
+    background: #fff;
+}
+
+.trial-upgrade-plans input:checked + span {
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.trial-upgrade-plans b {
+    color: #2563eb;
+    font-size: 22px;
+}
+
+.trial-upgrade-plans b small,
+.trial-upgrade-plans em {
+    color: #667085;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 500;
+}
+
+.trial-upgrade-modal form > button {
+    width: 100%;
+    margin-top: 18px;
+}
+
+.trial-upgrade-modal form > small {
+    display: block;
+    margin-top: 12px;
+    color: #667085;
+}
+
+.trial-upgrade-modal form > small.is-error {
+    color: var(--danger);
+}
+
+.trial-upgrade-contact {
+    display: grid;
+    gap: 6px;
+    border-radius: 10px;
+    padding: 16px;
+    color: #92400e;
+    background: #fffbeb;
+}
+
+@media (max-width: 700px) {
+    .trial-upgrade-plans {
+        grid-template-columns: 1fr;
+    }
+}
+
 .email-verification-popup__icon {
     width: 42px;
     height: 42px;
@@ -8836,13 +8954,53 @@ button.ghost-button {
     margin-top: 10px;
 }
 
-.email-verification-popup input[name="otp"] {
+.email-verification-popup input[name="otp"],
+.email-verification-popup input[name="email"] {
     width: 100%;
     margin-bottom: 8px;
     border: 1px solid #bfdbfe;
     border-radius: 8px;
     padding: 9px 10px;
     letter-spacing: .14em;
+}
+
+.email-verification-popup__address {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.email-verification-popup__edit {
+    width: 22px;
+    height: 22px;
+    display: inline-grid;
+    place-items: center;
+    margin: 0;
+    border: 1px solid #bfdbfe;
+    border-radius: 7px;
+    padding: 0;
+    color: #2563eb;
+    background: #eff6ff;
+    cursor: pointer;
+}
+
+.email-verification-popup__edit svg {
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
+}
+
+.email-verification-popup__edit:hover {
+    color: #1d4ed8;
+    background: #dbeafe;
+}
+
+.email-verification-popup__edit[hidden] {
+    display: none;
 }
 
 .email-verification-popup__actions {

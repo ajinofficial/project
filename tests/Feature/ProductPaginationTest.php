@@ -916,6 +916,10 @@ class ProductPaginationTest extends TestCase
         $response->assertSee('Range return');
         $response->assertSee('data-print-report', false);
         $response->assertSee('data-movement-filter', false);
+        $response->assertSee('data-reports-filter-form', false);
+        $response->assertSee('data-report-filter', false);
+        $response->assertSee("filterForm.addEventListener('change'", false);
+        $response->assertSee('filterForm.requestSubmit()', false);
         $response->assertSee('Sales vs purchases');
         $response->assertSee('Product bar chart');
         $response->assertSee('reports-chart-line is-sales', false);

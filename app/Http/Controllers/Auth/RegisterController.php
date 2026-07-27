@@ -33,6 +33,7 @@ class RegisterController extends Controller
         $gstNumber = str_replace(' ', '', (string) $request->input('gst_number'));
 
         $request->merge([
+            'business_name' => trim((string) $request->input('business_name')),
             'email' => Str::lower(trim((string) $request->input('email'))),
             'country_code' => $request->input('country_code') ?: '+91',
             'mobile' => preg_replace('/\D+/', '', (string) $request->input('mobile')),
@@ -40,7 +41,7 @@ class RegisterController extends Controller
         ]);
 
         $data = $request->validate([
-            'business_name' => ['required', 'string', 'max:255'],
+            'business_name' => ['required', 'string', 'max:255', Rule::unique('tenants', 'business_name')],
             'owner_name' => ['required', 'string', 'max:255'],
             'country_code' => ['required', 'string', Rule::in(array_keys($this->countryCodes()))],
             'mobile' => ['required', 'digits_between:6,15'],
@@ -53,6 +54,8 @@ class RegisterController extends Controller
             'terms_accepted' => ['accepted'],
         ], [
             'mobile.digits_between' => 'Mobile number must be 6 to 15 digits.',
+            'business_name.unique' => 'This business name is already registered.',
+            'email.unique' => 'This email address is already registered.',
             'gst_number.regex' => 'Enter a valid 15-character GST number.',
             'password.letters' => 'Password must include at least one letter.',
             'password.numbers' => 'Password must include at least one number.',
@@ -97,6 +100,27 @@ class RegisterController extends Controller
         }
 
         return redirect()->route('setup.index')->with('status', 'Business workspace created. Complete store setup.');
+    }
+
+    public function availability(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'field' => ['required', Rule::in(['business_name', 'email'])],
+            'value' => ['required', 'string', 'max:255'],
+        ]);
+
+        $value = trim($data['value']);
+        $available = $data['field'] === 'email'
+            ? filter_var($value, FILTER_VALIDATE_EMAIL)
+                && ! User::where('email', Str::lower($value))->exists()
+            : ! Tenant::where('business_name', $value)->exists();
+
+        return response()->json([
+            'available' => (bool) $available,
+            'message' => $available
+                ? ($data['field'] === 'email' ? 'Email address is available.' : 'Business name is available.')
+                : ($data['field'] === 'email' ? 'This email address is already registered.' : 'This business name is already registered.'),
+        ]);
     }
 
     private function domainExpiredDateFor(Plan $plan): string

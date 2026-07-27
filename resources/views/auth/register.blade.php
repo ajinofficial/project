@@ -37,7 +37,7 @@
                     <span>{{ $errors->first() }}</span>
                 </div>
             @endif
-            <form class="register-form" method="POST" action="{{ route('register.store') }}" data-register-form novalidate>
+            <form class="register-form" method="POST" action="{{ route('register.store') }}" data-register-form data-availability-url="{{ route('register.availability') }}" novalidate>
                 @csrf
                 <!-- <div class="register-progress" aria-label="Registration steps">
                     <span>1 Business</span>
@@ -57,7 +57,7 @@
                     <div class="field-grid">
                         <label>
                             <span>Business name</span>
-                            <input class="@error('business_name') is-invalid @enderror" type="text" name="business_name" value="{{ old('business_name') }}" placeholder="Mobile World" autocomplete="organization" required data-register-field="business_name">
+                            <input class="@error('business_name') is-invalid @enderror" type="text" name="business_name" value="{{ old('business_name') }}" placeholder="Mobile World" autocomplete="organization" required data-register-field="business_name" data-availability-field>
                             <small data-register-error="business_name" @if (! $errors->has('business_name')) hidden @endif>{{ $errors->first('business_name') }}</small>
                         </label>
                         <label>
@@ -85,7 +85,7 @@
                     <div class="field-grid">
                         <label>
                             <span>Email</span>
-                            <input class="@error('email') is-invalid @enderror" type="email" name="email" value="{{ old('email') }}" placeholder="owner@store.com" autocomplete="email" required data-register-field="email">
+                            <input class="@error('email') is-invalid @enderror" type="email" name="email" value="{{ old('email') }}" placeholder="owner@store.com" autocomplete="email" required data-register-field="email" data-availability-field>
                             <small data-register-error="email" @if (! $errors->has('email')) hidden @endif>{{ $errors->first('email') }}</small>
                         </label>
                     </div>
@@ -277,6 +277,90 @@
         function firstField(form, name) {
             return form.querySelector(`[data-register-field="${name}"]`);
         }
+
+        const availabilityTimers = new Map();
+        const availabilityRequests = new Map();
+
+        async function checkAvailability(field) {
+            const value = field.value.trim();
+            const error = registerForm?.querySelector(`[data-register-error="${field.name}"]`);
+
+            if (!registerForm || !value || (field.type === 'email' && !field.validity.valid)) {
+                return;
+            }
+
+            availabilityRequests.get(field.name)?.abort();
+            const controller = new AbortController();
+            availabilityRequests.set(field.name, controller);
+
+            if (error) {
+                error.textContent = 'Checking availability...';
+                error.classList.remove('is-success');
+                error.hidden = false;
+            }
+
+            try {
+                const body = new FormData();
+                body.append('_token', registerForm.querySelector('input[name="_token"]').value);
+                body.append('field', field.name);
+                body.append('value', value);
+
+                const response = await fetch(registerForm.dataset.availabilityUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body,
+                    signal: controller.signal,
+                });
+                const data = await response.json();
+
+                if (field.value.trim() !== value) {
+                    return;
+                }
+
+                field.setCustomValidity(data.available ? '' : data.message);
+                field.classList.toggle('is-invalid', !data.available);
+                field.setAttribute('aria-invalid', data.available ? 'false' : 'true');
+
+                if (error) {
+                    error.textContent = data.message;
+                    error.classList.toggle('is-success', data.available);
+                    error.hidden = false;
+                }
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    field.setCustomValidity('');
+                    error?.classList.remove('is-success');
+                    if (error) error.hidden = true;
+                }
+            }
+        }
+
+        registerForm?.querySelectorAll('[data-availability-field]').forEach((field) => {
+            field.addEventListener('input', () => {
+                window.clearTimeout(availabilityTimers.get(field.name));
+                availabilityRequests.get(field.name)?.abort();
+                field.setCustomValidity('');
+                field.classList.remove('is-invalid');
+                field.removeAttribute('aria-invalid');
+
+                const error = registerForm.querySelector(`[data-register-error="${field.name}"]`);
+                error?.classList.remove('is-success');
+                if (error) {
+                    error.textContent = '';
+                    error.hidden = true;
+                }
+
+                availabilityTimers.set(field.name, window.setTimeout(() => checkAvailability(field), 500));
+            });
+
+            field.addEventListener('blur', () => {
+                window.clearTimeout(availabilityTimers.get(field.name));
+                checkAvailability(field);
+            });
+        });
 
         registerForm?.addEventListener('submit', async (event) => {
             event.preventDefault();

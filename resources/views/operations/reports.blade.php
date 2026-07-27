@@ -58,15 +58,15 @@
             <form class="reports-filter-form" method="GET" action="{{ route('reports.index') }}" data-reports-filter-form>
                 <label>
                     <span>Start date</span>
-                    <input type="date" name="start_date" value="{{ $startDate->toDateString() }}" max="{{ $today->toDateString() }}" required data-date-picker>
+                    <input type="date" name="start_date" value="{{ $startDate->toDateString() }}" max="{{ $today->toDateString() }}" required data-report-filter>
                 </label>
                 <label>
                     <span>End date</span>
-                    <input type="date" name="end_date" value="{{ $endDate->toDateString() }}" max="{{ $today->toDateString() }}" required data-date-picker>
+                    <input type="date" name="end_date" value="{{ $endDate->toDateString() }}" min="{{ $startDate->toDateString() }}" max="{{ $today->toDateString() }}" required data-report-filter>
                 </label>
                 <label>
                     <span>Movement</span>
-                    <select name="movement_type" data-movement-filter>
+                    <select name="movement_type" data-report-filter data-movement-filter>
                         <option value="">All movements</option>
                         <option value="purchase" @selected($movementType === 'purchase')>Purchase</option>
                         <option value="sale" @selected($movementType === 'sale')>Sale</option>
@@ -75,7 +75,7 @@
                         <option value="adjustment" @selected($movementType === 'adjustment')>Adjustment</option>
                     </select>
                 </label>
-                <button class="filter-button" type="submit">Apply</button>
+                <!-- <button class="filter-button" type="submit">Apply</button> -->
                 <a class="product-clear-filter" href="{{ route('reports.index') }}">Reset</a>
             </form>
             @error('end_date') <small>{{ $message }}</small> @enderror
@@ -287,7 +287,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var printButton = document.querySelector('[data-print-report]');
-            var movementFilter = document.querySelector('[data-movement-filter]');
+            var filterForm = document.querySelector('[data-reports-filter-form]');
 
             if (printButton) {
                 printButton.addEventListener('click', function () {
@@ -295,12 +295,16 @@
                 });
             }
 
-            if (movementFilter) {
-                movementFilter.addEventListener('change', function () {
-                    var form = movementFilter.closest('form');
+            if (filterForm) {
+                filterForm.addEventListener('change', function (event) {
+                    if (!event.target.matches('[data-report-filter]') || !filterForm.checkValidity()) {
+                        return;
+                    }
 
-                    if (form && typeof form.requestSubmit === 'function') {
-                        form.requestSubmit();
+                    if (typeof filterForm.requestSubmit === 'function') {
+                        filterForm.requestSubmit();
+                    } else {
+                        filterForm.submit();
                     }
                 });
             }

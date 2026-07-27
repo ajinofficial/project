@@ -178,13 +178,80 @@
 
     @include('partials.confirm-modal')
 
+    @php
+        $trialTenant = auth()->user()?->tenant;
+        $expiredFreeTrial = $trialTenant?->plan?->name === 'free_trial'
+            && $trialTenant?->domain_expired_date
+            && $trialTenant->domain_expired_date->endOfDay()->isPast();
+        $upgradePlans = $expiredFreeTrial
+            ? \App\Models\Plan::where('monthly_price', '>', 0)->orderBy('monthly_price')->get()
+            : collect();
+    @endphp
+
+    @if ($expiredFreeTrial)
+        <div class="trial-upgrade-modal" data-trial-upgrade-modal role="dialog" aria-modal="true" aria-labelledby="trial-upgrade-title">
+            <div class="trial-upgrade-modal__backdrop"></div>
+            <section class="trial-upgrade-modal__dialog">
+                <p class="eyebrow">Free trial completed</p>
+                <h2 id="trial-upgrade-title">Choose a plan to continue</h2>
+                <p>Your 30-day trial ended on {{ $trialTenant->domain_expired_date->format('d M Y') }}. Upgrade {{ $trialTenant->business_name }} to restore continued access.</p>
+
+                @if ((int) auth()->user()->role === \App\Models\User::ROLE_OWNER)
+                    <form method="POST" action="{{ route('plan.upgrade') }}" data-trial-upgrade-form>
+                        @csrf
+                        <div class="trial-upgrade-plans">
+                            @foreach ($upgradePlans as $plan)
+                                <label>
+                                    <input type="radio" name="plan_id" value="{{ $plan->id }}" required>
+                                    <span>
+                                        <strong>{{ \Illuminate\Support\Str::headline($plan->name) }}</strong>
+                                        <b>&#8377;{{ number_format($plan->monthly_price) }}<small>/month</small></b>
+                                        <em>{{ $plan->features }}</em>
+                                    </span>
+                                </label>
+                            @endforeach
+                        </div>
+                        <small data-trial-upgrade-message aria-live="polite"></small>
+                        <button type="submit">Save and upgrade plan</button>
+                    </form>
+                @else
+                    <div class="trial-upgrade-contact">
+                        <strong>Owner action required</strong>
+                        <span>Ask the business owner to log in and choose a paid plan.</span>
+                    </div>
+                @endif
+            </section>
+        </div>
+    @endif
+
     @if (auth()->user() && ! auth()->user()->hasVerifiedEmail())
         <aside class="email-verification-popup" data-email-verification-popup aria-label="Email verification reminder">
             <button type="button" class="email-verification-popup__close" data-email-verification-close aria-label="Dismiss">&times;</button>
             <span class="email-verification-popup__icon" aria-hidden="true">&#9993;</span>
             <div>
                 <strong>Verify your email</strong>
-                <p>Send a six-digit OTP to {{ auth()->user()->email }}.</p>
+                <p>
+                    Send a six-digit OTP to
+                    <span class="email-verification-popup__address">
+                        <b data-verification-email>{{ auth()->user()->email }}</b>
+                        <button type="button" class="email-verification-popup__edit" data-email-edit-open aria-label="Edit email" title="Edit email">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 20h4l11-11-4-4L4 16v4Z"></path>
+                                <path d="m13.5 6.5 4 4"></path>
+                            </svg>
+                        </button>
+                    </span>.
+                </p>
+                <form method="POST" action="{{ route('account.email.update') }}" data-email-edit-form hidden novalidate>
+                    @csrf
+                    @method('PATCH')
+                    <input type="email" name="email" value="{{ auth()->user()->email }}" autocomplete="email" required aria-label="New email address">
+                    <div class="email-verification-popup__actions">
+                        <button type="submit">Save email</button>
+                        <button type="button" data-email-edit-cancel>Cancel</button>
+                    </div>
+                    <small data-email-edit-message aria-live="polite"></small>
+                </form>
                 <form method="POST" action="{{ route('verification.send') }}" data-email-verification-form>
                     @csrf
                     <button type="submit">Verify</button>
@@ -212,14 +279,116 @@
 
     <script>
         (function () {
+            var upgradeForm = document.querySelector('[data-trial-upgrade-form]');
             var verificationPopup = document.querySelector('[data-email-verification-popup]');
             var verificationForm = document.querySelector('[data-email-verification-form]');
             var otpForm = document.querySelector('[data-email-otp-form]');
             var resendButton = document.querySelector('[data-email-otp-resend]');
+            var emailEditForm = document.querySelector('[data-email-edit-form]');
+            var emailEditButton = document.querySelector('[data-email-edit-open]');
+            var emailEditCancel = document.querySelector('[data-email-edit-cancel]');
+
+            upgradeForm?.addEventListener('submit', function (event) {
+                event.preventDefault();
+                var button = upgradeForm.querySelector('button[type="submit"]');
+                var message = upgradeForm.querySelector('[data-trial-upgrade-message]');
+                var selectedPlan = upgradeForm.querySelector('input[name="plan_id"]:checked');
+
+                if (!selectedPlan) {
+                    message.textContent = 'Choose a plan to continue.';
+                    message.classList.add('is-error');
+                    return;
+                }
+
+                button.disabled = true;
+                button.textContent = 'Upgrading...';
+                message.textContent = '';
+
+                fetch(upgradeForm.action, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: new FormData(upgradeForm)
+                }).then(function (response) {
+                    return response.json().then(function (payload) {
+                        if (!response.ok) {
+                            throw new Error(payload.errors?.plan_id?.[0] || payload.message || 'Unable to upgrade the plan.');
+                        }
+                        return payload;
+                    });
+                }).then(function (payload) {
+                    window.location.assign(payload.redirect || window.location.href);
+                }).catch(function (error) {
+                    message.textContent = error.message;
+                    message.classList.add('is-error');
+                    button.disabled = false;
+                    button.textContent = 'Save and upgrade plan';
+                });
+            });
 
             if (verificationPopup && sessionStorage.getItem('emailVerificationDismissed') === 'true') {
                 verificationPopup.hidden = true;
             }
+
+            emailEditButton?.addEventListener('click', function () {
+                emailEditForm.hidden = false;
+                verificationForm.hidden = true;
+                otpForm.hidden = true;
+                emailEditButton.hidden = true;
+                emailEditForm.querySelector('input[name="email"]').focus();
+            });
+
+            emailEditCancel?.addEventListener('click', function () {
+                emailEditForm.hidden = true;
+                verificationForm.hidden = false;
+                emailEditButton.hidden = false;
+                emailEditForm.querySelector('[data-email-edit-message]').textContent = '';
+            });
+
+            emailEditForm?.addEventListener('submit', function (event) {
+                event.preventDefault();
+                var button = emailEditForm.querySelector('button[type="submit"]');
+                var message = emailEditForm.querySelector('[data-email-edit-message]');
+                var emailInput = emailEditForm.querySelector('input[name="email"]');
+
+                if (!emailInput.value.trim() || !emailInput.checkValidity()) {
+                    message.textContent = 'Enter a valid email address.';
+                    message.classList.add('is-error');
+                    emailInput.focus();
+                    return;
+                }
+
+                button.disabled = true;
+                button.textContent = 'Saving...';
+
+                fetch(emailEditForm.action, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: new FormData(emailEditForm)
+                }).then(function (response) {
+                    return response.json().then(function (payload) {
+                        if (!response.ok) {
+                            throw new Error(payload.errors?.email?.[0] || payload.message || 'Unable to update email.');
+                        }
+                        return payload;
+                    });
+                }).then(function (payload) {
+                    document.querySelector('[data-verification-email]').textContent = payload.email;
+                    emailInput.value = payload.email;
+                    message.textContent = '';
+                    message.classList.remove('is-error');
+                    emailEditForm.hidden = true;
+                    emailEditButton.hidden = false;
+                    verificationForm.hidden = false;
+                    otpForm.hidden = true;
+                    verificationForm.querySelector('[data-email-verification-message]').textContent = payload.message;
+                }).catch(function (error) {
+                    message.textContent = error.message;
+                    message.classList.add('is-error');
+                }).finally(function () {
+                    button.disabled = false;
+                    button.textContent = 'Save email';
+                });
+            });
 
             document.querySelector('[data-email-verification-close]')?.addEventListener('click', function () {
                 verificationPopup.hidden = true;

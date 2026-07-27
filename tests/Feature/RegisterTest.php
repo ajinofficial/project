@@ -141,6 +141,60 @@ class RegisterTest extends TestCase
         ]);
     }
 
+    public function test_registration_rejects_an_existing_business_name_and_email(): void
+    {
+        $plan = $this->starterPlan();
+
+        $this->post(route('register.store'), $this->validRegistrationData([
+            'plan' => $plan->id,
+        ]))->assertRedirect(route('setup.index'));
+
+        auth()->logout();
+
+        $response = $this->postJson(route('register.store'), $this->validRegistrationData([
+            'business_name' => 'Mobile World',
+            'email' => 'OWNER@EXAMPLE.COM',
+            'plan' => $plan->id,
+        ]));
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['business_name', 'email']);
+        $this->assertDatabaseCount('tenants', 1);
+        $this->assertDatabaseCount('users', 1);
+    }
+
+    public function test_registration_availability_checks_business_name_and_email(): void
+    {
+        $plan = $this->starterPlan();
+
+        $this->post(route('register.store'), $this->validRegistrationData([
+            'plan' => $plan->id,
+        ]))->assertRedirect(route('setup.index'));
+
+        auth()->logout();
+
+        $this->postJson(route('register.availability'), [
+            'field' => 'business_name',
+            'value' => 'Mobile World',
+        ])->assertOk()->assertJson([
+            'available' => false,
+            'message' => 'This business name is already registered.',
+        ]);
+
+        $this->postJson(route('register.availability'), [
+            'field' => 'email',
+            'value' => 'OWNER@EXAMPLE.COM',
+        ])->assertOk()->assertJson([
+            'available' => false,
+            'message' => 'This email address is already registered.',
+        ]);
+
+        $this->postJson(route('register.availability'), [
+            'field' => 'business_name',
+            'value' => 'New Store',
+        ])->assertOk()->assertJson(['available' => true]);
+    }
+
     private function validRegistrationData(array $overrides = []): array
     {
         return array_merge([
