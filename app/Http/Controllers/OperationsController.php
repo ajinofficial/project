@@ -264,11 +264,14 @@ class OperationsController extends Controller
     public function storeSale(Request $request): RedirectResponse
     {
         $tenantId = $request->user()->tenant_id;
+        $isNewCustomer = $request->input('customer_id') === 'new';
         $data = $request->validate([
-            'customer_id' => [
-                'nullable',
-                Rule::exists('customers', 'id')->where('tenant_id', $tenantId),
-            ],
+            'customer_id' => $isNewCustomer
+                ? ['required', 'in:new']
+                : ['nullable', Rule::exists('customers', 'id')->where('tenant_id', $tenantId)],
+            'new_customer_name' => ['exclude_unless:customer_id,new', 'required', 'string', 'max:255'],
+            'new_customer_mobile' => ['exclude_unless:customer_id,new', 'required', 'string', 'max:30'],
+            'new_customer_credit_limit' => ['exclude_unless:customer_id,new', 'required', 'numeric', 'min:0', 'max:99999999.99'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => [
                 'required',
@@ -279,6 +282,14 @@ class OperationsController extends Controller
             'payment_method' => ['required', 'in:cash,upi,card,net_banking,credit'],
         ], [
             'customer_id.exists' => 'Select a customer from your business.',
+            'new_customer_name.required' => 'Enter the new customer name.',
+            'new_customer_name.max' => 'Customer name cannot exceed 255 characters.',
+            'new_customer_mobile.required' => 'Enter the new customer mobile number.',
+            'new_customer_mobile.max' => 'Mobile number cannot exceed 30 characters.',
+            'new_customer_credit_limit.required' => 'Enter the customer credit limit.',
+            'new_customer_credit_limit.numeric' => 'Credit limit must be a valid number.',
+            'new_customer_credit_limit.min' => 'Credit limit cannot be negative.',
+            'new_customer_credit_limit.max' => 'Credit limit is too high.',
             'items.required' => 'Add at least one product to the bill.',
             'items.min' => 'Add at least one product to the bill.',
             'items.*.product_id.required' => 'Select a product for every bill row.',
@@ -303,6 +314,21 @@ class OperationsController extends Controller
             ->all();
 
         $saleSummary = DB::transaction(function () use ($data, $request, $tenantId) {
+            $customerId = $data['customer_id'] ?? null;
+            $newCustomerName = null;
+
+            if ($customerId === 'new') {
+                $customer = Customer::create([
+                    'tenant_id' => $tenantId,
+                    'name' => $data['new_customer_name'],
+                    'mobile' => $data['new_customer_mobile'],
+                    'credit_limit' => $data['new_customer_credit_limit'],
+                    'outstanding_balance' => 0,
+                ]);
+                $customerId = $customer->id;
+                $newCustomerName = $customer->name;
+            }
+
             $productIds = collect($data['items'])->pluck('product_id')->all();
             $products = Product::where('tenant_id', $tenantId)
                 ->whereIn('id', $productIds)
@@ -339,7 +365,7 @@ class OperationsController extends Controller
 
             $order = SalesOrder::create([
                 'tenant_id' => $tenantId,
-                'customer_id' => $data['customer_id'] ?? null,
+                'customer_id' => $customerId,
                 'invoice_number' => $request->user()->tenant->invoice_prefix.'-'.now()->format('YmdHis'),
                 'subtotal' => $subtotal,
                 'tax_amount' => $tax,
@@ -376,8 +402,18 @@ class OperationsController extends Controller
                 'item_count' => count($data['items']),
                 'quantity' => $totalQuantity,
                 'total' => $order->total_amount,
+                'new_customer_name' => $newCustomerName,
             ];
         });
+
+        if ($saleSummary['new_customer_name']) {
+            ActivityNotifier::notify(
+                $tenantId,
+                'customer_created',
+                'Customer saved',
+                $request->user()->name.' saved customer '.$saleSummary['new_customer_name'].'.'
+            );
+        }
 
         ActivityNotifier::notify(
             $tenantId,
@@ -400,11 +436,11 @@ class OperationsController extends Controller
 
         $movements = StockMovement::with('product')
             ->where('tenant_id', $request->user()->tenant_id)
-            ->whereIn('type', ['sales_return', 'purchase_return', 'damaged_return'])
+            ->whereIn('type', ['sales_return', 'purchase_return', 'damaged_return', 'reserve_stock', 'release_reserved'])
             ->when($request->filled('type'), function ($query) use ($request) {
                 $type = (string) $request->string('type');
 
-                if (in_array($type, ['sales_return', 'purchase_return', 'damaged_return'], true)) {
+                if (in_array($type, ['sales_return', 'purchase_return', 'damaged_return', 'reserve_stock', 'release_reserved'], true)) {
                     $query->where('type', $type);
                 }
             })
@@ -441,7 +477,7 @@ class OperationsController extends Controller
                 Rule::exists('products', 'id')->where('tenant_id', $tenantId),
             ],
             'quantity' => ['required', 'integer', 'min:1', 'max:999999'],
-            'return_type' => ['required', 'in:sales_return,purchase_return,damaged_return'],
+            'return_type' => ['required', 'in:sales_return,purchase_return,damaged_return,reserve_stock,release_reserved'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ], [
             'product_id.required' => 'Select a product for the return.',
@@ -457,7 +493,11 @@ class OperationsController extends Controller
 
         $returnSummary = DB::transaction(function () use ($data, $request, $tenantId) {
             $product = Product::where('tenant_id', $tenantId)->lockForUpdate()->findOrFail($data['product_id']);
-            $delta = $data['return_type'] === 'purchase_return' ? -$data['quantity'] : $data['quantity'];
+            $delta = match ($data['return_type']) {
+                'purchase_return' => -$data['quantity'],
+                'reserve_stock', 'release_reserved' => 0,
+                default => $data['quantity'],
+            };
 
             if ($product->inventory + $delta < 0) {
                 throw ValidationException::withMessages([
@@ -465,13 +505,35 @@ class OperationsController extends Controller
                 ]);
             }
 
+            if ($data['return_type'] === 'reserve_stock' && $data['quantity'] > $product->available_stock) {
+                throw ValidationException::withMessages([
+                    'quantity' => 'Only '.$product->available_stock.' sellable units are available to reserve.',
+                ]);
+            }
+
+            if ($data['return_type'] === 'release_reserved' && $data['quantity'] > $product->reserved_stock) {
+                throw ValidationException::withMessages([
+                    'quantity' => 'Only '.$product->reserved_stock.' reserved units are available to release.',
+                ]);
+            }
+
             $product->inventory += $delta;
             $product->returned_stock += in_array($data['return_type'], ['sales_return', 'damaged_return'], true) ? $data['quantity'] : 0;
             $product->damaged_stock += $data['return_type'] === 'damaged_return' ? $data['quantity'] : 0;
+            $product->reserved_stock += match ($data['return_type']) {
+                'reserve_stock' => $data['quantity'],
+                'release_reserved' => -$data['quantity'],
+                default => 0,
+            };
             $product->save();
             StockNotifier::sync($product);
 
-            $this->movement($request, $product, $data['return_type'], $delta, null, null, $data['notes'] ?? null);
+            $movementQuantity = match ($data['return_type']) {
+                'reserve_stock' => -$data['quantity'],
+                'release_reserved' => $data['quantity'],
+                default => $delta,
+            };
+            $this->movement($request, $product, $data['return_type'], $movementQuantity, null, null, $data['notes'] ?? null);
 
             return [
                 'product_name' => $product->name,
@@ -483,11 +545,11 @@ class OperationsController extends Controller
         ActivityNotifier::notify(
             $tenantId,
             'return_processed',
-            'Return processed',
+            'Stock flow processed',
             $request->user()->name.' processed a '.str_replace('_', ' ', $returnSummary['return_type']).' for '.$returnSummary['quantity'].' units of '.$returnSummary['product_name'].'.'
         );
 
-        return back()->with('status', 'Return processed.');
+        return back()->with('status', 'Stock flow processed.');
     }
 
     public function reports(Request $request): View

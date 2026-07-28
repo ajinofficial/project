@@ -102,7 +102,7 @@
 
     <section class="ops-grid">
         <article class="admin-section">
-            <div class="section-title"><div><p class="eyebrow">Returns</p><h2>Process return</h2></div></div>
+            <div class="section-title"><div><p class="eyebrow">Stock flow</p><h2>Returns and reservations</h2></div></div>
             <form class="product-form return-form" method="POST" action="{{ route('returns.store') }}" data-return-form>
                 @csrf
 
@@ -118,7 +118,7 @@
                     <select class="return-form-control" name="product_id" required>
                         <option value="">Select product</option>
                         @foreach ($products as $product)
-                            <option value="{{ $product->id }}" @selected((string) old('product_id') === (string) $product->id)>{{ $product->name }} - Stock {{ $product->inventory }}</option>
+                            <option value="{{ $product->id }}" @selected((string) old('product_id') === (string) $product->id)>{{ $product->name }} - Available {{ $product->available_stock }} - Reserved {{ $product->reserved_stock }} - Damaged {{ $product->damaged_stock }}</option>
                         @endforeach
                     </select>
                     @error('product_id') <small>{{ $message }}</small> @enderror
@@ -132,6 +132,8 @@
                             <option value="sales_return" @selected(old('return_type', 'sales_return') === 'sales_return')>Sales return: stock increases</option>
                             <option value="purchase_return" @selected(old('return_type') === 'purchase_return')>Purchase return: stock decreases</option>
                             <option value="damaged_return" @selected(old('return_type') === 'damaged_return')>Damaged return: added to damaged stock</option>
+                            <option value="reserve_stock" @selected(old('return_type') === 'reserve_stock')>Reserve stock: sellable stock decreases</option>
+                            <option value="release_reserved" @selected(old('return_type') === 'release_reserved')>Release reserved: sellable stock increases</option>
                         </select>
                         @error('return_type') <small>{{ $message }}</small> @enderror
                     </label>
@@ -150,7 +152,7 @@
                 </label>
 
                 <button class="product-save-button" type="submit" data-return-submit>
-                    <span class="product-save-button__idle">Process return</span>
+                    <span class="product-save-button__idle">Process stock flow</span>
                     <span class="product-save-button__loading" aria-hidden="true">
                         <i></i>
                         Processing
@@ -160,7 +162,7 @@
         </article>
 
         <article class="admin-section return-listing-panel" data-return-listing>
-            <div class="section-title"><div><p class="eyebrow">Audit log</p><h2>Return movements</h2></div></div>
+            <div class="section-title"><div><p class="eyebrow">Audit log</p><h2>Return and reservation movements</h2></div></div>
             <div class="product-toolbar">
                 <form class="product-filter-form return-filter-form" method="GET" action="{{ route('returns.index') }}" data-return-search-form>
                     <input type="search" name="search" value="{{ request('search') }}" placeholder="Search product, SKU, notes" data-return-search>
@@ -169,6 +171,8 @@
                         <option value="sales_return" @selected(request('type') === 'sales_return')>Sales return</option>
                         <option value="purchase_return" @selected(request('type') === 'purchase_return')>Purchase return</option>
                         <option value="damaged_return" @selected(request('type') === 'damaged_return')>Damaged return</option>
+                        <option value="reserve_stock" @selected(request('type') === 'reserve_stock')>Reserved stock</option>
+                        <option value="release_reserved" @selected(request('type') === 'release_reserved')>Released reservation</option>
                     </select>
                     <select name="per_page" aria-label="Returns per page" data-return-search>
                         @foreach ($perPageOptions as $option)
@@ -193,6 +197,7 @@
                                     'is-sales' => $movement->type === 'sales_return',
                                     'is-purchase' => $movement->type === 'purchase_return',
                                     'is-damaged' => $movement->type === 'damaged_return',
+                                    'is-purchase' => in_array($movement->type, ['reserve_stock', 'release_reserved'], true),
                                 ])>
                                     {{ str_replace('_', ' ', ucfirst($movement->type)) }}
                                 </span>

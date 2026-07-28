@@ -57,21 +57,6 @@
         <input type="number" name="minimum_stock_level" value="{{ old('minimum_stock_level', $product->minimum_stock_level ?? auth()->user()->tenant->low_stock_threshold) }}" min="0" step="1" required data-replace-on-focus>
         @error('minimum_stock_level') <small>{{ $message }}</small> @enderror
     </label>
-    <label>
-        <span>Returned stock</span>
-        <input type="number" name="returned_stock" value="{{ old('returned_stock', $product->returned_stock ?? 0) }}" min="0" step="1" data-replace-on-focus>
-    </label>
-</div>
-
-<div class="field-grid">
-    <label>
-        <span>Reserved stock</span>
-        <input type="number" name="reserved_stock" value="{{ old('reserved_stock', $product->reserved_stock ?? 0) }}" min="0" step="1" data-replace-on-focus>
-    </label>
-    <label>
-        <span>Damaged stock</span>
-        <input type="number" name="damaged_stock" value="{{ old('damaged_stock', $product->damaged_stock ?? 0) }}" min="0" step="1" data-replace-on-focus>
-    </label>
 </div>
 
 <section class="product-image-uploader" data-product-image-uploader>

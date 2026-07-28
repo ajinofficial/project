@@ -180,6 +180,80 @@
             margin-top: 8px;
         }
 
+        .billing-new-customer {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            border: 1px solid #dbe4ee;
+            border-radius: 10px;
+            padding: 18px;
+            background: #f8fafc;
+            box-shadow: inset 3px 0 0 #2563eb;
+        }
+
+        .billing-new-customer[hidden] { display: none; }
+
+        .billing-new-customer__head {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .billing-new-customer__icon {
+            flex: 0 0 auto;
+            display: grid;
+            width: 36px;
+            height: 36px;
+            place-items: center;
+            border-radius: 50%;
+            color: #1d4ed8;
+            background: #dbeafe;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .billing-new-customer__head strong,
+        .billing-new-customer__head small {
+            display: block;
+        }
+
+        .billing-new-customer__head strong { color: #172033; }
+        .billing-new-customer__head small { margin-top: 3px; color: #64748b; }
+
+        .billing-new-customer__field {
+            display: grid;
+            align-content: start;
+            gap: 7px;
+            min-width: 0;
+        }
+
+        .billing-new-customer__field > span {
+            color: #334155;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .billing-new-customer__field input {
+            width: 100%;
+            min-height: 44px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: #172033;
+            background: #fff;
+            outline: none;
+        }
+
+        .billing-new-customer__field input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+        }
+
+        .billing-new-customer__field small { color: #b42318; }
+
         .invoice-item-list {
             display: grid;
             gap: 4px;
@@ -387,6 +461,75 @@
             margin-top: auto;
         }
 
+        .invoice-print-button {
+            min-height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 0;
+            border-radius: 8px;
+            padding: 0 18px;
+            color: #fff;
+            background: #2563eb;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .invoice-print-button:hover { background: #1d4ed8; }
+        .invoice-print-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
+
+        .invoice-business {
+            border: 1px solid #dbeafe;
+            border-radius: 10px;
+            padding: 16px;
+            background: linear-gradient(135deg, #eff6ff, #fff);
+        }
+
+        .invoice-business strong { display: block; color: #172033; font-size: 18px; }
+        .invoice-business span { display: block; margin-top: 4px; color: #64748b; font-size: 12px; }
+
+        .invoice-payment-status {
+            display: inline-flex !important;
+            width: fit-content;
+            border-radius: 999px;
+            padding: 4px 9px;
+            color: #166534 !important;
+            background: #dcfce7;
+            font-size: 11px !important;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .invoice-payment-status.has-balance { color: #92400e !important; background: #fef3c7; }
+
+        .invoice-total-box .invoice-grand-total {
+            border-top: 1px solid #dbe4ee;
+            margin-top: 4px;
+            padding-top: 10px;
+        }
+
+        .invoice-total-box .invoice-grand-total strong { color: #1d4ed8; font-size: 18px; }
+
+        @media print {
+            body * { visibility: hidden !important; }
+            .invoice-drawer,
+            .invoice-drawer * { visibility: visible !important; }
+            .invoice-drawer {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: auto;
+                border: 0;
+                box-shadow: none;
+                transform: none;
+            }
+            .invoice-drawer-body { overflow: visible; }
+            .invoice-drawer-close,
+            .invoice-drawer-actions,
+            .invoice-drawer-backdrop { display: none !important; }
+        }
+
         .billing-invoice-table {
             min-width: 0;
         }
@@ -523,6 +666,8 @@
         }
 
         @media (max-width: 640px) {
+            .billing-new-customer { grid-template-columns: 1fr; }
+
             .billing-page .admin-section {
                 padding-left: 12px;
                 padding-right: 12px;
@@ -667,14 +812,40 @@
 
                 <label>
                     <span>Customer</span>
-                    <select name="customer_id">
+                    <select name="customer_id" data-customer-select>
                         <option value="">Walk-in customer</option>
                         @foreach ($customers as $customer)
                             <option value="{{ $customer->id }}" @selected((string) old('customer_id') === (string) $customer->id)>{{ $customer->name }}</option>
                         @endforeach
+                        <option value="new" @selected(old('customer_id') === 'new')>Other / Add new customer</option>
                     </select>
                     @error('customer_id') <small>{{ $message }}</small> @enderror
                 </label>
+
+                <div class="billing-new-customer" data-new-customer-fields @if (old('customer_id') !== 'new') hidden @endif>
+                    <div class="billing-new-customer__head">
+                        <span class="billing-new-customer__icon" aria-hidden="true">+</span>
+                        <div>
+                            <strong>New customer details</strong>
+                            <small>The customer will be saved and selected for this invoice.</small>
+                        </div>
+                    </div>
+                    <label class="billing-new-customer__field">
+                        <span>Customer name</span>
+                        <input name="new_customer_name" value="{{ old('new_customer_name') }}" maxlength="255" placeholder="Enter customer name" autocomplete="name" @if (old('customer_id') !== 'new') disabled @else required @endif>
+                        @error('new_customer_name') <small>{{ $message }}</small> @enderror
+                    </label>
+                    <label class="billing-new-customer__field">
+                        <span>Mobile number</span>
+                        <input type="tel" name="new_customer_mobile" value="{{ old('new_customer_mobile') }}" maxlength="30" placeholder="Enter mobile number" autocomplete="tel" @if (old('customer_id') !== 'new') disabled @else required @endif>
+                        @error('new_customer_mobile') <small>{{ $message }}</small> @enderror
+                    </label>
+                    <label class="billing-new-customer__field">
+                        <span>Credit limit</span>
+                        <input type="number" name="new_customer_credit_limit" value="{{ old('new_customer_credit_limit', 0) }}" min="0" step="0.01" @if (old('customer_id') !== 'new') disabled @else required @endif>
+                        @error('new_customer_credit_limit') <small>{{ $message }}</small> @enderror
+                    </label>
+                </div>
 
                 <div>
                     <div class="billing-items" data-billing-items>
@@ -810,11 +981,13 @@
                                 data-invoice-view
                                 data-invoice-number="{{ $order->invoice_number }}"
                                 data-invoice-customer="{{ $order->customer->name ?? 'Walk-in' }}"
+                                data-invoice-customer-mobile="{{ $order->customer->mobile ?? '' }}"
                                 data-invoice-date="{{ $order->created_at->format('d M Y, h:i A') }}"
                                 data-invoice-subtotal="{{ number_format($order->subtotal, 2) }}"
                                 data-invoice-tax="{{ number_format($order->tax_amount, 2) }}"
                                 data-invoice-total="{{ number_format($order->total_amount, 2) }}"
                                 data-invoice-paid="{{ number_format($order->paid_amount, 2) }}"
+                                data-invoice-balance="{{ max(0, (float) $order->total_amount - (float) $order->paid_amount) }}"
                                 data-invoice-payment="{{ ucfirst(str_replace('_', ' ', $order->payment_method)) }}"
                                 data-invoice-items="{{ base64_encode($invoiceItems->toJson()) }}"
                             >
@@ -852,9 +1025,16 @@
             </button>
         </div>
         <div class="invoice-drawer-body">
+            <div class="invoice-business">
+                <strong>{{ auth()->user()->tenant->business_name }}</strong>
+                <span>{{ auth()->user()->tenant->store_address }}</span>
+                <span>{{ auth()->user()->tenant->mobile }} @if(auth()->user()->tenant->gst_number) · GSTIN {{ auth()->user()->tenant->gst_number }} @endif</span>
+            </div>
             <div class="invoice-detail-grid">
                 <div><span>Customer</span><strong data-invoice-drawer-customer></strong></div>
                 <div><span>Payment</span><strong data-invoice-drawer-payment></strong></div>
+                <div><span>Mobile</span><strong data-invoice-drawer-mobile>-</strong></div>
+                <div><span>Status</span><strong class="invoice-payment-status" data-invoice-drawer-status></strong></div>
             </div>
             <div>
                 <p class="eyebrow">Products</p>
@@ -863,9 +1043,16 @@
             <div class="invoice-total-box">
                 <div><span>Subtotal</span><strong data-invoice-drawer-subtotal></strong></div>
                 <div><span>Tax</span><strong data-invoice-drawer-tax></strong></div>
-                <div><span>Total</span><strong data-invoice-drawer-total></strong></div>
                 <div><span>Paid</span><strong data-invoice-drawer-paid></strong></div>
+                <div><span>Balance</span><strong data-invoice-drawer-balance></strong></div>
+                <div class="invoice-grand-total"><span>Total</span><strong data-invoice-drawer-total></strong></div>
             </div>
+        </div>
+        <div class="invoice-drawer-actions">
+            <button type="button" class="invoice-print-button" data-print-invoice>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z"/></svg>
+                Print invoice
+            </button>
         </div>
     </aside>
 
@@ -940,11 +1127,17 @@
                     document.querySelector('[data-invoice-drawer-number]').textContent = button.dataset.invoiceNumber || 'Invoice';
                     document.querySelector('[data-invoice-drawer-date]').textContent = button.dataset.invoiceDate || '';
                     document.querySelector('[data-invoice-drawer-customer]').textContent = button.dataset.invoiceCustomer || 'Walk-in';
+                    document.querySelector('[data-invoice-drawer-mobile]').textContent = button.dataset.invoiceCustomerMobile || '-';
                     document.querySelector('[data-invoice-drawer-payment]').textContent = button.dataset.invoicePayment || '-';
                     document.querySelector('[data-invoice-drawer-subtotal]').textContent = money(button.dataset.invoiceSubtotal || '0.00');
                     document.querySelector('[data-invoice-drawer-tax]').textContent = money(button.dataset.invoiceTax || '0.00');
                     document.querySelector('[data-invoice-drawer-total]').textContent = money(button.dataset.invoiceTotal || '0.00');
                     document.querySelector('[data-invoice-drawer-paid]').textContent = money(button.dataset.invoicePaid || '0.00');
+                    var balance = Number(button.dataset.invoiceBalance || 0);
+                    var status = document.querySelector('[data-invoice-drawer-status]');
+                    document.querySelector('[data-invoice-drawer-balance]').textContent = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(balance);
+                    status.textContent = balance > 0 ? 'Partially paid' : 'Paid';
+                    status.classList.toggle('has-balance', balance > 0);
 
                     var list = document.querySelector('[data-invoice-drawer-items]');
                     list.innerHTML = '';
@@ -974,6 +1167,10 @@
 
             document.querySelectorAll('[data-close-invoice], [data-invoice-backdrop]').forEach(function (button) {
                 button.addEventListener('click', closeInvoiceDrawer);
+            });
+
+            document.querySelector('[data-print-invoice]')?.addEventListener('click', function () {
+                window.print();
             });
 
             document.addEventListener('keydown', function (event) {
@@ -1096,7 +1293,19 @@
                 var subtotalOutput = form.querySelector('[data-billing-subtotal]');
                 var taxOutput = form.querySelector('[data-billing-tax]');
                 var totalOutput = form.querySelector('[data-billing-total]');
+                var customerSelect = form.querySelector('[data-customer-select]');
+                var newCustomerFields = form.querySelector('[data-new-customer-fields]');
                 var currency = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
+
+                function toggleNewCustomerFields() {
+                    if (!customerSelect || !newCustomerFields) return;
+                    var show = customerSelect.value === 'new';
+                    newCustomerFields.hidden = !show;
+                    newCustomerFields.querySelectorAll('input').forEach(function (field) {
+                        field.disabled = !show;
+                        field.required = show;
+                    });
+                }
 
                 function fieldLabel(field) {
                     var label = field.closest('label');
@@ -1250,6 +1459,8 @@
                 rows().forEach(bindRow);
                 renameRows();
                 updateTotals();
+                customerSelect?.addEventListener('change', toggleNewCustomerFields);
+                toggleNewCustomerFields();
 
                 form.querySelectorAll('[data-replace-on-focus]').forEach(function (field) {
                     field.addEventListener('focus', function () {

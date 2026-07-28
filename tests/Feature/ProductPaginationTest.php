@@ -272,6 +272,9 @@ class ProductPaginationTest extends TestCase
         $response->assertOk();
         $response->assertDontSee('name="supplier_id"', false);
         $response->assertSee('data-product-save-form', false);
+        $response->assertDontSee('name="returned_stock"', false);
+        $response->assertDontSee('name="reserved_stock"', false);
+        $response->assertDontSee('name="damaged_stock"', false);
         $response->assertSee('data-product-save-button', false);
         $response->assertSee('data-replace-on-focus', false);
         $response->assertDontSee('name="inventory"', false);
@@ -749,6 +752,50 @@ class ProductPaginationTest extends TestCase
             'type' => 'damaged_return',
             'quantity' => 2,
             'stock_after' => 12,
+        ]);
+    }
+
+    public function test_reserved_stock_is_managed_from_the_returns_page(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+
+        $product = Product::create($this->productPayload([
+            'tenant_id' => $tenant->id,
+            'user_id' => $owner->id,
+            'name' => 'Reservation Flow Product',
+            'inventory' => 10,
+            'reserved_stock' => 1,
+        ]));
+
+        $this->actingAs($owner)->post(route('returns.store'), [
+            'product_id' => $product->id,
+            'return_type' => 'reserve_stock',
+            'quantity' => 3,
+            'notes' => 'Held for customer order.',
+        ])->assertRedirect();
+
+        $this->assertSame(4, $product->fresh()->reserved_stock);
+        $this->assertSame(6, $product->fresh()->available_stock);
+
+        $this->actingAs($owner)->post(route('returns.store'), [
+            'product_id' => $product->id,
+            'return_type' => 'release_reserved',
+            'quantity' => 2,
+        ])->assertRedirect();
+
+        $this->assertSame(2, $product->fresh()->reserved_stock);
+        $this->assertSame(8, $product->fresh()->available_stock);
+        $this->assertDatabaseHas('stock_movements', [
+            'tenant_id' => $tenant->id,
+            'product_id' => $product->id,
+            'type' => 'reserve_stock',
+            'quantity' => -3,
+        ]);
+        $this->assertDatabaseHas('stock_movements', [
+            'tenant_id' => $tenant->id,
+            'product_id' => $product->id,
+            'type' => 'release_reserved',
+            'quantity' => 2,
         ]);
     }
 
@@ -1347,8 +1394,51 @@ class ProductPaginationTest extends TestCase
         $listing->assertSee('data-invoice-view', false);
         $listing->assertSee('invoice-drawer', false);
         $listing->assertSee('Invoice details');
+        $listing->assertSee('data-print-invoice', false);
+        $listing->assertSee('Print invoice');
+        $listing->assertSee('window.print()', false);
         $listing->assertSee('>View</span>', false);
         $listing->assertSee($order->invoice_number);
+    }
+
+    public function test_sale_can_create_and_use_a_new_customer(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+
+        $product = Product::create($this->productPayload([
+            'tenant_id' => $tenant->id,
+            'user_id' => $owner->id,
+            'name' => 'New Customer Bill Product',
+            'sku' => 'NEW-CUSTOMER-01',
+            'price' => 100,
+            'tax_percentage' => 0,
+            'inventory' => 5,
+        ]));
+
+        $response = $this->actingAs($owner)
+            ->from(route('sales.index'))
+            ->post(route('sales.store'), [
+                'customer_id' => 'new',
+                'new_customer_name' => 'Billing Counter Customer',
+                'new_customer_mobile' => '9876543210',
+                'new_customer_credit_limit' => 5000,
+                'items' => [['product_id' => $product->id, 'quantity' => 1]],
+                'paid_amount' => 100,
+                'payment_method' => 'cash',
+            ]);
+
+        $response->assertRedirect(route('sales.index'));
+
+        $customer = Customer::where('tenant_id', $tenant->id)
+            ->where('mobile', '9876543210')
+            ->firstOrFail();
+
+        $this->assertSame('Billing Counter Customer', $customer->name);
+        $this->assertSame('5000.00', $customer->credit_limit);
+        $this->assertDatabaseHas('sales_orders', [
+            'tenant_id' => $tenant->id,
+            'customer_id' => $customer->id,
+        ]);
     }
 
     public function test_sale_store_rejects_zero_paid_amount(): void

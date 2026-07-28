@@ -146,9 +146,6 @@
                                                 <input type="hidden" name="category" value="{{ $product->category }}">
                                                 <input type="hidden" name="brand" value="{{ $product->brand }}">
                                                 <input type="hidden" name="minimum_stock_level" value="{{ $product->minimum_stock_level }}">
-                                                <input type="hidden" name="reserved_stock" value="{{ $product->reserved_stock }}">
-                                                <input type="hidden" name="damaged_stock" value="{{ $product->damaged_stock }}">
-                                                <input type="hidden" name="returned_stock" value="{{ $product->returned_stock }}">
                                                 <input type="hidden" name="image_url" value="{{ $product->image_url }}">
                                                 <input type="hidden" name="description" value="{{ $product->description }}">
                                                 <input type="hidden" name="status" value="{{ $product->status === 'active' ? 'archived' : 'active' }}">
