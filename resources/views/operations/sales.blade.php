@@ -36,7 +36,7 @@
         .billing-items {
             border: 1px solid #e5e7eb;
             border-radius: 8px;
-            overflow: hidden;
+            overflow: visible;
             background: #fff;
             min-width: 0;
         }
@@ -81,6 +81,15 @@
             width: 100%;
         }
 
+        .billing-item-row .billing-product-search {
+            position: relative;
+        }
+
+        .billing-item-row .searchable-select__menu {
+            top: 44px;
+            z-index: 40;
+        }
+
         .billing-item-row select,
         .billing-item-row input,
         .billing-row-remove {
@@ -94,6 +103,41 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: .04em;
+        }
+
+        @media (min-width: 901px) {
+            .billing-item-row,
+            .billing-items-head {
+                grid-template-columns: minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) 40px;
+                grid-template-areas:
+                    "product product product product"
+                    "qty rate total remove";
+            }
+
+            .billing-item-row > label:first-child,
+            .billing-items-head > span:first-child {
+                grid-area: product;
+            }
+
+            .billing-item-row > label:nth-child(2),
+            .billing-items-head > span:nth-child(2) {
+                grid-area: qty;
+            }
+
+            .billing-item-row > .billing-line-price,
+            .billing-items-head > span:nth-child(3) {
+                grid-area: rate;
+            }
+
+            .billing-item-row > .billing-cell-total,
+            .billing-items-head > span:nth-child(4) {
+                grid-area: total;
+            }
+
+            .billing-item-row > .billing-row-remove,
+            .billing-items-head > span:nth-child(5) {
+                grid-area: remove;
+            }
         }
 
         .billing-item-row + .billing-item-row {
@@ -859,9 +903,11 @@
 
                         @foreach ($oldItems as $index => $item)
                             <div class="billing-item-row" data-billing-row>
-                                <label data-label="Product">
+                                <label class="billing-product-search searchable-select" data-label="Product" data-billing-product-search>
                                     <span class="sr-only">Product</span>
-                                    <select name="items[{{ $index }}][product_id]" required data-product-select>
+                                    <input type="search" placeholder="Search or select product" autocomplete="off" role="combobox" aria-label="Search products" aria-expanded="false" data-billing-product-search-input>
+                                    <div class="searchable-select__menu" role="listbox" data-billing-product-search-menu hidden></div>
+                                    <select class="searchable-select__native" name="items[{{ $index }}][product_id]" required data-product-select tabindex="-1" aria-hidden="true">
                                         <option value="">Select product</option>
                                         @foreach ($products as $product)
                                             <option
@@ -1058,9 +1104,11 @@
 
     <template data-billing-row-template>
         <div class="billing-item-row" data-billing-row>
-            <label data-label="Product">
+            <label class="billing-product-search searchable-select" data-label="Product" data-billing-product-search>
                 <span class="sr-only">Product</span>
-                <select required data-product-select>
+                <input type="search" placeholder="Search or select product" autocomplete="off" role="combobox" aria-label="Search products" aria-expanded="false" data-billing-product-search-input>
+                <div class="searchable-select__menu" role="listbox" data-billing-product-search-menu hidden></div>
+                <select class="searchable-select__native" required data-product-select tabindex="-1" aria-hidden="true">
                     <option value="">Select product</option>
                     @foreach ($products as $product)
                         <option value="{{ $product->id }}" data-price="{{ $product->price }}" data-tax="{{ $product->tax_percentage }}" data-stock="{{ $product->available_stock }}">
@@ -1421,7 +1469,83 @@
                     totalOutput.textContent = currency.format(subtotal + tax);
                 }
 
+                function bindProductSearch(row) {
+                    var component = row.querySelector('[data-billing-product-search]');
+                    var search = component.querySelector('[data-billing-product-search-input]');
+                    var menu = component.querySelector('[data-billing-product-search-menu]');
+                    var select = component.querySelector('[data-product-select]');
+                    var productOptions = Array.prototype.slice.call(select.options).filter(function (option) {
+                        return option.value !== '';
+                    });
+
+                    function closeMenu() {
+                        menu.hidden = true;
+                        search.setAttribute('aria-expanded', 'false');
+                    }
+
+                    function choose(option) {
+                        select.value = option.value;
+                        search.value = option.textContent.trim();
+                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                        closeMenu();
+                    }
+
+                    function renderOptions() {
+                        var query = search.value.trim().toLowerCase();
+                        var matches = productOptions.filter(function (option) {
+                            return query === '' || option.textContent.toLowerCase().includes(query);
+                        });
+
+                        menu.innerHTML = '';
+                        matches.forEach(function (option) {
+                            var item = document.createElement('button');
+                            item.type = 'button';
+                            item.className = 'searchable-select__option';
+                            item.setAttribute('role', 'option');
+                            item.textContent = option.textContent.trim();
+                            item.addEventListener('mousedown', function (event) {
+                                event.preventDefault();
+                                choose(option);
+                            });
+                            menu.appendChild(item);
+                        });
+
+                        if (!matches.length) {
+                            var empty = document.createElement('span');
+                            empty.className = 'searchable-select__empty';
+                            empty.textContent = 'No products found';
+                            menu.appendChild(empty);
+                        }
+
+                        menu.hidden = false;
+                        search.setAttribute('aria-expanded', 'true');
+                    }
+
+                    var selected = select.selectedOptions[0];
+                    if (selected && selected.value) search.value = selected.textContent.trim();
+
+                    search.addEventListener('focus', renderOptions);
+                    search.addEventListener('input', function () {
+                        select.value = '';
+                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                        renderOptions();
+                    });
+                    search.addEventListener('keydown', function (event) {
+                        if (event.key === 'ArrowDown') {
+                            event.preventDefault();
+                            menu.querySelector('.searchable-select__option')?.focus();
+                        } else if (event.key === 'Escape') {
+                            closeMenu();
+                        }
+                    });
+                    document.addEventListener('click', function (event) {
+                        if (!component.contains(event.target)) closeMenu();
+                    });
+                }
+
                 function bindRow(row) {
+                    bindProductSearch(row);
+
                     row.querySelectorAll('input, select').forEach(function (field) {
                         field.addEventListener('input', function () {
                             updateTotals();
@@ -1437,6 +1561,7 @@
                     row.querySelector('[data-remove-row]').addEventListener('click', function () {
                         if (rows().length === 1) {
                             row.querySelector('[data-product-select]').value = '';
+                            row.querySelector('[data-billing-product-search-input]').value = '';
                             row.querySelector('[data-quantity-input]').value = 1;
                         } else {
                             row.remove();
@@ -1453,7 +1578,7 @@
                     bindRow(row);
                     renameRows();
                     updateTotals();
-                    row.querySelector('[data-product-select]').focus();
+                    row.querySelector('[data-billing-product-search-input]').focus();
                 });
 
                 rows().forEach(bindRow);
@@ -1502,7 +1627,10 @@
 
                     event.preventDefault();
                     event.stopImmediatePropagation();
-                    firstInvalid.focus();
+                    var productSearch = firstInvalid.matches('[data-product-select]')
+                        ? firstInvalid.closest('[data-billing-product-search]')?.querySelector('[data-billing-product-search-input]')
+                        : null;
+                    (productSearch || firstInvalid).focus();
                 });
             });
         });

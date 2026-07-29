@@ -664,6 +664,19 @@ class ProductPaginationTest extends TestCase
         $response->assertDontSee('Filtered return other tenant');
     }
 
+    public function test_return_form_product_dropdown_is_searchable(): void
+    {
+        [$owner] = $this->tenantOwner();
+
+        $response = $this->actingAs($owner)->get(route('returns.index'));
+
+        $response->assertOk();
+        $response->assertSee('data-searchable-select', false);
+        $response->assertSee('data-searchable-select-input', false);
+        $response->assertSee('data-searchable-select-menu', false);
+        $response->assertSee('Search or select product');
+    }
+
     public function test_return_form_shows_required_validation_errors(): void
     {
         [$owner] = $this->tenantOwner();
@@ -1387,6 +1400,11 @@ class ProductPaginationTest extends TestCase
         $listing->assertSee('data-billing-listing', false);
         $listing->assertSee('data-billing-listing-results', false);
         $listing->assertSee('data-billing-listing-loader', false);
+        $listing->assertSee('data-billing-product-search', false);
+        $listing->assertSee('data-billing-product-search-input', false);
+        $listing->assertSee('data-billing-product-search-menu', false);
+        $listing->assertSee('Search or select product');
+        $listing->assertSee('No products found');
         $listing->assertSee('Loading invoices');
         $listing->assertSee('loadBillingListing', false);
         $listing->assertSee("'X-Requested-With': 'XMLHttpRequest'", false);

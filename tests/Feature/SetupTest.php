@@ -26,6 +26,8 @@ class SetupTest extends TestCase
         $response->assertSee('Invoice and tax setup');
         $response->assertSee('Invoice preview');
         $response->assertSee('Role permissions');
+        $response->assertSee("button.textContent = 'Done'", false);
+        $response->assertSee("button.dataset.emailVerified === 'true'", false);
     }
 
     public function test_owner_can_update_store_setup_defaults(): void

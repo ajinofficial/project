@@ -113,14 +113,26 @@
                     </div>
                 @endif
 
-                <label class="return-field">
+                <label class="return-field searchable-select" data-searchable-select>
                     <span>Product</span>
-                    <select class="return-form-control" name="product_id" required>
+                    <input
+                        type="search"
+                        class="return-form-control searchable-select__search"
+                        placeholder="Search or select product"
+                        autocomplete="off"
+                        role="combobox"
+                        aria-label="Search products"
+                        aria-expanded="false"
+                        data-searchable-select-input
+                    >
+                    <div class="searchable-select__menu" role="listbox" data-searchable-select-menu hidden></div>
+                    <select class="searchable-select__native" name="product_id" required tabindex="-1" aria-hidden="true">
                         <option value="">Select product</option>
                         @foreach ($products as $product)
-                            <option value="{{ $product->id }}" @selected((string) old('product_id') === (string) $product->id)>{{ $product->name }} - Available {{ $product->available_stock }} - Reserved {{ $product->reserved_stock }} - Damaged {{ $product->damaged_stock }}</option>
+                            <option value="{{ $product->id }}" @selected((string) old('product_id') === (string) $product->id)>{{ $product->name }} - {{ $product->sku ?: 'SKU-'.$product->id }} - Available {{ $product->available_stock }} - Reserved {{ $product->reserved_stock }} - Damaged {{ $product->damaged_stock }}</option>
                         @endforeach
                     </select>
+                    <small class="searchable-select__status" data-searchable-select-status aria-live="polite"></small>
                     @error('product_id') <small>{{ $message }}</small> @enderror
                 </label>
 
@@ -388,4 +400,6 @@
             });
         });
     </script>
+
+    @include('partials.searchable-select-script')
 @endsection

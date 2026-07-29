@@ -443,6 +443,11 @@
                 var otpInput = otpForm.querySelector('input[name="otp"]');
                 var otp = otpInput.value.trim();
 
+                if (button.dataset.emailVerified === 'true') {
+                    verificationPopup.hidden = true;
+                    return;
+                }
+
                 if (! otp) {
                     message.textContent = 'Verification code is required.';
                     message.classList.add('is-error');
@@ -472,14 +477,19 @@
                 }).then(function (payload) {
                     message.textContent = payload.message;
                     message.classList.remove('is-error');
-                    verificationPopup.hidden = true;
+                    otpInput.hidden = true;
+                    resendButton.hidden = true;
+                    button.dataset.emailVerified = 'true';
+                    button.textContent = 'Done';
                     sessionStorage.removeItem('emailVerificationDismissed');
                 }).catch(function (error) {
                     message.textContent = error.message;
                     message.classList.add('is-error');
                 }).finally(function () {
                     button.disabled = false;
-                    button.textContent = 'Verify OTP';
+                    if (button.dataset.emailVerified !== 'true') {
+                        button.textContent = 'Verify OTP';
+                    }
                 });
             });
 
