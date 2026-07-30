@@ -325,10 +325,6 @@
                 });
             });
 
-            if (verificationPopup && sessionStorage.getItem('emailVerificationDismissed') === 'true') {
-                verificationPopup.hidden = true;
-            }
-
             emailEditButton?.addEventListener('click', function () {
                 emailEditForm.hidden = false;
                 verificationForm.hidden = true;
@@ -392,7 +388,6 @@
 
             document.querySelector('[data-email-verification-close]')?.addEventListener('click', function () {
                 verificationPopup.hidden = true;
-                sessionStorage.setItem('emailVerificationDismissed', 'true');
             });
 
             verificationForm?.addEventListener('submit', function (event) {
@@ -481,7 +476,6 @@
                     resendButton.hidden = true;
                     button.dataset.emailVerified = 'true';
                     button.textContent = 'Done';
-                    sessionStorage.removeItem('emailVerificationDismissed');
                 }).catch(function (error) {
                     message.textContent = error.message;
                     message.classList.add('is-error');

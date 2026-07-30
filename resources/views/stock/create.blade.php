@@ -31,6 +31,28 @@
             color: var(--v-text);
             font-size: 16px;
         }
+        .searchable-select__loader {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            color: var(--v-muted);
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .searchable-select__loader::before {
+            content: "";
+            width: 15px;
+            height: 15px;
+            border: 2px solid #d8e2ef;
+            border-top-color: var(--v-primary, #2f80ed);
+            border-radius: 50%;
+            animation: searchable-select-rotate .7s linear infinite;
+        }
+        @keyframes searchable-select-rotate {
+            to { transform: rotate(360deg); }
+        }
     </style>
 
     <section class="product-workspace stock-form-workspace">
@@ -58,7 +80,7 @@
                     </div>
                 @endif
 
-                <label class="searchable-select" data-searchable-select>
+                <label class="searchable-select" data-searchable-select data-searchable-select-url="{{ route('stock.products') }}">
                     <span>Product</span>
                     <input type="search" class="searchable-select__search" placeholder="Search or select product" autocomplete="off" role="combobox" aria-label="Search products" aria-expanded="false" data-searchable-select-input>
                     <div class="searchable-select__menu" role="listbox" data-searchable-select-menu hidden></div>

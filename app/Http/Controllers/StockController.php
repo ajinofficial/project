@@ -7,6 +7,7 @@ use App\Models\StockMovement;
 use App\Support\ActivityNotifier;
 use App\Support\StockNotifier;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -80,7 +81,45 @@ class StockController extends Controller
     public function create(Request $request): View
     {
         return view('stock.create', [
-            'products' => Product::where('tenant_id', $request->user()->tenant_id)->orderBy('name')->get(),
+            'products' => Product::where('tenant_id', $request->user()->tenant_id)
+                ->orderBy('name')
+                ->take(10)
+                ->get(),
+        ]);
+    }
+
+    public function products(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'page' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $search = trim((string) ($validated['search'] ?? ''));
+        $products = Product::where('tenant_id', $request->user()->tenant_id)
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('sku', 'like', "%{$search}%")
+                        ->orWhere('barcode', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('name')
+            ->paginate(10);
+
+        return response()->json([
+            'data' => $products->getCollection()->map(fn (Product $product) => [
+                'id' => $product->id,
+                'label' => $product->name.' - '.($product->sku ?: 'SKU-'.$product->id).' - Stock '.$product->inventory,
+                'purchase_price' => $product->purchase_price,
+                'selling_price' => $product->price,
+            ])->values(),
+            'meta' => [
+                'current_page' => $products->currentPage(),
+                'last_page' => $products->lastPage(),
+                'total' => $products->total(),
+                'has_more' => $products->hasMorePages(),
+            ],
         ]);
     }
 

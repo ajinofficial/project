@@ -123,6 +123,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('products', ProductController::class)->except(['show'])->middleware('menu:inventory');
     Route::get('/stock', [StockController::class, 'index'])->middleware('menu:stock')->name('stock.index');
     Route::get('/stock/add', [StockController::class, 'create'])->middleware('menu:stock')->name('stock.create');
+    Route::get('/stock/products', [StockController::class, 'products'])->middleware('menu:stock')->name('stock.products');
     Route::post('/stock/adjust', [StockController::class, 'adjust'])->middleware('menu:stock')->name('stock.adjust');
     Route::get('/suppliers', [OperationsController::class, 'suppliers'])->middleware('menu:suppliers')->name('suppliers.index');
     Route::post('/suppliers', [OperationsController::class, 'storeSupplier'])->middleware('menu:suppliers')->name('suppliers.store');
@@ -131,6 +132,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/purchases', [OperationsController::class, 'purchases'])->middleware('menu:purchases')->name('purchases.index');
     Route::post('/purchases', [OperationsController::class, 'storePurchase'])->middleware('menu:purchases')->name('purchases.store');
     Route::get('/sales', [OperationsController::class, 'sales'])->middleware('menu:billing')->name('sales.index');
+    Route::get('/sales/products', [OperationsController::class, 'saleProducts'])->middleware('menu:billing')->name('sales.products');
     Route::post('/sales', [OperationsController::class, 'storeSale'])->middleware('menu:billing')->name('sales.store');
     Route::get('/returns', [OperationsController::class, 'returns'])->middleware('menu:returns')->name('returns.index');
     Route::post('/returns', [OperationsController::class, 'storeReturn'])->middleware('menu:returns')->name('returns.store');

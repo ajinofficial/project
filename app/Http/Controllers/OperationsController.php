@@ -13,6 +13,7 @@ use App\Models\Supplier;
 use App\Support\ActivityNotifier;
 use App\Support\StockNotifier;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -254,10 +255,62 @@ class OperationsController extends Controller
             ->paginate(10)
             ->appends($request->only('search'));
 
+        $oldProductIds = collect($request->old('items', []))
+            ->pluck('product_id')
+            ->filter()
+            ->map(fn ($id) => (int) $id);
+        $initialProductIds = Product::where('tenant_id', $request->user()->tenant_id)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->limit(10)
+            ->pluck('id');
+        $initialProducts = Product::where('tenant_id', $request->user()->tenant_id)
+            ->where('status', 'active')
+            ->whereIn('id', $initialProductIds->merge($oldProductIds)->unique())
+            ->orderBy('name')
+            ->get();
+
         return view('operations.sales', [
-            'products' => Product::where('tenant_id', $request->user()->tenant_id)->where('status', 'active')->orderBy('name')->get(),
+            'products' => $initialProducts,
             'customers' => Customer::where('tenant_id', $request->user()->tenant_id)->orderBy('name')->get(),
             'orders' => $orders,
+        ]);
+    }
+
+    public function saleProducts(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'page' => ['nullable', 'integer', 'min:1'],
+        ]);
+        $search = trim((string) ($validated['search'] ?? ''));
+        $products = Product::where('tenant_id', $request->user()->tenant_id)
+            ->where('status', 'active')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('sku', 'like', "%{$search}%")
+                        ->orWhere('barcode', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('name')
+            ->paginate(10);
+
+        return response()->json([
+            'data' => $products->getCollection()->map(fn (Product $product) => [
+                'id' => $product->id,
+                'label' => $product->name.' - '.($product->sku ?: $product->barcode ?: 'No SKU').' - Stock '.$product->available_stock,
+                'name' => $product->name,
+                'sku' => $product->sku ?: $product->barcode,
+                'stock' => $product->available_stock,
+                'price' => (float) $product->price,
+                'tax' => (float) $product->tax_percentage,
+            ])->values(),
+            'meta' => [
+                'current_page' => $products->currentPage(),
+                'total' => $products->total(),
+                'has_more' => $products->hasMorePages(),
+            ],
         ]);
     }
 

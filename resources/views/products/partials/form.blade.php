@@ -8,7 +8,7 @@
 <div class="field-grid">
     <label>
         <span>Item name</span>
-        <input type="text" name="name" value="{{ old('name', $product->name) }}" required>
+        <input type="text" name="name" value="{{ old('name', $product->name) }}" placeholder="Enter item name" required>
         @error('name') <small>{{ $message }}</small> @enderror
     </label>
 

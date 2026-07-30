@@ -74,6 +74,9 @@ class StockModuleTest extends TestCase
         $response->assertSee('data-searchable-select', false);
         $response->assertSee('data-searchable-select-input', false);
         $response->assertSee('data-searchable-select-menu', false);
+        $response->assertSee('data-searchable-select-url="'.route('stock.products').'"', false);
+        $response->assertSee('Loading products');
+        $response->assertSee('loadRemoteProducts');
         $response->assertSee('Search or select product');
         $response->assertSee('name="adjustment"', false);
         $response->assertSee('name="stock_date"', false);
@@ -84,6 +87,60 @@ class StockModuleTest extends TestCase
         $response->assertSee('Selling price after profit');
         $response->assertSee('novalidate', false);
         $response->assertSee('is required.', false);
+    }
+
+    public function test_stock_product_selector_is_tenant_scoped_and_paginated(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+        $otherTenant = Tenant::create([
+            'plan_id' => Plan::where('name', 'starter')->firstOrFail()->id,
+            'tenant_type' => Tenant::TYPE_CLIENT,
+            'business_name' => 'Other Store',
+            'owner_name' => 'Other Owner',
+            'mobile' => '+91 90000 00000',
+            'email' => 'other-owner@example.com',
+            'business_category' => Tenant::CATEGORY_RETAIL,
+            'store_address' => 'Other road',
+            'role_permissions' => RolePermission::defaults(),
+        ]);
+
+        foreach (range(1, 25) as $number) {
+            Product::create($this->productPayload([
+                'tenant_id' => $tenant->id,
+                'user_id' => $owner->id,
+                'name' => 'Paged Product '.str_pad((string) $number, 2, '0', STR_PAD_LEFT),
+                'sku' => 'PAGE-'.$number,
+            ]));
+        }
+
+        Product::create($this->productPayload([
+            'tenant_id' => $otherTenant->id,
+            'user_id' => $owner->id,
+            'name' => 'Other Tenant Secret',
+            'sku' => 'SECRET-1',
+        ]));
+
+        $this->actingAs($owner)->getJson(route('stock.products'))
+            ->assertOk()
+            ->assertJsonCount(10, 'data')
+            ->assertJsonPath('meta.current_page', 1)
+            ->assertJsonPath('meta.has_more', true)
+            ->assertJsonMissing(['label' => 'Other Tenant Secret - SECRET-1 - Stock 20']);
+
+        $this->actingAs($owner)->getJson(route('stock.products', ['page' => 2]))
+            ->assertOk()
+            ->assertJsonCount(10, 'data')
+            ->assertJsonPath('meta.has_more', true);
+
+        $this->actingAs($owner)->getJson(route('stock.products', ['page' => 3]))
+            ->assertOk()
+            ->assertJsonCount(5, 'data')
+            ->assertJsonPath('meta.has_more', false);
+
+        $this->actingAs($owner)->getJson(route('stock.products', ['search' => 'PAGE-25']))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', Product::where('tenant_id', $tenant->id)->where('sku', 'PAGE-25')->value('id'));
     }
 
     public function test_stock_adjustment_updates_inventory_and_records_movement(): void

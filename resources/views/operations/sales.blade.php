@@ -89,6 +89,28 @@
             top: 44px;
             z-index: 40;
         }
+        .billing-product-loader {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 13px;
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .billing-product-loader::before {
+            content: "";
+            width: 15px;
+            height: 15px;
+            border: 2px solid #d8e2ef;
+            border-top-color: #2f80ed;
+            border-radius: 50%;
+            animation: billing-product-rotate .7s linear infinite;
+        }
+        @keyframes billing-product-rotate {
+            to { transform: rotate(360deg); }
+        }
 
         .billing-item-row select,
         .billing-item-row input,
@@ -903,7 +925,7 @@
 
                         @foreach ($oldItems as $index => $item)
                             <div class="billing-item-row" data-billing-row>
-                                <label class="billing-product-search searchable-select" data-label="Product" data-billing-product-search>
+                                <label class="billing-product-search searchable-select" data-label="Product" data-billing-product-search data-product-url="{{ route('sales.products') }}">
                                     <span class="sr-only">Product</span>
                                     <input type="search" placeholder="Search or select product" autocomplete="off" role="combobox" aria-label="Search products" aria-expanded="false" data-billing-product-search-input>
                                     <div class="searchable-select__menu" role="listbox" data-billing-product-search-menu hidden></div>
@@ -1104,7 +1126,7 @@
 
     <template data-billing-row-template>
         <div class="billing-item-row" data-billing-row>
-            <label class="billing-product-search searchable-select" data-label="Product" data-billing-product-search>
+            <label class="billing-product-search searchable-select" data-label="Product" data-billing-product-search data-product-url="{{ route('sales.products') }}">
                 <span class="sr-only">Product</span>
                 <input type="search" placeholder="Search or select product" autocomplete="off" role="combobox" aria-label="Search products" aria-expanded="false" data-billing-product-search-input>
                 <div class="searchable-select__menu" role="listbox" data-billing-product-search-menu hidden></div>
@@ -1474,61 +1496,128 @@
                     var search = component.querySelector('[data-billing-product-search-input]');
                     var menu = component.querySelector('[data-billing-product-search-menu]');
                     var select = component.querySelector('[data-product-select]');
-                    var productOptions = Array.prototype.slice.call(select.options).filter(function (option) {
-                        return option.value !== '';
-                    });
+                    var page = 0;
+                    var hasMore = true;
+                    var loading = false;
+                    var requestNumber = 0;
+                    var activeQuery = '';
+                    var searchTimer;
 
                     function closeMenu() {
                         menu.hidden = true;
                         search.setAttribute('aria-expanded', 'false');
                     }
 
-                    function choose(option) {
-                        select.value = option.value;
-                        search.value = option.textContent.trim();
+                    function choose(product) {
+                        var option = Array.from(select.options).find(function (item) {
+                            return String(item.value) === String(product.id);
+                        });
+                        if (!option) {
+                            option = document.createElement('option');
+                            option.value = product.id;
+                            select.appendChild(option);
+                        }
+                        option.textContent = product.label;
+                        option.dataset.price = product.price;
+                        option.dataset.tax = product.tax;
+                        option.dataset.stock = product.stock;
+                        select.value = String(product.id);
+                        search.value = product.label;
+                        var existingProduct = productData.find(function (item) { return String(item.id) === String(product.id); });
+                        if (existingProduct) Object.assign(existingProduct, product);
+                        else productData.push(product);
                         select.dispatchEvent(new Event('change', { bubbles: true }));
                         closeMenu();
                     }
 
-                    function renderOptions() {
-                        var query = search.value.trim().toLowerCase();
-                        var matches = productOptions.filter(function (option) {
-                            return query === '' || option.textContent.toLowerCase().includes(query);
+                    function appendProduct(product) {
+                        if (menu.querySelector('[data-product-id="' + product.id + '"]')) return;
+                        var item = document.createElement('button');
+                        item.type = 'button';
+                        item.className = 'searchable-select__option';
+                        item.dataset.productId = product.id;
+                        item.setAttribute('role', 'option');
+                        item.textContent = product.label;
+                        item.addEventListener('mousedown', function (event) {
+                            event.preventDefault();
+                            choose(product);
                         });
+                        menu.appendChild(item);
+                    }
 
-                        menu.innerHTML = '';
-                        matches.forEach(function (option) {
-                            var item = document.createElement('button');
-                            item.type = 'button';
-                            item.className = 'searchable-select__option';
-                            item.setAttribute('role', 'option');
-                            item.textContent = option.textContent.trim();
-                            item.addEventListener('mousedown', function (event) {
-                                event.preventDefault();
-                                choose(option);
+                    async function loadProducts(reset, queryOverride) {
+                        if ((!reset && loading) || (!reset && !hasMore)) return;
+                        if (reset) {
+                            page = 0;
+                            hasMore = true;
+                            activeQuery = queryOverride === undefined ? search.value.trim() : queryOverride;
+                            menu.innerHTML = '';
+                        }
+
+                        loading = true;
+                        var currentRequest = ++requestNumber;
+                        menu.querySelector('[data-billing-products-loader]')?.remove();
+                        var loader = document.createElement('span');
+                        loader.className = 'billing-product-loader';
+                        loader.dataset.billingProductsLoader = '';
+                        loader.setAttribute('role', 'status');
+                        loader.textContent = 'Loading products…';
+                        menu.appendChild(loader);
+                        menu.hidden = false;
+                        search.setAttribute('aria-expanded', 'true');
+
+                        var url = new URL(component.dataset.productUrl, window.location.origin);
+                        url.searchParams.set('page', String(page + 1));
+                        if (activeQuery) url.searchParams.set('search', activeQuery);
+
+                        try {
+                            var response = await fetch(url, {
+                                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                             });
-                            menu.appendChild(item);
-                        });
+                            if (!response.ok) throw new Error('Unable to load products.');
+                            var payload = await response.json();
+                            if (currentRequest !== requestNumber) return;
 
-                        if (!matches.length) {
+                            loader.remove();
+                            payload.data.forEach(appendProduct);
+                            page = payload.meta.current_page;
+                            hasMore = payload.meta.has_more;
+
+                            if (!menu.querySelector('.searchable-select__option')) {
                             var empty = document.createElement('span');
                             empty.className = 'searchable-select__empty';
                             empty.textContent = 'No products found';
                             menu.appendChild(empty);
+                            } else if (!hasMore) {
+                                var end = document.createElement('span');
+                                end.className = 'searchable-select__empty';
+                                end.textContent = 'All products loaded';
+                                menu.appendChild(end);
+                            }
+                        } catch (error) {
+                            loader.remove();
+                            var retry = document.createElement('button');
+                            retry.type = 'button';
+                            retry.className = 'searchable-select__empty';
+                            retry.textContent = 'Could not load products. Click to retry.';
+                            retry.addEventListener('click', function () { loadProducts(reset, activeQuery); });
+                            menu.appendChild(retry);
+                        } finally {
+                            if (currentRequest === requestNumber) loading = false;
                         }
-
-                        menu.hidden = false;
-                        search.setAttribute('aria-expanded', 'true');
                     }
 
                     var selected = select.selectedOptions[0];
                     if (selected && selected.value) search.value = selected.textContent.trim();
 
-                    search.addEventListener('focus', renderOptions);
+                    search.addEventListener('focus', function () {
+                        loadProducts(true, select.value ? '' : search.value.trim());
+                    });
                     search.addEventListener('input', function () {
                         select.value = '';
                         select.dispatchEvent(new Event('change', { bubbles: true }));
-                        renderOptions();
+                        clearTimeout(searchTimer);
+                        searchTimer = setTimeout(function () { loadProducts(true); }, 250);
                     });
                     search.addEventListener('keydown', function (event) {
                         if (event.key === 'ArrowDown') {
@@ -1536,6 +1625,11 @@
                             menu.querySelector('.searchable-select__option')?.focus();
                         } else if (event.key === 'Escape') {
                             closeMenu();
+                        }
+                    });
+                    menu.addEventListener('scroll', function () {
+                        if (menu.scrollTop + menu.clientHeight >= menu.scrollHeight - 40) {
+                            loadProducts(false);
                         }
                     });
                     document.addEventListener('click', function (event) {
