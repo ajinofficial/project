@@ -27,6 +27,10 @@ class SetupController extends Controller
                 'invoice_prefix' => ['required', 'string', 'max:12', 'regex:/^[A-Za-z0-9-]+$/'],
             ],
             [
+                'currency.required' => 'Currency is required.',
+                'default_tax_percentage.required' => 'Default tax percentage is required.',
+                'low_stock_threshold.required' => 'Low-stock alert threshold is required.',
+                'invoice_prefix.required' => 'Invoice prefix is required.',
                 'invoice_prefix.regex' => 'Invoice prefix may only contain letters, numbers, and hyphens.',
             ]
         );

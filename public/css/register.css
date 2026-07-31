@@ -1659,10 +1659,31 @@ button.ghost-button {
 }
 
 .crop-preview-frame img {
+    position: absolute;
+    max-width: none;
+    user-select: none;
+    pointer-events: none;
+}
+
+.crop-preview-frame img:not([data-crop-ready]) {
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transform-origin: center;
+}
+
+.crop-preview-frame.is-adjustable {
+    cursor: grab;
+    touch-action: none;
+}
+
+.crop-preview-frame.is-dragging {
+    cursor: grabbing;
+}
+
+.crop-preview-frame:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.25);
+    outline-offset: 2px;
 }
 
 .crop-preview-frame span {
@@ -1689,9 +1710,41 @@ button.ghost-button {
     font-weight: 800;
 }
 
+.crop-zoom-control output {
+    float: right;
+    color: #2563eb;
+}
+
 .crop-zoom-control input {
     min-height: auto;
     padding: 0;
+}
+
+.crop-position-hint,
+.crop-file-error {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.crop-file-error {
+    color: #b42318;
+}
+
+.crop-reset-button {
+    min-height: 34px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    color: #344054;
+    background: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.crop-reset-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 @media (max-width: 760px) {

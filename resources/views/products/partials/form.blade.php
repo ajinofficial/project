@@ -62,31 +62,35 @@
 <section class="product-image-uploader" data-product-image-uploader>
     <div>
         <span>Product image</span>
-        <p>Upload a product photo and preview the common square crop used in lists and cards.</p>
+        <p>Upload a product photo, then zoom and reposition it for the square crop used in lists and cards.</p>
     </div>
 
     <div class="image-crop-grid">
         <label class="image-upload-drop">
-            <input type="file" accept="image/*" data-product-image-input>
+            <input type="file" name="product_image" accept="image/jpeg,image/png,image/webp" data-product-image-input>
             <b>Choose image</b>
-            <small>JPG, PNG, or WebP. The saved image will be cropped square.</small>
+            <small>JPG, PNG, or WebP up to 2 MB. The saved image will be cropped square.</small>
         </label>
 
         <div class="crop-preview-card">
-            <div class="crop-preview-frame">
+            <div class="crop-preview-frame" tabindex="0" role="application" aria-label="Product image crop. Drag to reposition or use the arrow keys." data-product-crop-frame>
                 <img data-product-image-preview src="{{ old('image_url', $product->image_url) }}" alt="" @if (! old('image_url', $product->image_url)) hidden @endif>
                 <span data-product-image-placeholder @if (old('image_url', $product->image_url)) hidden @endif>{{ strtoupper(substr(old('name', $product->name ?: 'P'), 0, 1)) }}</span>
             </div>
+            <small class="crop-position-hint" data-product-crop-hint>Choose an image to adjust its crop.</small>
             <label class="crop-zoom-control">
-                <span>Crop zoom</span>
-                <input type="range" min="1" max="2" step="0.05" value="1" data-product-image-zoom>
+                <span>Crop zoom <output data-product-zoom-value>100%</output></span>
+                <input type="range" min="1" max="3" step="0.05" value="1" aria-label="Crop zoom" data-product-image-zoom disabled>
             </label>
+            <button class="crop-reset-button" type="button" data-product-crop-reset disabled>Reset crop</button>
+            <small class="crop-file-error" role="alert" data-product-image-error hidden></small>
         </div>
     </div>
 
     <input type="hidden" name="cropped_image" value="" data-product-cropped-image>
     <input type="hidden" name="image_url" value="{{ old('image_url', $product->image_url) }}">
     @error('cropped_image') <small>{{ $message }}</small> @enderror
+    @error('product_image') <small>{{ $message }}</small> @enderror
 </section>
 
 <label>
@@ -210,20 +214,68 @@
                 var placeholder = uploader.querySelector('[data-product-image-placeholder]');
                 var croppedInput = uploader.querySelector('[data-product-cropped-image]');
                 var zoomInput = uploader.querySelector('[data-product-image-zoom]');
+                var zoomValue = uploader.querySelector('[data-product-zoom-value]');
+                var cropFrame = uploader.querySelector('[data-product-crop-frame]');
+                var cropHint = uploader.querySelector('[data-product-crop-hint]');
+                var resetButton = uploader.querySelector('[data-product-crop-reset]');
+                var imageError = uploader.querySelector('[data-product-image-error]');
                 var form = uploader.closest('form');
                 var sourceImage = new Image();
                 var hasUpload = false;
+                var panX = 0;
+                var panY = 0;
+                var dragStart = null;
 
-                function updatePreviewScale() {
-                    if (preview) {
-                        preview.style.transform = 'scale(' + zoomInput.value + ')';
+                function clamp(value, minimum, maximum) {
+                    return Math.min(maximum, Math.max(minimum, value));
+                }
+
+                function cropGeometry() {
+                    var frameSize = cropFrame.clientWidth;
+                    var zoom = parseFloat(zoomInput.value || '1');
+                    var imageRatio = sourceImage.naturalWidth / sourceImage.naturalHeight;
+                    var baseWidth = imageRatio >= 1 ? frameSize * imageRatio : frameSize;
+                    var baseHeight = imageRatio >= 1 ? frameSize : frameSize / imageRatio;
+                    var width = baseWidth * zoom;
+                    var height = baseHeight * zoom;
+
+                    return {
+                        width: width,
+                        height: height,
+                        overflowX: Math.max(0, (width - frameSize) / 2),
+                        overflowY: Math.max(0, (height - frameSize) / 2)
+                    };
+                }
+
+                function updatePreview() {
+                    zoomValue.value = Math.round(parseFloat(zoomInput.value || '1') * 100) + '%';
+
+                    if (!hasUpload || !sourceImage.naturalWidth) {
+                        return;
                     }
+
+                    var geometry = cropGeometry();
+                    preview.style.width = geometry.width + 'px';
+                    preview.style.height = geometry.height + 'px';
+                    preview.style.left = 'calc(50% - ' + (geometry.width / 2 + panX * geometry.overflowX) + 'px)';
+                    preview.style.top = 'calc(50% - ' + (geometry.height / 2 + panY * geometry.overflowY) + 'px)';
                 }
 
                 fileInput.addEventListener('change', function () {
                     var file = fileInput.files && fileInput.files[0];
 
                     if (!file) {
+                        return;
+                    }
+
+                    imageError.hidden = true;
+
+                    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 2 * 1024 * 1024) {
+                        fileInput.value = '';
+                        imageError.textContent = file.size > 2 * 1024 * 1024
+                            ? 'Choose an image no larger than 2 MB.'
+                            : 'Choose a JPG, PNG, or WebP image.';
+                        imageError.hidden = false;
                         return;
                     }
 
@@ -234,10 +286,17 @@
                         sourceImage = new Image();
                         sourceImage.onload = function () {
                             preview.src = event.target.result;
+                            preview.setAttribute('data-crop-ready', '');
                             preview.hidden = false;
                             placeholder.hidden = true;
                             zoomInput.value = '1';
-                            updatePreviewScale();
+                            panX = 0;
+                            panY = 0;
+                            cropFrame.classList.add('is-adjustable');
+                            cropHint.textContent = 'Drag the image to reposition it, or use the arrow keys.';
+                            zoomInput.disabled = false;
+                            resetButton.disabled = false;
+                            updatePreview();
                         };
                         sourceImage.src = event.target.result;
                     };
@@ -245,7 +304,48 @@
                     reader.readAsDataURL(file);
                 });
 
-                zoomInput.addEventListener('input', updatePreviewScale);
+                zoomInput.addEventListener('input', updatePreview);
+                resetButton.addEventListener('click', function () {
+                    zoomInput.value = '1';
+                    panX = 0;
+                    panY = 0;
+                    updatePreview();
+                });
+
+                cropFrame.addEventListener('pointerdown', function (event) {
+                    if (!hasUpload) return;
+                    dragStart = { x: event.clientX, y: event.clientY, panX: panX, panY: panY };
+                    cropFrame.setPointerCapture(event.pointerId);
+                    cropFrame.classList.add('is-dragging');
+                });
+
+                cropFrame.addEventListener('pointermove', function (event) {
+                    if (!dragStart) return;
+                    var geometry = cropGeometry();
+                    panX = geometry.overflowX ? clamp(dragStart.panX - (event.clientX - dragStart.x) / geometry.overflowX, -1, 1) : 0;
+                    panY = geometry.overflowY ? clamp(dragStart.panY - (event.clientY - dragStart.y) / geometry.overflowY, -1, 1) : 0;
+                    updatePreview();
+                });
+
+                function endDrag() {
+                    dragStart = null;
+                    cropFrame.classList.remove('is-dragging');
+                }
+
+                cropFrame.addEventListener('pointerup', endDrag);
+                cropFrame.addEventListener('pointercancel', endDrag);
+                cropFrame.addEventListener('keydown', function (event) {
+                    var movement = event.shiftKey ? 0.1 : 0.025;
+                    if (event.key === 'ArrowLeft') panX = clamp(panX - movement, -1, 1);
+                    else if (event.key === 'ArrowRight') panX = clamp(panX + movement, -1, 1);
+                    else if (event.key === 'ArrowUp') panY = clamp(panY - movement, -1, 1);
+                    else if (event.key === 'ArrowDown') panY = clamp(panY + movement, -1, 1);
+                    else return;
+                    event.preventDefault();
+                    updatePreview();
+                });
+
+                window.addEventListener('resize', updatePreview);
 
                 form.addEventListener('submit', function () {
                     if (!hasUpload || !sourceImage.naturalWidth || !sourceImage.naturalHeight) {
@@ -257,8 +357,8 @@
                     var canvas = document.createElement('canvas');
                     var context = canvas.getContext('2d');
                     var cropSize = Math.min(sourceImage.naturalWidth, sourceImage.naturalHeight) / zoom;
-                    var sourceX = (sourceImage.naturalWidth - cropSize) / 2;
-                    var sourceY = (sourceImage.naturalHeight - cropSize) / 2;
+                    var sourceX = (sourceImage.naturalWidth - cropSize) / 2 + panX * (sourceImage.naturalWidth - cropSize) / 2;
+                    var sourceY = (sourceImage.naturalHeight - cropSize) / 2 + panY * (sourceImage.naturalHeight - cropSize) / 2;
 
                     canvas.width = outputSize;
                     canvas.height = outputSize;

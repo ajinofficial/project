@@ -192,6 +192,61 @@
             var saveCopy = form.querySelector('[data-save-copy]');
             var today = '{{ now()->format('Ymd') }}';
             var initialState;
+            var fields = Array.from(form.querySelectorAll('input, select'));
+
+            form.noValidate = true;
+
+            function validationMessage(field) {
+                var label = field.closest('.setup-field');
+                var labelText = label?.querySelector(':scope > span')?.textContent.trim() || 'This field';
+
+                if (field.validity.valueMissing) {
+                    return labelText + ' is required.';
+                }
+
+                if (field.validity.rangeUnderflow) {
+                    return labelText + ' must be at least ' + field.min + '.';
+                }
+
+                if (field.validity.rangeOverflow) {
+                    return labelText + ' must not exceed ' + field.max + '.';
+                }
+
+                if (field.validity.patternMismatch) {
+                    return 'Invoice prefix may only contain letters, numbers, and hyphens.';
+                }
+
+                return field.validationMessage;
+            }
+
+            function validateField(field) {
+                var label = field.closest('.setup-field');
+                var error = label?.querySelector('[data-validation-error]');
+
+                if (field.checkValidity()) {
+                    field.classList.remove('is-invalid');
+                    field.removeAttribute('aria-invalid');
+
+                    if (error) {
+                        error.remove();
+                    }
+
+                    return true;
+                }
+
+                if (! error) {
+                    error = document.createElement('small');
+                    error.dataset.validationError = '';
+                    error.setAttribute('role', 'alert');
+                    label.appendChild(error);
+                }
+
+                error.textContent = validationMessage(field);
+                field.classList.add('is-invalid');
+                field.setAttribute('aria-invalid', 'true');
+
+                return false;
+            }
 
             function fieldValue(name) {
                 return (form.elements[name]?.value || '').trim();
@@ -252,12 +307,33 @@
                 }
 
                 field.addEventListener('input', function () {
+                    validateField(field);
                     updatePreview();
                     updateSaveState();
                 });
+
+                field.addEventListener('blur', function () {
+                    validateField(field);
+                });
             });
 
-            form.addEventListener('submit', function () {
+            form.addEventListener('submit', function (event) {
+                var firstInvalid = null;
+
+                fields.forEach(function (field) {
+                    if (! validateField(field) && ! firstInvalid) {
+                        firstInvalid = field;
+                    }
+                });
+
+                if (firstInvalid) {
+                    event.preventDefault();
+                    firstInvalid.focus();
+                    saveTitle.textContent = 'Please correct the highlighted fields';
+                    saveCopy.textContent = 'Required fields are marked with a red error message.';
+                    return;
+                }
+
                 saveButton.disabled = true;
                 saveButton.textContent = 'Saving...';
             });

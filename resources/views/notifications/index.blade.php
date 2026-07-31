@@ -2,7 +2,7 @@
 
 @section('content')
     @php
-        $queryState = array_filter(['filter' => $filter, 'search' => $search, 'type' => $type], fn ($value) => $value !== '' && $value !== 'all');
+        $queryState = array_filter(['filter' => $filter, 'search' => $search, 'type' => $type, 'redirect_url' => $redirectUrl], fn ($value) => $value !== '' && $value !== 'all');
     @endphp
     <section class="admin-section notification-page" data-notification-page>
         <div class="section-title notification-page-head">
@@ -13,17 +13,17 @@
                 <p>Stock and activity alerts for this tenant.</p>
             </div>
             <div class="notification-page-actions">
-                <a class="notification-back-button" href="{{ route(\App\Support\RolePermission::firstAccessibleRoute(auth()->user())) }}" data-notification-back>
+                <a class="notification-back-button" href="{{ $backUrl }}" data-notification-back>
                     <span aria-hidden="true">&larr;</span> Back
                 </a>
                 <nav class="notification-filter-tabs" aria-label="Notification filters">
-                    <a href="{{ route('notifications.index', array_filter(['search' => $search, 'type' => $type])) }}" @class(['active' => $filter === 'all'])>
+                    <a href="{{ route('notifications.index', array_filter(['search' => $search, 'type' => $type, 'redirect_url' => $redirectUrl])) }}" @class(['active' => $filter === 'all'])>
                         All <span>{{ $allCount }}</span>
                     </a>
-                    <a href="{{ route('notifications.index', array_filter(['filter' => 'unread', 'search' => $search, 'type' => $type])) }}" @class(['active' => $filter === 'unread'])>
+                    <a href="{{ route('notifications.index', array_filter(['filter' => 'unread', 'search' => $search, 'type' => $type, 'redirect_url' => $redirectUrl])) }}" @class(['active' => $filter === 'unread'])>
                         Unread <span>{{ $unreadCount }}</span>
                     </a>
-                    <a href="{{ route('notifications.index', array_filter(['filter' => 'read', 'search' => $search, 'type' => $type])) }}" @class(['active' => $filter === 'read'])>
+                    <a href="{{ route('notifications.index', array_filter(['filter' => 'read', 'search' => $search, 'type' => $type, 'redirect_url' => $redirectUrl])) }}" @class(['active' => $filter === 'read'])>
                         Read <span>{{ $readCount }}</span>
                     </a>
                 </nav>
@@ -61,17 +61,17 @@
         </div>
 
         <div class="notification-summary-grid">
-            <a href="{{ route('notifications.index', ['filter' => 'unread']) }}">
+            <a href="{{ route('notifications.index', array_filter(['filter' => 'unread', 'redirect_url' => $redirectUrl])) }}">
                 <span>Unread</span>
                 <strong>{{ $unreadCount }}</strong>
                 <small>Need attention</small>
             </a>
-            <a href="{{ route('notifications.index', ['filter' => 'read']) }}">
+            <a href="{{ route('notifications.index', array_filter(['filter' => 'read', 'redirect_url' => $redirectUrl])) }}">
                 <span>Read</span>
                 <strong>{{ $readCount }}</strong>
                 <small>Already reviewed</small>
             </a>
-            <a href="{{ route('notifications.index') }}">
+            <a href="{{ route('notifications.index', array_filter(['redirect_url' => $redirectUrl])) }}">
                 <span>Total</span>
                 <strong>{{ $allCount }}</strong>
                 <small>All alerts</small>
@@ -80,6 +80,9 @@
 
         <section class="notification-tools" aria-label="Find notifications">
             <form method="GET" action="{{ route('notifications.index') }}" data-notification-filter-form>
+                @if ($redirectUrl !== '')
+                    <input type="hidden" name="redirect_url" value="{{ $redirectUrl }}">
+                @endif
                 @if ($filter !== 'all')
                     <input type="hidden" name="filter" value="{{ $filter }}">
                 @endif
@@ -96,7 +99,7 @@
                 </select>
 
                 @if ($search !== '' || $type !== '')
-                    <a class="product-clear-filter" href="{{ route('notifications.index', $filter === 'all' ? [] : ['filter' => $filter]) }}">Clear</a>
+                    <a class="product-clear-filter" href="{{ route('notifications.index', array_filter(['filter' => $filter === 'all' ? '' : $filter, 'redirect_url' => $redirectUrl])) }}">Clear</a>
                 @endif
             </form>
             <span>{{ number_format($notifications->total()) }} matching {{ Str::plural('notification', $notifications->total()) }}</span>
@@ -177,23 +180,6 @@
     </section>
 
     <script>
-        (function initialiseNotificationBackButton() {
-            var backButton = document.querySelector('[data-notification-back]');
-
-            if (!backButton) {
-                return;
-            }
-
-            backButton.addEventListener('click', function (event) {
-                if (window.history.length <= 1) {
-                    return;
-                }
-
-                event.preventDefault();
-                window.history.back();
-            });
-        })();
-
         document.addEventListener('submit', function (event) {
             var form = event.target.closest('[data-notification-action]');
 

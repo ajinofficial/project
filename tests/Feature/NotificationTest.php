@@ -52,7 +52,7 @@ class NotificationTest extends TestCase
         $response->assertSee('data-notification-search', false);
         $response->assertSee('data-notification-type', false);
         $response->assertSee('data-notification-back', false);
-        $response->assertSee('window.history.back()', false);
+        $response->assertDontSee('window.history.back()', false);
         $response->assertSee('setTimeout(submitFilters, 400)', false);
         $response->assertSee('notification-read-all-button', false);
         $response->assertSee('Mark all notifications as read?', false);
@@ -77,6 +77,34 @@ class NotificationTest extends TestCase
         $searchResponse->assertOk();
         $searchResponse->assertSee('Unread notification');
         $searchResponse->assertDontSee('<h3>Read notification</h3>', false);
+    }
+
+    public function test_notification_back_button_uses_encoded_redirect_url(): void
+    {
+        [$owner] = $this->tenantOwner();
+        $redirectUrl = \App\Support\RedirectUrl::encode('/products?search=coffee');
+
+        $response = $this->actingAs($owner)->get(route('notifications.index', [
+            'redirect_url' => $redirectUrl,
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('href="/products?search=coffee" data-notification-back', false);
+        $response->assertSee('name="redirect_url" value="'.$redirectUrl.'"', false);
+    }
+
+    public function test_notification_back_button_rejects_an_unsafe_redirect_url(): void
+    {
+        [$owner] = $this->tenantOwner();
+        $unsafeUrl = rtrim(strtr(base64_encode('//evil.example/path'), '+/', '-_'), '=');
+
+        $response = $this->actingAs($owner)->get(route('notifications.index', [
+            'redirect_url' => $unsafeUrl,
+        ]));
+
+        $response->assertOk();
+        $response->assertDontSee('href="//evil.example/path"', false);
+        $response->assertSee('href="'.route(RolePermission::firstAccessibleRoute($owner)).'" data-notification-back', false);
     }
 
     public function test_mark_read_preserves_unread_filter(): void

@@ -26,6 +26,9 @@ class SetupTest extends TestCase
         $response->assertSee('Invoice and tax setup');
         $response->assertSee('Invoice preview');
         $response->assertSee('Role permissions');
+        $response->assertSee('data-validation-error', false);
+        $response->assertSee("form.noValidate = true", false);
+        $response->assertSee("labelText + ' is required.'", false);
         $response->assertSee("button.textContent = 'Done'", false);
         $response->assertSee("button.dataset.emailVerified === 'true'", false);
     }
@@ -72,6 +75,28 @@ class SetupTest extends TestCase
 
         $response->assertRedirect(route('setup.index'));
         $response->assertSessionHasErrors('invoice_prefix');
+    }
+
+    public function test_setup_shows_clear_required_field_errors(): void
+    {
+        [$owner] = $this->tenantOwner();
+
+        $response = $this->actingAs($owner)
+            ->from(route('setup.index'))
+            ->put(route('setup.update'), [
+                'currency' => '',
+                'default_tax_percentage' => '',
+                'low_stock_threshold' => '',
+                'invoice_prefix' => '',
+            ]);
+
+        $response->assertRedirect(route('setup.index'));
+        $response->assertSessionHasErrors([
+            'currency' => 'Currency is required.',
+            'default_tax_percentage' => 'Default tax percentage is required.',
+            'low_stock_threshold' => 'Low-stock alert threshold is required.',
+            'invoice_prefix' => 'Invoice prefix is required.',
+        ]);
     }
 
     public function test_unverified_user_can_send_and_complete_email_verification(): void

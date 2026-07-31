@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Notification;
+use App\Support\RedirectUrl;
+use App\Support\RolePermission;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -17,6 +19,8 @@ class NotificationController extends Controller
         $baseQuery = Notification::where('tenant_id', $request->user()->tenant_id);
         $search = trim((string) $request->query('search', ''));
         $type = trim((string) $request->query('type', ''));
+        $redirectUrl = trim((string) $request->query('redirect_url', ''));
+        $fallbackUrl = route(RolePermission::firstAccessibleRoute($request->user()));
         $types = (clone $baseQuery)->select('type')->distinct()->orderBy('type')->pluck('type');
         $notificationsQuery = (clone $baseQuery)
             ->when($filter === 'unread', fn ($query) => $query->whereNull('read_at'))
@@ -34,6 +38,8 @@ class NotificationController extends Controller
             'filter' => $filter,
             'search' => $search,
             'type' => $type,
+            'redirectUrl' => $redirectUrl,
+            'backUrl' => RedirectUrl::decode($redirectUrl, $fallbackUrl),
             'types' => $types,
             'allCount' => (clone $baseQuery)->count(),
             'unreadCount' => (clone $baseQuery)->whereNull('read_at')->count(),
@@ -41,7 +47,7 @@ class NotificationController extends Controller
             'notifications' => $notificationsQuery
                 ->latest()
                 ->paginate(15)
-                ->appends($request->only(['filter', 'search', 'type'])),
+                ->appends($request->only(['filter', 'search', 'type', 'redirect_url'])),
         ]);
     }
 
@@ -52,7 +58,7 @@ class NotificationController extends Controller
         $notification->update(['read_at' => now()]);
 
         return redirect()
-            ->route('notifications.index', $request->only(['filter', 'search', 'type']))
+            ->route('notifications.index', $request->only(['filter', 'search', 'type', 'redirect_url']))
             ->with('status', 'Notification marked as read.');
     }
 
@@ -63,7 +69,7 @@ class NotificationController extends Controller
         $notification->update(['read_at' => null]);
 
         return redirect()
-            ->route('notifications.index', $request->only(['filter', 'search', 'type']))
+            ->route('notifications.index', $request->only(['filter', 'search', 'type', 'redirect_url']))
             ->with('status', 'Notification marked as unread.');
     }
 
@@ -74,7 +80,7 @@ class NotificationController extends Controller
             ->update(['read_at' => now()]);
 
         return redirect()
-            ->route('notifications.index', $request->only(['filter', 'search', 'type']))
+            ->route('notifications.index', $request->only(['filter', 'search', 'type', 'redirect_url']))
             ->with('status', 'All notifications marked as read.');
     }
 }

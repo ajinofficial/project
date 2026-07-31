@@ -92,6 +92,7 @@ class ProductController extends Controller
         $data['tax_percentage'] = $request->user()->tenant->default_tax_percentage ?? 0;
         $data['compare_at_price'] = null;
         unset($data['cropped_image']);
+        unset($data['product_image']);
 
         $product = Product::create($data);
         StockNotifier::sync($product);
@@ -131,6 +132,7 @@ class ProductController extends Controller
         unset($data['tax_percentage']);
         unset($data['compare_at_price']);
         unset($data['cropped_image']);
+        unset($data['product_image']);
 
         $product->update($data);
         StockNotifier::sync($product);
@@ -188,6 +190,7 @@ class ProductController extends Controller
             'status' => ['required', 'in:draft,active,archived'],
             'image_url' => ['nullable', 'string', 'max:2048'],
             'cropped_image' => ['nullable', 'string'],
+            'product_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'description' => ['nullable', 'string', 'max:5000'],
         ];
 

@@ -144,7 +144,7 @@
                             <div class="notification-list">
                                 @forelse (($navNotifications ?? collect()) as $notification)
                                     <div @class(['notification-item', 'is-unread' => ! $notification->read_at])>
-                                        <a href="{{ route('notifications.index') }}">
+                                        <a href="{{ route('notifications.index', ['redirect_url' => \App\Support\RedirectUrl::encode(request()->fullUrl())]) }}">
                                             <strong>{{ $notification->title }}</strong>
                                             <span>{{ $notification->message }}</span>
                                             <small>{{ $notification->created_at->diffForHumans() }}</small>
@@ -161,7 +161,7 @@
                                     <div class="notification-empty">No notifications yet.</div>
                                 @endforelse
                             </div>
-                            <a class="notification-view-all" href="{{ route('notifications.index') }}">View all notifications</a>
+                            <a class="notification-view-all" href="{{ route('notifications.index', ['redirect_url' => \App\Support\RedirectUrl::encode(request()->fullUrl())]) }}">View all notifications</a>
                         </div>
                     </details>
                     <span class="inapp-user-avatar">{{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}</span>
