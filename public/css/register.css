@@ -6372,19 +6372,94 @@ button.ghost-button {
     .login-visual-panel {
         min-height: auto;
     }
+
+    .login-form-panel {
+        min-height: auto;
+    }
 }
 
 @media (max-width: 640px) {
+    .login-page {
+        min-height: 100dvh;
+    }
+
+    .inventory-login-shell {
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .auth-ui .login-visual-panel {
+        min-height: 76px;
+        flex: 0 0 auto;
+        justify-content: center;
+        padding: 14px 18px;
+    }
+
+    .login-visual-panel::after,
+    .login-hero-copy,
     .login-stat-grid {
-        grid-template-columns: 1fr;
+        display: none;
     }
 
-    .login-hero-copy {
-        padding: 48px 0 28px;
+    .auth-ui .login-brand {
+        min-height: 0;
+        font-size: 18px;
     }
 
-    .login-card-header {
-        grid-template-columns: 1fr;
+    .auth-ui .login-brand .brand-logo {
+        width: 38px;
+        height: 38px;
+    }
+
+    .auth-ui .login-form-panel {
+        flex: 1 1 auto;
+        display: block;
+        padding: 20px 14px 28px;
+    }
+
+    .login-form-panel .login-card {
+        width: 100%;
+        gap: 18px;
+        border-radius: 10px;
+        padding: 22px 18px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.07);
+    }
+
+    .login-form-panel h1 {
+        font-size: clamp(26px, 8vw, 32px);
+    }
+
+    .login-field input {
+        min-width: 0;
+        min-height: 48px;
+        font-size: 16px;
+    }
+
+    .business-search-results {
+        max-height: min(220px, 38vh);
+    }
+
+    .login-form .check-row {
+        align-items: center;
+        flex-direction: row;
+    }
+
+    .forgot-password-link,
+    .auth-switch a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 36px;
+    }
+}
+
+@media (max-width: 380px) {
+    .auth-ui .login-form-panel {
+        padding-inline: 10px;
+    }
+
+    .login-form-panel .login-card {
+        padding: 20px 14px;
     }
 }
 
@@ -9919,5 +9994,336 @@ button.ghost-button {
     .verify-code-submit__spinner,
     .reset-password-submit__spinner {
         animation-duration: 1.4s;
+    }
+}
+
+/* Shared mobile layout safeguards */
+@media (max-width: 760px) {
+    html,
+    body {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    img,
+    svg,
+    video,
+    canvas {
+        max-width: 100%;
+    }
+
+    .inapp-shell,
+    .inapp-main,
+    .inapp-dashboard,
+    .admin-content,
+    .admin-section,
+    .dashboard-pro,
+    .product-workspace,
+    .users-page,
+    .clients-page,
+    .permission-page,
+    .reports-page,
+    .setup-page,
+    .whatsapp-page,
+    .email-module-page,
+    .notification-page {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .inapp-sidebar {
+        position: fixed;
+        inset: auto 0 0;
+        z-index: 50;
+        width: 100%;
+        min-width: 0;
+        height: auto;
+        overflow: hidden;
+        border: 0;
+        border-top: 1px solid var(--inapp-line);
+        padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+        background: rgba(255, 255, 255, 0.97);
+        box-shadow: 0 -8px 24px rgba(16, 24, 40, 0.08);
+        backdrop-filter: blur(14px);
+    }
+
+    .inapp-sidebar .inapp-brand,
+    .inapp-sidebar .inapp-store-card {
+        display: none;
+    }
+
+    .inapp-nav {
+        display: flex;
+        gap: 6px;
+        width: 100%;
+        margin: 0;
+        overflow-x: auto;
+        padding: 0 0 2px;
+        overscroll-behavior-inline: contain;
+        scroll-snap-type: x proximity;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .inapp-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .inapp-nav > small {
+        display: none;
+    }
+
+    .inapp-nav > a,
+    .inapp-nav > .inapp-nav-form,
+    .inapp-nav > .inapp-nav-form button {
+        flex: 0 0 auto;
+        width: auto;
+        min-width: 70px;
+        min-height: 54px;
+        scroll-snap-align: start;
+    }
+
+    .inapp-nav > a,
+    .inapp-nav > .inapp-nav-form button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 3px;
+        border-radius: 8px;
+        padding: 5px 8px;
+        font-size: 10px;
+        line-height: 1.15;
+        white-space: nowrap;
+    }
+
+    .inapp-nav > a span,
+    .inapp-nav > .inapp-nav-form button span {
+        width: 25px;
+        height: 25px;
+    }
+
+    .inapp-nav > a.active {
+        color: var(--inapp-primary);
+        background: var(--inapp-primary-soft);
+        box-shadow: none;
+    }
+
+    .inapp-main {
+        padding-bottom: calc(70px + env(safe-area-inset-bottom));
+    }
+
+    .inapp-topbar {
+        width: 100%;
+    }
+
+    .notification-panel {
+        position: fixed;
+        top: 64px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+        max-height: calc(100dvh - 76px);
+        overflow-y: auto;
+    }
+
+    .content-toolbar,
+    .product-toolbar,
+    .product-page-head,
+    .product-head-actions,
+    .users-hero,
+    .clients-hero,
+    .permission-hero,
+    .reports-hero,
+    .setup-hero,
+    .whatsapp-hero,
+    .email-module-hero,
+    .notification-page-head,
+    .expense-actions,
+    .inventory-actions,
+    .form-actions {
+        width: 100%;
+        min-width: 0;
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .content-toolbar > *,
+    .product-head-actions > *,
+    .reports-hero-actions,
+    .reports-hero-actions > *,
+    .permission-hero-actions,
+    .permission-hero-actions > *,
+    .expense-actions > *,
+    .inventory-actions > *,
+    .form-actions > * {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .field-grid,
+    .ops-grid,
+    .users-layout,
+    .setup-layout,
+    .whatsapp-grid,
+    .email-module-grid,
+    .email-module-field-grid,
+    .expense-form-grid,
+    .invoice-detail-grid,
+    .purchase-bill-grid,
+    .image-crop-grid,
+    .permission-summary-grid,
+    .reports-grid,
+    .reports-chart-grid,
+    .reports-kpi-grid,
+    .reports-signal-grid,
+    .users-stat-grid,
+    .clients-stat-grid,
+    .setup-field-grid,
+    .setup-role-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .filter-bar,
+    .product-filter-form,
+    .users-filter-form,
+    .clients-filter-form,
+    .reports-filter-form,
+    .purchase-filter-form,
+    .supplier-filter-form,
+    .customer-filter-form,
+    .return-filter-form {
+        width: 100%;
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    input,
+    select,
+    textarea,
+    button {
+        max-width: 100%;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="password"],
+    input[type="search"],
+    input[type="number"],
+    input[type="url"],
+    input[type="date"],
+    select,
+    textarea {
+        font-size: 16px;
+    }
+
+    .table-wrap,
+    .product-table-wrap,
+    .users-table-wrap,
+    .clients-table-wrap,
+    .reports-table-wrap,
+    .whatsapp-table-wrap,
+    .email-module-table-wrap {
+        max-width: 100%;
+        overflow-x: auto;
+        overscroll-behavior-inline: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .admin-table,
+    .product-table,
+    .users-table,
+    .clients-table,
+    .reports-table {
+        white-space: nowrap;
+    }
+
+    .confirm-modal,
+    .permission-drawer,
+    .invoice-drawer,
+    .clients-drawer {
+        max-width: 100vw;
+    }
+
+    .confirm-modal__dialog,
+    .email-verification-popup {
+        width: calc(100vw - 24px);
+        max-width: calc(100vw - 24px);
+        max-height: calc(100dvh - 24px);
+        overflow-y: auto;
+    }
+
+    .permission-drawer,
+    .invoice-drawer,
+    .clients-drawer {
+        width: min(100%, 440px) !important;
+    }
+
+    .permission-drawer-actions,
+    .invoice-drawer-actions,
+    .confirm-modal__actions,
+    .email-verification-popup__actions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .permission-drawer-actions > *,
+    .invoice-drawer-actions > *,
+    .confirm-modal__actions > *,
+    .email-verification-popup__actions > * {
+        width: 100%;
+    }
+
+    .section-title,
+    .stock-row,
+    .notification-item,
+    .category-progress-row,
+    .reports-ranked-row,
+    .reports-stock-row {
+        min-width: 0;
+    }
+
+    .section-title > div,
+    .stock-row > div,
+    .notification-item > div {
+        min-width: 0;
+    }
+
+    h1,
+    h2,
+    h3,
+    p,
+    td,
+    dd,
+    .stock-row span {
+        overflow-wrap: anywhere;
+    }
+}
+
+@media (max-width: 420px) {
+    .inapp-dashboard,
+    .product-workspace,
+    .users-page,
+    .clients-page,
+    .permission-page,
+    .reports-page,
+    .setup-page,
+    .whatsapp-page,
+    .email-module-page {
+        padding-inline: 10px;
+    }
+
+    .admin-section,
+    .users-card,
+    .clients-card,
+    .reports-card,
+    .setup-card,
+    .whatsapp-card,
+    .email-module-card {
+        padding: 14px;
+    }
+
+    .clients-drawer-list {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
