@@ -90,7 +90,7 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => [
                 'required',
-                'email',
+                new \App\Rules\SafeEmail,
                 'max:255',
                 Rule::unique('users', 'email')->where('tenant_id', $tenant->id),
             ],

@@ -29,7 +29,7 @@ class PasswordResetController extends Controller
     public function sendOtp(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'email' => ['required', 'email'],
+            'email' => ['required', new \App\Rules\SafeEmail],
         ], [
             'email.required' => 'Email address is required.',
             'email.email' => 'Enter a valid email address.',

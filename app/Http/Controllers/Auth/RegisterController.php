@@ -45,7 +45,7 @@ class RegisterController extends Controller
             'owner_name' => ['required', 'string', 'max:255'],
             'country_code' => ['required', 'string', Rule::in(array_keys($this->countryCodes()))],
             'mobile' => ['required', 'digits_between:6,15'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'email' => ['required', new \App\Rules\SafeEmail, 'max:255', 'unique:users,email'],
             'gst_number' => ['nullable', 'string', 'size:15', 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/'],
             'business_category' => ['required', 'integer', Rule::in(array_keys(Tenant::BUSINESS_CATEGORIES))],
             'store_address' => ['required', 'string', 'max:1000'],

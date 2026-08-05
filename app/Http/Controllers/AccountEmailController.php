@@ -21,7 +21,7 @@ class AccountEmailController extends Controller
         $data = $request->validate([
             'email' => [
                 'required',
-                'email',
+                new \App\Rules\SafeEmail,
                 'max:255',
                 Rule::unique('users', 'email')->ignore($request->user()->id),
             ],

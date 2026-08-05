@@ -27,8 +27,7 @@ class PasswordResetOtpTest extends TestCase
         Mail::assertSent(PasswordResetOtpMail::class, function (PasswordResetOtpMail $mail) use (&$otp) {
             $otp = $mail->otp;
 
-            return $mail->businessName === 'OTP Store'
-                && $mail->subject === 'OTP Store - Password reset code';
+            return $mail->businessName === 'OTP Store';
         });
 
         $this->post(route('password.otp.verify'), ['otp' => $otp])

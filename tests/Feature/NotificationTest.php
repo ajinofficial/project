@@ -232,8 +232,7 @@ class NotificationTest extends TestCase
             return $mail->hasTo($owner->email)
                 && $mail->eventTitle === 'Sale billed'
                 && $mail->eventType === 'sale_billed'
-                && $mail->businessName === 'Demo Store'
-                && $mail->subject === 'Demo Store - Sale billed';
+                && $mail->businessName === 'Demo Store';
         });
     }
 

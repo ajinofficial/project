@@ -36,7 +36,7 @@ class EmailIntegrationController extends Controller
             'encryption' => ['nullable', Rule::in(['tls', 'ssl'])],
             'username' => ['required', 'string', 'max:255'],
             'password' => [Rule::requiredIf(! $existing), 'nullable', 'string', 'max:4096'],
-            'from_address' => ['required', 'email', 'max:255'],
+            'from_address' => ['required', new \App\Rules\SafeEmail, 'max:255'],
             'from_name' => ['required', 'string', 'max:255'],
             'is_active' => ['nullable', 'boolean'],
         ]);
@@ -58,7 +58,7 @@ class EmailIntegrationController extends Controller
     public function send(Request $request, TenantEmailSender $sender): RedirectResponse
     {
         $data = $request->validate([
-            'recipient' => ['required', 'email', 'max:255'],
+            'recipient' => ['required', new \App\Rules\SafeEmail, 'max:255'],
             'subject' => ['required', 'string', 'max:255'],
             'message' => ['required', 'string', 'max:20000'],
         ]);

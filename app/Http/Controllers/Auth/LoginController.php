@@ -52,7 +52,7 @@ class LoginController extends Controller
     {
         $credentials = $request->validate([
             'tenant_id' => ['required', 'integer', Rule::exists('tenants', 'id')],
-            'email' => ['required', 'email'],
+            'email' => ['required', new \App\Rules\SafeEmail],
             'password' => ['required', 'string'],
         ], [
             'tenant_id.required' => 'Business name is required.',

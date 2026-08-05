@@ -22,14 +22,14 @@ class EmailIntegrationTest extends TestCase
 
         $this->actingAs($vendor)->get(route('vendor.dashboard'))
             ->assertOk()
-            ->assertSee(route('email.index'), false);
+            ->assertSee('href="'.route('email.index').'"', false);
         $this->actingAs($vendor)->get(route('email.index'))
             ->assertOk()
             ->assertSee('Email workspace');
 
         $this->actingAs($client)->get(route('dashboard'))
             ->assertOk()
-            ->assertDontSee(route('email.index'), false);
+            ->assertDontSee('href="'.route('email.index').'"', false);
         $this->actingAs($client)->get(route('email.index'))->assertForbidden();
     }
 
@@ -63,14 +63,14 @@ class EmailIntegrationTest extends TestCase
 
         $this->actingAs($vendor)->post(route('email.send'), [
             'recipient' => 'customer@example.com',
-            'subject' => 'Vendor HQ - Account update',
+            'subject' => 'Account update',
             'message' => 'Your account has been updated.',
         ])->assertSessionHas('status', 'Email sent successfully.');
 
         $this->assertDatabaseHas('email_messages', [
             'tenant_id' => $vendor->tenant_id,
             'recipient' => 'customer@example.com',
-            'subject' => 'Account update',
+            'subject' => 'Vendor HQ - Account update',
             'status' => 'sent',
         ]);
     }
