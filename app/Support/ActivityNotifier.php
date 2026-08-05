@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Mail\ImportantEventMail;
 use App\Models\Notification;
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -49,8 +50,10 @@ class ActivityNotifier
             return;
         }
 
+        $businessName = Tenant::query()->whereKey($tenantId)->value('business_name') ?: config('app.name');
+
         try {
-            Mail::to($recipients)->send(new ImportantEventMail($title, $message, $type));
+            Mail::to($recipients)->send(new ImportantEventMail($title, $message, $type, $businessName));
         } catch (Throwable $exception) {
             Log::error('Important event email notification could not be sent.', [
                 'tenant_id' => $tenantId,

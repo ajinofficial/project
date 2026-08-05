@@ -58,12 +58,12 @@ class EmailIntegrationTest extends TestCase
             ->once()
             ->withArgs(fn ($settings, $recipient, $subject, $message) => $settings->is($integration)
                 && $recipient === 'customer@example.com'
-                && $subject === 'Account update'
+                && $subject === 'Vendor HQ - Account update'
                 && $message === 'Your account has been updated.');
 
         $this->actingAs($vendor)->post(route('email.send'), [
             'recipient' => 'customer@example.com',
-            'subject' => 'Account update',
+            'subject' => 'Vendor HQ - Account update',
             'message' => 'Your account has been updated.',
         ])->assertSessionHas('status', 'Email sent successfully.');
 

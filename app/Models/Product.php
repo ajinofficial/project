@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class Product extends Model
 {
@@ -74,5 +75,24 @@ class Product extends Model
     public function getAvailableStockAttribute(): int
     {
         return max(0, $this->inventory - $this->reserved_stock - $this->damaged_stock);
+    }
+
+    public function getImageUrlAttribute(?string $value): ?string
+    {
+        if (! $value || Str::startsWith($value, ['//', 'data:'])) {
+            return $value;
+        }
+
+        if (Str::startsWith($value, ['http://', 'https://'])) {
+            $path = parse_url($value, PHP_URL_PATH);
+
+            // Older uploads were stored with the APP_URL host. Rebuild local
+            // upload URLs for the current host so previews survive a move.
+            return is_string($path) && Str::startsWith($path, '/uploads/')
+                ? asset(ltrim($path, '/'))
+                : $value;
+        }
+
+        return asset(ltrim($value, '/'));
     }
 }

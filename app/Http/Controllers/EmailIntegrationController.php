@@ -7,6 +7,7 @@ use App\Models\EmailMessage;
 use App\Services\TenantEmailSender;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Throwable;
@@ -70,17 +71,20 @@ class EmailIntegrationController extends Controller
             return back()->withErrors(['connection' => 'Configure and enable SMTP before sending email.'])->withInput();
         }
 
+        $businessName = $request->user()->tenant?->business_name ?: config('app.name');
+        $subject = Str::limit($businessName.' - '.$data['subject'], 255, '');
+
         $log = EmailMessage::create([
             'tenant_id' => $request->user()->tenant_id,
             'sent_by' => $request->user()->id,
             'recipient' => $data['recipient'],
-            'subject' => $data['subject'],
+            'subject' => $subject,
             'message' => $data['message'],
             'status' => 'pending',
         ]);
 
         try {
-            $sender->send($integration, $data['recipient'], $data['subject'], $data['message']);
+            $sender->send($integration, $data['recipient'], $subject, $data['message']);
             $log->update(['status' => 'sent']);
             $integration->update(['last_used_at' => now()]);
 

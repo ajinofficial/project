@@ -88,7 +88,6 @@
     </div>
 
     <input type="hidden" name="cropped_image" value="" data-product-cropped-image>
-    <input type="hidden" name="image_url" value="{{ old('image_url', $product->image_url) }}">
     @error('cropped_image') <small>{{ $message }}</small> @enderror
     @error('product_image') <small>{{ $message }}</small> @enderror
 </section>

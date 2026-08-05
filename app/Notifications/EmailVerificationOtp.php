@@ -21,8 +21,12 @@ class EmailVerificationOtp extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
+        $businessName = $notifiable->tenant?->business_name
+            ?: $notifiable->company_name
+            ?: config('app.name');
+
         return (new MailMessage)
-            ->subject('Verify your email address')
+            ->subject($businessName.' - Verify your email address')
             ->greeting('Hello '.$notifiable->name.',')
             ->line('Use this six-digit OTP to verify your email address:')
             ->line($this->otp)

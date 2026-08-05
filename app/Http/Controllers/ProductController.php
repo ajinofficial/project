@@ -85,7 +85,7 @@ class ProductController extends Controller
         $data = $this->validated($request);
         $data['user_id'] = $request->user()->id;
         $data['tenant_id'] = $request->user()->tenant_id;
-        $data['image_url'] = $this->storeCroppedImage($request) ?: ($data['image_url'] ?? null);
+        $data['image_url'] = $this->storeProductImage($request);
         $data['inventory'] = 0;
         $data['purchase_price'] = 0;
         $data['price'] = 0;
@@ -122,7 +122,7 @@ class ProductController extends Controller
         $this->authorizeProduct($request, $product);
 
         $data = $this->validated($request, $product);
-        $uploadedImage = $this->storeCroppedImage($request);
+        $uploadedImage = $this->storeProductImage($request);
 
         if ($uploadedImage) {
             $data['image_url'] = $uploadedImage;
@@ -188,7 +188,6 @@ class ProductController extends Controller
             'inventory' => ['nullable', 'integer', 'min:0', 'max:999999'],
             'minimum_stock_level' => ['required', 'integer', 'min:0', 'max:999999'],
             'status' => ['required', 'in:draft,active,archived'],
-            'image_url' => ['nullable', 'string', 'max:2048'],
             'cropped_image' => ['nullable', 'string'],
             'product_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'description' => ['nullable', 'string', 'max:5000'],
@@ -202,23 +201,23 @@ class ProductController extends Controller
         abort_unless((int) $product->tenant_id === (int) $request->user()->tenant_id, 404);
     }
 
-    private function storeCroppedImage(Request $request): ?string
+    private function storeProductImage(Request $request): ?string
     {
         $image = $request->input('cropped_image');
 
         if (! is_string($image) || $image === '') {
-            return null;
+            return $this->storeUploadedImage($request);
         }
 
         if (! preg_match('/^data:image\/(jpeg|jpg|png|webp);base64,/', $image)) {
-            return null;
+            return $this->storeUploadedImage($request);
         }
 
         $encoded = preg_replace('/^data:image\/(jpeg|jpg|png|webp);base64,/', '', $image);
         $binary = base64_decode($encoded, true);
 
-        if ($binary === false) {
-            return null;
+        if ($binary === false || strlen($binary) > 5 * 1024 * 1024 || getimagesizefromstring($binary) === false) {
+            return $this->storeUploadedImage($request);
         }
 
         $tenantId = (string) $request->user()->tenant_id;
@@ -226,8 +225,28 @@ class ProductController extends Controller
         File::ensureDirectoryExists($directory);
 
         $filename = Str::uuid().'.jpg';
-        file_put_contents($directory.DIRECTORY_SEPARATOR.$filename, $binary);
+        if (file_put_contents($directory.DIRECTORY_SEPARATOR.$filename, $binary, LOCK_EX) === false) {
+            return null;
+        }
 
-        return asset('uploads/'.$tenantId.'/products/'.$filename);
+        return 'uploads/'.$tenantId.'/products/'.$filename;
+    }
+
+    private function storeUploadedImage(Request $request): ?string
+    {
+        if (! $request->hasFile('product_image')) {
+            return null;
+        }
+
+        $image = $request->file('product_image');
+        $tenantId = (string) $request->user()->tenant_id;
+        $directory = public_path('uploads/'.$tenantId.'/products');
+        File::ensureDirectoryExists($directory);
+
+        $extension = strtolower($image->extension() ?: 'jpg');
+        $filename = Str::uuid().'.'.$extension;
+        $image->move($directory, $filename);
+
+        return 'uploads/'.$tenantId.'/products/'.$filename;
     }
 }

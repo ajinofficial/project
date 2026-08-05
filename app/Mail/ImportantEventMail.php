@@ -13,13 +13,14 @@ class ImportantEventMail extends Mailable
     public function __construct(
         public string $eventTitle,
         public string $eventMessage,
-        public string $eventType
+        public string $eventType,
+        public string $businessName
     ) {}
 
     public function build(): self
     {
         return $this
-            ->subject('[Investrivo] '.$this->eventTitle)
+            ->subject($this->businessName.' - '.$this->eventTitle)
             ->view('emails.important-event');
     }
 }

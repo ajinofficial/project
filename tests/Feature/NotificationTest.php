@@ -231,7 +231,9 @@ class NotificationTest extends TestCase
         Mail::assertSent(ImportantEventMail::class, function (ImportantEventMail $mail) use ($owner) {
             return $mail->hasTo($owner->email)
                 && $mail->eventTitle === 'Sale billed'
-                && $mail->eventType === 'sale_billed';
+                && $mail->eventType === 'sale_billed'
+                && $mail->businessName === 'Demo Store'
+                && $mail->subject === 'Demo Store - Sale billed';
         });
     }
 

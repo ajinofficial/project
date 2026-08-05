@@ -53,7 +53,8 @@ class PasswordResetController extends Controller
         $request->session()->forget('password_reset_verified');
 
         try {
-            Mail::to($user->email)->send(new PasswordResetOtpMail($otp));
+            $businessName = $user->tenant?->business_name ?: $user->company_name ?: config('app.name');
+            Mail::to($user->email)->send(new PasswordResetOtpMail($otp, $businessName));
         } catch (Throwable $exception) {
             Cache::forget($this->cacheKey($email));
             $request->session()->forget('password_reset_email');

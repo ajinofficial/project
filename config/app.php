@@ -60,6 +60,12 @@ return [
     'asset_url' => env('ASSET_URL'),
 
     /*
+    | Version appended to local CSS and JavaScript URLs for cache busting.
+    | Increase this value after deploying a changed asset.
+    */
+    'asset_version' => env('APP_ASSET_VERSION', '1'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------

@@ -10,11 +10,11 @@ class PasswordResetOtpMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public string $otp) {}
+    public function __construct(public string $otp, public string $businessName) {}
 
     public function build(): self
     {
-        return $this->subject('Your Investrivo password reset code')
+        return $this->subject($this->businessName.' - Password reset code')
             ->view('emails.password-reset-otp');
     }
 }

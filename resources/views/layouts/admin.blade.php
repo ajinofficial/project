@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title ?? 'Dashboard' }} - InvestRivo</title>
     @include('partials.app-base-url')
-    <link rel="stylesheet" href="{{ asset('css/register.css') }}?v={{ filemtime(public_path('css/register.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/register.css') }}?v={{ rawurlencode(config('app.asset_version')) }}">
 </head>
 <body class="admin-body inapp-body">
     <div @class(['inapp-shell', 'inapp-shell-full' => $hideSidebar ?? false])>
