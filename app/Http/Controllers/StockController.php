@@ -126,6 +126,10 @@ class StockController extends Controller
     public function adjust(Request $request): RedirectResponse
     {
         $tenantId = $request->user()->tenant_id;
+        // Older stock clients supplied only a percentage with their purchase price.
+        if (! $request->has('profit_type') && ($request->filled('purchase_price') || $request->filled('profit_percentage'))) {
+            $request->merge(['profit_type' => 'percentage']);
+        }
         $data = $request->validate([
             'product_id' => [
                 'required',
@@ -133,8 +137,10 @@ class StockController extends Controller
             ],
             'adjustment' => ['required', 'integer', 'min:-999999', 'max:999999', 'not_in:0'],
             'stock_date' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'],
-            'purchase_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
-            'profit_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'purchase_price' => ['required_with:profit_type', 'nullable', 'numeric', 'min:0', 'max:99999999.99', 'decimal:0,2'],
+            'profit_type' => ['required_with:profit_amount,profit_percentage,purchase_price', 'nullable', 'in:percentage,amount'],
+            'profit_percentage' => ['required_if:profit_type,percentage', 'prohibited_unless:profit_type,percentage', 'nullable', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
+            'profit_amount' => ['required_if:profit_type,amount', 'prohibited_unless:profit_type,amount', 'nullable', 'numeric', 'min:0', 'max:99999999.99', 'decimal:0,2'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ], [
             'product_id.required' => 'Select the product to adjust.',
@@ -174,21 +180,28 @@ class StockController extends Controller
                     ? (($product->purchase_price * $oldStock) + ($purchasePrice * $data['adjustment'])) / ($oldStock + $data['adjustment'])
                     : $purchasePrice;
 
-                if (isset($data['profit_percentage'])) {
-                    $product->price = $purchasePrice + ($purchasePrice * ((float) $data['profit_percentage'] / 100));
+                $profit = ($data['profit_type'] ?? 'percentage') === 'amount'
+                    ? (float) $data['profit_amount']
+                    : $purchasePrice * ((float) $data['profit_percentage'] / 100);
+                $sellingPrice = round($purchasePrice + $profit, 2);
+                if ($sellingPrice > 99999999.99) {
+                    throw ValidationException::withMessages(['purchase_price' => 'Selling price after profit cannot exceed 99,999,999.99.']);
                 }
+                $product->price = $sellingPrice;
             }
 
             $product->save();
             StockNotifier::sync($product);
 
-            $notes = $data['notes'] ?: 'Manual stock adjustment.';
+            $notes = ($data['notes'] ?? '') ?: 'Manual stock adjustment.';
 
             if ($data['adjustment'] > 0 && isset($data['purchase_price'])) {
                 $notes = trim($notes.' Purchase price: '.number_format((float) $data['purchase_price'], 2).'.');
 
                 if (isset($data['profit_percentage'])) {
                     $notes = trim($notes.' Profit: '.number_format((float) $data['profit_percentage'], 2).'%. Selling price: '.number_format((float) $product->price, 2).'.');
+                } elseif (isset($data['profit_amount'])) {
+                    $notes = trim($notes.' Profit amount per unit: '.number_format((float) $data['profit_amount'], 2).'. Selling price: '.number_format((float) $product->price, 2).'.');
                 }
             }
 

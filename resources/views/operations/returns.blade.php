@@ -19,7 +19,7 @@
         .return-form .return-field span {
             margin: 0;
             color: #17201a;
-            font-size: 14px;
+            font-size: var(--text-sm);
             font-weight: 800;
         }
 
@@ -37,7 +37,7 @@
             padding: 9px 12px !important;
             color: #050703 !important;
             background: #ffffff !important;
-            font-size: 15px !important;
+            font-size: var(--text-base) !important;
             line-height: 1.4 !important;
             box-shadow: none !important;
         }
@@ -60,7 +60,7 @@
 
         .return-form small {
             color: #b42318;
-            font-size: 12px;
+            font-size: var(--text-xs);
             font-weight: 700;
         }
 
@@ -79,7 +79,7 @@
             align-items: center;
             border-radius: 999px;
             padding: 4px 8px;
-            font-size: 11px;
+            font-size: var(--text-xs);
             font-weight: 800;
             white-space: nowrap;
         }

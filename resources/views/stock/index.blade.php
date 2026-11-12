@@ -17,15 +17,15 @@
             background: #fff;
         }
         .stock-watch-row strong,
-        .stock-flow-row strong { display: block; color: var(--v-text); font-size: 13px; }
+        .stock-flow-row strong { display: block; color: var(--v-text); font-size: var(--text-sm); }
         .stock-watch-row span,
-        .stock-flow-row span { display: block; margin-top: 4px; color: var(--v-muted); font-size: 12px; line-height: 1.35; }
+        .stock-flow-row span { display: block; margin-top: 4px; color: var(--v-muted); font-size: var(--text-xs); line-height: 1.35; }
         .stock-count-pill,
         .stock-type-pill {
             flex: 0 0 auto;
             border-radius: 999px;
             padding: 6px 10px;
-            font-size: 11px;
+            font-size: var(--text-xs);
             font-weight: 900;
             white-space: nowrap;
         }

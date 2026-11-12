@@ -16,8 +16,8 @@
             <form class="register-form" method="POST" action="{{ route('password.email') }}" data-forgot-password-form novalidate>
                 @csrf
                 <label>
-                    <span>Email address</span>
-                    <input class="@error('email') is-invalid @enderror" type="email" name="email" value="{{ old('email') }}" autocomplete="email" placeholder="staff@shop.com" required autofocus aria-describedby="forgot-password-email-error">
+                    <span>Email</span>
+                    <input class="@error('email') is-invalid @enderror" type="email" name="email" value="{{ old('email') }}" autocomplete="email" placeholder="Enter email" required autofocus aria-describedby="forgot-password-email-error">
                     <small id="forgot-password-email-error" data-forgot-password-email-error @if (! $errors->has('email')) hidden @endif>{{ $errors->first('email') }}</small>
                 </label>
                 <button type="submit" data-forgot-password-submit>

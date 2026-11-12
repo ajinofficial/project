@@ -76,7 +76,12 @@ class ProductController extends Controller
     public function create(Request $request): View
     {
         return view('products.create', [
-            'product' => new Product(['status' => 'draft', 'inventory' => 0, 'minimum_stock_level' => 10]),
+            'product' => new Product([
+                'status' => 'draft',
+                'inventory' => 0,
+                'minimum_stock_level' => 10,
+                'tax_percentage' => $request->user()->tenant->default_tax_percentage ?? 0,
+            ]),
         ]);
     }
 
@@ -89,7 +94,6 @@ class ProductController extends Controller
         $data['inventory'] = 0;
         $data['purchase_price'] = 0;
         $data['price'] = 0;
-        $data['tax_percentage'] = $request->user()->tenant->default_tax_percentage ?? 0;
         $data['compare_at_price'] = null;
         unset($data['cropped_image']);
         unset($data['product_image']);
@@ -129,7 +133,6 @@ class ProductController extends Controller
         }
 
         unset($data['inventory']);
-        unset($data['tax_percentage']);
         unset($data['compare_at_price']);
         unset($data['cropped_image']);
         unset($data['product_image']);
@@ -187,6 +190,7 @@ class ProductController extends Controller
             'brand' => ['nullable', 'string', 'max:120'],
             'inventory' => ['nullable', 'integer', 'min:0', 'max:999999'],
             'minimum_stock_level' => ['required', 'integer', 'min:0', 'max:999999'],
+            'tax_percentage' => ['required', 'numeric', 'min:0', 'max:99.99', 'decimal:0,2'],
             'status' => ['required', 'in:draft,active,archived'],
             'cropped_image' => ['nullable', 'string'],
             'product_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],

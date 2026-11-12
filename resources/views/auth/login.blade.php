@@ -17,8 +17,8 @@
 
             <div class="login-hero-copy">
                 <p class="eyebrow">Investrivo inventory platform</p>
-                <h1>Control stock, catalog status, and reorder work from one desk.</h1>
-                <p>Built for store teams that need fast SKU lookup, low-stock visibility, and reliable daily inventory operations.</p>
+                <h1>Control stock, catalog status, and reorder alerts.</h1>
+                <p>Built for store teams that need fast SKU lookup, low-stock visibility, expense tracking, net profit insights, and reliable daily inventory operations.</p>
             </div>
 
             <div class="login-stat-grid">
@@ -40,7 +40,7 @@
         <section class="login-form-panel" aria-labelledby="login-title">
             <div class="login-card">
                 
-                        <h1 id="login-title">Log in to inventory</h1>
+                        <h1 id="login-title" style="text-align: center;">Login</h1>
                         
 
                 <form class="register-form login-form" method="POST" action="{{ route('login.store') }}" data-login-form novalidate>
@@ -57,7 +57,7 @@
 
                     <label class="login-field">
                         <span>Email</span>
-                        <input type="email" name="email" value="{{ old('email') }}" autocomplete="email" placeholder="staff@shop.com" @class(['is-invalid' => $errors->has('email')]) required data-login-field="email">
+                        <input type="email" name="email" value="{{ old('email') }}" autocomplete="email" placeholder="Enter email" @class(['is-invalid' => $errors->has('email')]) required data-login-field="email">
                         <small data-login-error="email" @if (! $errors->has('email')) hidden @endif>{{ $errors->first('email') }}</small>
                     </label>
 
@@ -77,7 +77,7 @@
 
                     <label class="check-row">
                         <input type="checkbox" name="remember" value="1">
-                        <span>Keep this device signed in</span>
+                        <span>Keep this device login</span>
                     </label>
 
                     <a class="forgot-password-link" href="{{ route('password.request') }}">Forgot password?</a>
@@ -86,7 +86,7 @@
                 @if (session('status'))
                     <p class="auth-status" role="status">{{ session('status') }}</p>
                 @endif
-                <p class="auth-switch">New business? <a href="{{ route('register') }}">Create an account</a></p>
+                <!-- <p class="auth-switch">New business? <a href="{{ route('register') }}">Create an account</a></p> -->
                 <!-- <div class="auth-footnote">
                     <span>Tenant isolated</span>
                     <span>Role based access</span>

@@ -223,6 +223,59 @@ class StockModuleTest extends TestCase
         $this->assertSame('2025-07-10', StockMovement::where('product_id', $product->id)->firstOrFail()->created_at->toDateString());
     }
 
+    public function test_fixed_profit_amount_updates_stock_and_selling_price(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+        $product = Product::create($this->productPayload([
+            'tenant_id' => $tenant->id, 'user_id' => $owner->id,
+            'inventory' => 10, 'purchase_price' => 50,
+        ]));
+
+        $this->actingAs($owner)->post(route('stock.adjust'), [
+            'product_id' => $product->id, 'adjustment' => 5,
+            'stock_date' => now()->toDateString(), 'purchase_price' => 80,
+            'profit_type' => 'amount', 'profit_amount' => 15.5, 'notes' => '',
+        ])->assertRedirect(route('stock.index'));
+
+        $this->assertSame(15, $product->fresh()->inventory);
+        $this->assertSame('60.00', $product->fresh()->purchase_price);
+        $this->assertSame('95.50', $product->fresh()->price);
+        $this->assertStringContainsString('Profit amount per unit: 15.50.', StockMovement::where('product_id', $product->id)->firstOrFail()->notes);
+    }
+
+    public function test_stock_profit_choice_and_values_are_validated_before_stock_changes(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+        $product = Product::create($this->productPayload([
+            'tenant_id' => $tenant->id, 'user_id' => $owner->id, 'inventory' => 10,
+        ]));
+        $base = [
+            'product_id' => $product->id, 'adjustment' => 5,
+            'stock_date' => now()->toDateString(), 'purchase_price' => 80,
+            'profit_type' => 'amount', 'profit_amount' => 10,
+        ];
+        foreach ([
+            [['profit_type' => 'other'], 'profit_type'],
+            [['profit_amount' => null], 'profit_amount'],
+            [['profit_amount' => -1], 'profit_amount'],
+            [['profit_amount' => 'abc'], 'profit_amount'],
+            [['profit_amount' => 1.234], 'profit_amount'],
+            [['profit_percentage' => 10], 'profit_percentage'],
+            [['purchase_price' => null], 'purchase_price'],
+            [['purchase_price' => 99999999.99], 'purchase_price'],
+            [['profit_type' => 'percentage', 'profit_amount' => null, 'profit_percentage' => 101], 'profit_percentage'],
+        ] as [$changes, $error]) {
+            $this->actingAs($owner)->post(route('stock.adjust'), array_merge($base, $changes))
+                ->assertSessionHasErrors($error);
+        }
+        $this->assertSame(10, $product->fresh()->inventory);
+        $this->assertSame(0, StockMovement::where('product_id', $product->id)->count());
+
+        $this->actingAs($owner)->post(route('stock.adjust'), array_merge($base, ['profit_amount' => 0]))
+            ->assertRedirect(route('stock.index'));
+        $this->assertSame('80.00', $product->fresh()->price);
+    }
+
     public function test_stock_movement_filters_by_search_and_type(): void
     {
         [$owner, $tenant] = $this->tenantOwner();

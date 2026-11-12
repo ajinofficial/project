@@ -6,6 +6,7 @@
     <meta name="robots" content="noindex, nofollow">
     <title>Access denied — Investrivo</title>
     @include('partials.app-base-url')
+    <link rel="stylesheet" href="{{ asset('css/typography.css') }}?v={{ rawurlencode(config('app.asset_version')) }}">
     <style>
         :root {
             color-scheme: light;
@@ -31,7 +32,7 @@
                 radial-gradient(circle at 12% 15%, rgba(20, 108, 67, .09), transparent 28rem),
                 radial-gradient(circle at 88% 88%, rgba(217, 79, 48, .09), transparent 25rem),
                 var(--surface);
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-family: var(--font-sans);
         }
 
         .page {
@@ -47,7 +48,7 @@
             align-items: center;
             gap: 11px;
             color: var(--ink);
-            font-size: 18px;
+            font-size: var(--text-lg);
             font-weight: 800;
             text-decoration: none;
         }
@@ -169,7 +170,7 @@
             color: var(--accent);
             background: rgba(255, 255, 255, .92);
             box-shadow: 0 12px 30px rgba(23, 32, 26, .1);
-            font-size: 14px;
+            font-size: var(--text-sm);
             font-weight: 800;
             letter-spacing: .08em;
         }
@@ -177,7 +178,7 @@
         .eyebrow {
             margin: 0 0 15px;
             color: var(--accent);
-            font-size: 12px;
+            font-size: var(--text-xs);
             font-weight: 800;
             letter-spacing: .12em;
             text-transform: uppercase;
@@ -195,7 +196,7 @@
             max-width: 570px;
             margin: 0 0 32px;
             color: var(--muted);
-            font-size: 17px;
+            font-size: var(--text-lg);
             line-height: 1.7;
         }
 
@@ -216,7 +217,7 @@
             border-radius: 9px;
             color: var(--ink);
             background: white;
-            font-size: 14px;
+            font-size: var(--text-sm);
             font-weight: 750;
             text-decoration: none;
             transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
@@ -260,7 +261,7 @@
             padding-top: 22px;
             border-top: 1px solid var(--line);
             color: var(--muted);
-            font-size: 12px;
+            font-size: var(--text-xs);
         }
 
         @media (max-width: 760px) {

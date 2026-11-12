@@ -57,6 +57,13 @@
         <input type="number" name="minimum_stock_level" value="{{ old('minimum_stock_level', $product->minimum_stock_level ?? auth()->user()->tenant->low_stock_threshold) }}" min="0" step="1" required data-replace-on-focus>
         @error('minimum_stock_level') <small>{{ $message }}</small> @enderror
     </label>
+
+    <label>
+        <span>Tax percentage (%)</span>
+        <input type="number" name="tax_percentage" value="{{ old('tax_percentage', $product->tax_percentage ?? auth()->user()->tenant->default_tax_percentage ?? 0) }}" min="0" max="99.99" step="0.01" required aria-describedby="product-tax-help" data-replace-on-focus>
+        <small id="product-tax-help">Added automatically to the selling price during billing. Enter 0 for tax-free products.</small>
+        @error('tax_percentage') <small>{{ $message }}</small> @enderror
+    </label>
 </div>
 
 <section class="product-image-uploader" data-product-image-uploader>

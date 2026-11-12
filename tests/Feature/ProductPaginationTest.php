@@ -279,8 +279,8 @@ class ProductPaginationTest extends TestCase
         $response->assertSee('data-replace-on-focus', false);
         $response->assertDontSee('name="inventory"', false);
         $response->assertDontSee('Stock on hand');
-        $response->assertDontSee('name="tax_percentage"', false);
-        $response->assertDontSee('Tax percentage');
+        $response->assertSee('name="tax_percentage"', false);
+        $response->assertSee('Tax percentage');
         $response->assertDontSee('name="purchase_price"', false);
         $response->assertDontSee('Purchase price');
         $response->assertDontSee('name="profit_percentage"', false);
@@ -319,8 +319,8 @@ class ProductPaginationTest extends TestCase
         $response->assertSee('data-product-save-button', false);
         $response->assertDontSee('name="inventory"', false);
         $response->assertDontSee('Stock on hand');
-        $response->assertDontSee('name="tax_percentage"', false);
-        $response->assertDontSee('Tax percentage');
+        $response->assertSee('name="tax_percentage"', false);
+        $response->assertSee('Tax percentage');
         $response->assertDontSee('name="purchase_price"', false);
         $response->assertDontSee('Purchase price');
         $response->assertDontSee('name="profit_percentage"', false);
@@ -422,7 +422,7 @@ class ProductPaginationTest extends TestCase
 
         $response->assertRedirect(route('products.index'));
         $this->assertSame(12, $product->fresh()->inventory);
-        $this->assertSame('18.00', $product->fresh()->tax_percentage);
+        $this->assertSame('5.00', $product->fresh()->tax_percentage);
         $this->assertSame('150.00', $product->fresh()->compare_at_price);
         $this->assertSame('50.00', $product->fresh()->purchase_price);
         $this->assertSame('100.00', $product->fresh()->price);
@@ -1485,6 +1485,71 @@ class ProductPaginationTest extends TestCase
         $response->assertSessionHasErrors('paid_amount');
         $this->assertSame(5, $product->fresh()->inventory);
         $this->assertDatabaseMissing('sales_orders', ['tenant_id' => $tenant->id]);
+    }
+
+    public function test_product_tax_is_saved_and_applied_to_billing_with_invoice_history_preserved(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+        $tenant->update(['default_tax_percentage' => 12]);
+
+        $this->actingAs($owner)->get(route('products.create'))
+            ->assertOk()
+            ->assertSee('name="tax_percentage" value="12.00"', false);
+
+        $this->actingAs($owner)->post(route('products.store'), $this->productPayload([
+            'tax_percentage' => 7.5,
+        ]))->assertRedirect(route('products.index'));
+
+        $product = Product::where('tenant_id', $tenant->id)->firstOrFail();
+        $this->assertSame('7.50', $product->tax_percentage);
+        $product->update(['price' => 100, 'inventory' => 10]);
+
+        $this->actingAs($owner)->put(route('products.update', $product), $this->productPayload([
+            'tax_percentage' => 5.25,
+        ]))->assertRedirect(route('products.index'));
+
+        $this->actingAs($owner)->getJson(route('sales.products', ['search' => $product->sku]))
+            ->assertOk()->assertJsonPath('data.0.tax', 5.25);
+
+        $this->actingAs($owner)->from(route('sales.index'))->post(route('sales.store'), [
+            'items' => [['product_id' => $product->id, 'quantity' => 2]],
+            'paid_amount' => 210.5,
+            'payment_method' => 'cash',
+            'tax_percentage' => 0,
+        ])->assertRedirect(route('sales.index'));
+
+        $order = SalesOrder::where('tenant_id', $tenant->id)->firstOrFail();
+        $this->assertSame('200.00', $order->subtotal);
+        $this->assertSame('10.50', $order->tax_amount);
+        $this->assertSame('210.50', $order->total_amount);
+        $this->assertSame('5.25', $order->items()->firstOrFail()->tax_percentage);
+
+        $this->actingAs($owner)->put(route('products.update', $product), $this->productPayload([
+            'tax_percentage' => 0,
+        ]))->assertRedirect(route('products.index'));
+        $this->assertSame('0.00', $product->fresh()->tax_percentage);
+        $this->assertSame('5.25', $order->items()->firstOrFail()->tax_percentage);
+        $this->assertSame('10.50', $order->fresh()->tax_amount);
+    }
+
+    public function test_product_tax_validation_rejects_invalid_rates_on_create_and_update(): void
+    {
+        [$owner, $tenant] = $this->tenantOwner();
+        $product = Product::create($this->productPayload([
+            'tenant_id' => $tenant->id,
+            'user_id' => $owner->id,
+        ]));
+
+        foreach ([null, -1, 100, 'invalid', 5.255] as $rate) {
+            $payload = $this->productPayload(['tax_percentage' => $rate, 'sku' => 'INVALID-TAX']);
+            $this->actingAs($owner)->post(route('products.store'), $payload)
+                ->assertSessionHasErrors('tax_percentage');
+            $this->actingAs($owner)->put(route('products.update', $product), $payload)
+                ->assertSessionHasErrors('tax_percentage');
+        }
+
+        $this->assertSame('18.00', $product->fresh()->tax_percentage);
+        $this->assertSame(1, Product::where('tenant_id', $tenant->id)->count());
     }
 
     private function tenantOwner(string $email = 'owner@example.com'): array

@@ -4,13 +4,13 @@
     <style>
         .expense-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-bottom:18px; }
         .expense-stat { padding:18px 20px; border:1px solid #e7e9ef; border-radius:14px; background:#fff; }
-        .expense-stat span { display:block; color:#717784; font-size:13px; margin-bottom:5px; }
-        .expense-stat strong { font-size:24px; color:#172033; }
+        .expense-stat span { display:block; color:#717784; font-size: var(--text-sm); margin-bottom:5px; }
+        .expense-stat strong { font-size: var(--text-2xl); color:#172033; }
         .expense-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
         .expense-form-grid .wide { grid-column:1/-1; }
         .expense-filters { display:grid; grid-template-columns:minmax(150px,1fr) 135px 135px 105px auto; gap:8px; align-items:center; }
         .expense-filters input,
-        .expense-filters select { min-height:40px; padding:8px 10px; font-size:13px; }
+        .expense-filters select { min-height:40px; padding:8px 10px; font-size: var(--text-sm); }
         .expense-filters .expense-action-button,
         .expense-filters .product-clear-filter { min-height:40px; padding:9px 12px; white-space:nowrap; }
         .expense-actions { display:flex; gap:8px; align-items:center; }

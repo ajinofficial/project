@@ -13,7 +13,7 @@
         .stock-adjust-hint {
             margin: -8px 0 0;
             color: var(--v-muted);
-            font-size: 12px;
+            font-size: var(--text-xs);
             line-height: 1.45;
         }
         .stock-price-preview {
@@ -22,14 +22,14 @@
             padding: 12px;
             background: #f8fafc;
             color: var(--v-muted);
-            font-size: 12px;
+            font-size: var(--text-xs);
             line-height: 1.45;
         }
         .stock-price-preview strong {
             display: block;
             margin-top: 4px;
             color: var(--v-text);
-            font-size: 16px;
+            font-size: var(--text-base);
         }
         .searchable-select__loader {
             display: flex;
@@ -38,7 +38,7 @@
             gap: 8px;
             padding: 12px;
             color: var(--v-muted);
-            font-size: 12px;
+            font-size: var(--text-xs);
             font-weight: 700;
         }
         .searchable-select__loader::before {
@@ -124,9 +124,22 @@
                     </label>
 
                     <label>
-                        <span>Profit percentage</span>
-                        <input type="number" name="profit_percentage" min="0" max="100" step="0.01" value="{{ old('profit_percentage') }}" required data-stock-profit-percentage data-replace-on-focus>
+                        <span>Profit type</span>
+                        <select name="profit_type" required data-stock-profit-type>
+                            <option value="percentage" @selected(old('profit_type', 'percentage') === 'percentage')>Percentage (%)</option>
+                            <option value="amount" @selected(old('profit_type') === 'amount')>Fixed amount per unit (₹)</option>
+                        </select>
+                        @error('profit_type') <small>{{ $message }}</small> @enderror
+                    </label>
+                </div>
+
+                <div class="field-grid">
+                    @php($profitIsAmount = old('profit_type', 'percentage') === 'amount')
+                    <label>
+                        <span data-stock-profit-label>{{ $profitIsAmount ? 'Profit amount per unit (₹)' : 'Profit percentage' }}</span>
+                        <input type="number" name="{{ $profitIsAmount ? 'profit_amount' : 'profit_percentage' }}" min="0" max="{{ $profitIsAmount ? '99999999.99' : '100' }}" step="0.01" value="{{ old($profitIsAmount ? 'profit_amount' : 'profit_percentage') }}" required data-stock-profit-value data-replace-on-focus>
                         @error('profit_percentage') <small>{{ $message }}</small> @enderror
+                        @error('profit_amount') <small>{{ $message }}</small> @enderror
                     </label>
                 </div>
 
@@ -157,7 +170,8 @@
             document.querySelectorAll('[data-stock-adjust-form]').forEach(function (form) {
                 var productSelect = form.querySelector('[data-stock-product]');
                 var purchasePriceInput = form.querySelector('[data-stock-purchase-price]');
-                var profitPercentageInput = form.querySelector('[data-stock-profit-percentage]');
+                var profitInput = form.querySelector('[data-stock-profit-value]');
+                var profitTypeInput = form.querySelector('[data-stock-profit-type]');
                 var sellingPreview = form.querySelector('[data-stock-selling-preview]');
                 var currency = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
 
@@ -185,15 +199,39 @@
                     }
 
                     var purchasePrice = numberValue(purchasePriceInput);
-                    var profitPercentage = numberValue(profitPercentageInput);
+                    var isAmount = profitTypeInput.value === 'amount';
+                    var profit = numberValue(profitInput);
 
-                    if (purchasePrice === null || profitPercentage === null) {
+                    if (purchasePrice === null || profit === null || purchasePrice < 0 || profit < 0 || (!isAmount && profit > 100)) {
                         sellingPreview.textContent = 'Enter purchase price and profit';
                         return;
                     }
 
-                    sellingPreview.textContent = currency.format(purchasePrice + (purchasePrice * (profitPercentage / 100)));
+                    var sellingPrice = purchasePrice + (isAmount ? profit : purchasePrice * profit / 100);
+                    sellingPreview.textContent = sellingPrice > 99999999.99
+                        ? 'Selling price is too high'
+                        : currency.format(sellingPrice);
                 }
+
+                function syncProfitType() {
+                    var isAmount = profitTypeInput.value === 'amount';
+                    profitInput.name = isAmount ? 'profit_amount' : 'profit_percentage';
+                    profitInput.max = isAmount ? '99999999.99' : '100';
+                    form.querySelector('[data-stock-profit-label]').textContent = isAmount ? 'Profit amount per unit (₹)' : 'Profit percentage';
+                    var error = existingErrorElement(profitInput);
+                    if (error) {
+                        error.textContent = '';
+                        error.hidden = true;
+                    }
+                    profitInput.classList.remove('is-invalid');
+                    profitInput.removeAttribute('aria-invalid');
+                    updateSellingPreview();
+                }
+                profitTypeInput.addEventListener('change', function () {
+                    profitInput.value = '0';
+                    syncProfitType();
+                });
+                syncProfitType();
 
                 if (productSelect) {
                     productSelect.addEventListener('change', function () {
@@ -202,7 +240,7 @@
                     });
                 }
 
-                [purchasePriceInput, profitPercentageInput].forEach(function (field) {
+                [purchasePriceInput, profitInput].forEach(function (field) {
                     if (field) {
                         field.addEventListener('input', updateSellingPreview);
                     }
