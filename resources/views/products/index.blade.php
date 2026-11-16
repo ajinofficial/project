@@ -3,7 +3,7 @@
 ])
 
 @section('content')
-    <section class="product-workspace">
+    <section class="product-workspace product-overview">
         <header class="product-page-head">
             <div>
                 <p class="eyebrow">Products</p>

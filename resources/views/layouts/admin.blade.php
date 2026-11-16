@@ -24,6 +24,7 @@
                 $canOpenMenu = fn (string $menu) => \App\Support\RolePermission::canAccess(auth()->user(), $menu);
                 $sidebarIcon = function (string $menuKey): string {
                     return match ($menuKey) {
+                        'services' => '<path d="m14 6 4 4M4 20l8-8M14 3a6 6 0 0 0-6 8L3 16l5 5 5-5a6 6 0 0 0 8-6l-4 3-4-4 3-4-2-2Z" />',
                         'vendor_dashboard' => '<path d="M4 21V7l8-4 8 4v14" /><path d="M9 21v-7h6v7" /><path d="M8 10h2" /><path d="M14 10h2" />',
                         'dashboard' => '<path d="M4 13h6V4H4v9Zm10 7h6V4h-6v16ZM4 20h6v-4H4v4Z" />',
                         'clients' => '<path d="M3 21V7l9-4 9 4v14" /><path d="M9 21v-7h6v7" /><path d="M7 10h2" /><path d="M15 10h2" />',

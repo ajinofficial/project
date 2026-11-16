@@ -55,6 +55,14 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::middleware('menu:services')->group(function () {
+        Route::get('/services', [\App\Http\Controllers\ServiceOrderController::class, 'index'])->name('services.index');
+        Route::post('/services', [\App\Http\Controllers\ServiceOrderController::class, 'store'])->name('services.store');
+        Route::get('/services/{service}', [\App\Http\Controllers\ServiceOrderController::class, 'show'])->name('services.show');
+        Route::patch('/services/{service}', [\App\Http\Controllers\ServiceOrderController::class, 'update'])->name('services.update');
+        Route::post('/services/{service}/costs', [\App\Http\Controllers\ServiceOrderController::class, 'cost'])->name('services.cost');
+        Route::post('/services/{service}/payments', [\App\Http\Controllers\ServiceOrderController::class, 'payment'])->name('services.payment');
+    });
     Route::patch('/account/email', [AccountEmailController::class, 'update'])->name('account.email.update');
     Route::post('/plan/upgrade', [PlanUpgradeController::class, 'update'])->name('plan.upgrade');
     Route::post('/email/verification-notification', function (Request $request) {

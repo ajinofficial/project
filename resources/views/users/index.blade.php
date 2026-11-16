@@ -1,8 +1,8 @@
 @extends('layouts.admin', ['title' => 'Users'])
 
 @section('content')
-    <section class="users-page">
-        <header class="users-hero">
+    <section class="users-page product-overview">
+        <header class="users-hero product-page-head">
             <div>
                 <p class="eyebrow">Team accounts</p>
                 <h1>Users</h1>
@@ -26,16 +26,16 @@
             </div>
         @endif
 
-        <section class="users-stat-grid">
-            <article>
+        <section class="users-stat-grid product-stat-grid">
+            <article class="product-stat">
                 <span>Active accounts</span>
                 <strong>{{ number_format($userCount) }}</strong>
             </article>
-            <article>
+            <article class="product-stat">
                 <span>Plan limit</span>
                 <strong>{{ $userLimit ?? 'Unlimited' }}</strong>
             </article>
-            <article>
+            <article class="product-stat">
                 <span>Available seats</span>
                 <strong>{{ $remainingUsers ?? 'Unlimited' }}</strong>
             </article>

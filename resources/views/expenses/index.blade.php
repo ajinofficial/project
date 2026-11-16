@@ -30,13 +30,18 @@
         @media(max-width:800px) { .expense-filters,.expense-form-grid,.expense-stats { grid-template-columns:1fr; } .expense-form-grid .wide { grid-column:auto; } }
     </style>
 
-    <div class="expense-stats" data-expense-stats>
-        <div class="expense-stat"><span>This month's expenses</span><strong>&#8377;{{ number_format($monthTotal, 2) }}</strong></div>
-        <div class="expense-stat"><span>Filtered total</span><strong>&#8377;{{ number_format($filteredTotal, 2) }}</strong></div>
+    <div class="product-overview expense-overview">
+    <header class="product-page-head">
+        <div><p class="eyebrow">Expense management</p><h1>Expenses</h1><span>Record business costs and track your spending in one place.</span></div>
+        <div class="product-head-actions"><a class="primary-link" href="#expense-entry">Record expense</a></div>
+    </header>
+    <div class="expense-stats product-stat-grid" data-expense-stats>
+        <div class="expense-stat product-stat"><span>This month's expenses</span><strong>&#8377;{{ number_format($monthTotal, 2) }}</strong></div>
+        <div class="expense-stat product-stat"><span>Filtered total</span><strong>&#8377;{{ number_format($filteredTotal, 2) }}</strong></div>
     </div>
 
     <section class="ops-grid">
-        <article class="admin-section">
+        <article class="admin-section" id="expense-entry">
             <div class="section-title"><div><p class="eyebrow">Money out</p><h2 data-expense-form-title>{{ $editingExpense ? 'Edit expense' : 'Record expense' }}</h2></div></div>
             <form class="product-form" method="POST" action="{{ $editingExpense ? route('expenses.update', $editingExpense) : route('expenses.store') }}" data-expense-form data-store-action="{{ route('expenses.store') }}" data-update-action-template="{{ route('expenses.update', ['expense' => '__ID__']) }}" data-default-date="{{ now()->toDateString() }}">
                 @csrf
@@ -293,4 +298,5 @@
             bindFilters();
         });
     </script>
+</div>
 @endsection

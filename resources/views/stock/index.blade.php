@@ -4,6 +4,8 @@
     <style>
         .stock-workspace .product-stat-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
         .stock-workspace .product-stat { min-height: 96px; }
+        .stock-workspace.product-overview .product-stat:nth-child(5) { border-top-color: #fb923c; }
+        .stock-workspace.product-overview .product-stat:nth-child(6) { border-top-color: #f87171; }
         .stock-watch-list { display: grid; gap: 10px; }
         .stock-watch-row,
         .stock-flow-row {
@@ -46,10 +48,14 @@
             .stock-workspace .product-stat-grid,
             .stock-filter-form { grid-template-columns: 1fr; }
             .stock-filter-form .product-clear-filter { width: 100%; }
+            .stock-workspace.product-overview .product-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 360px) {
+            .stock-workspace.product-overview .product-stat-grid { grid-template-columns: minmax(0, 1fr); }
         }
     </style>
 
-    <section class="product-workspace stock-workspace">
+    <section class="product-workspace stock-workspace product-overview">
         <header class="product-page-head">
             <div>
                 <p class="eyebrow">Stock</p>
@@ -106,6 +112,7 @@
                         <option value="sales_return" @selected(request('type') === 'sales_return')>Sales return</option>
                         <option value="purchase_return" @selected(request('type') === 'purchase_return')>Purchase return</option>
                         <option value="adjustment" @selected(request('type') === 'adjustment')>Adjustment</option>
+                        <option value="service" @selected(request('type') === 'service')>Service parts</option>
                     </select>
                     <select name="per_page" aria-label="Movements per page" data-stock-search>
                         @foreach ($perPageOptions as $option)

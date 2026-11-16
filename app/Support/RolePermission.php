@@ -12,6 +12,7 @@ class RolePermission
         'clients' => ['label' => 'Clients', 'abbr' => 'CL', 'route' => 'clients.index', 'active' => 'clients.*'],
         'inventory' => ['label' => 'Products', 'abbr' => 'PR', 'route' => 'products.index', 'active' => 'products.*'],
         'stock' => ['label' => 'Stock', 'abbr' => 'SK', 'route' => 'stock.index', 'active' => 'stock.*'],
+        'services' => ['label' => 'Services', 'abbr' => 'SV', 'route' => 'services.index', 'active' => 'services.*'],
         'billing' => ['label' => 'Billing', 'abbr' => 'BL', 'route' => 'sales.index', 'active' => 'sales.*'],
         'purchases' => ['label' => 'Purchases', 'abbr' => 'PO', 'route' => 'purchases.index', 'active' => 'purchases.*'],
         'expenses' => ['label' => 'Expenses', 'abbr' => 'EX', 'route' => 'expenses.index', 'active' => 'expenses.*'],
@@ -56,7 +57,7 @@ class RolePermission
     {
         return [
             'owner' => self::configurableMenuKeys(),
-            'manager' => ['dashboard', 'inventory', 'stock', 'billing', 'purchases', 'expenses', 'suppliers', 'customers', 'returns', 'reports'],
+            'manager' => ['dashboard', 'inventory', 'stock', 'billing', 'services', 'purchases', 'expenses', 'suppliers', 'customers', 'returns', 'reports'],
             'sales_staff' => ['dashboard', 'billing', 'customers', 'returns'],
             'warehouse_staff' => ['dashboard', 'inventory', 'stock', 'purchases', 'suppliers', 'returns'],
             'accountant' => ['dashboard', 'expenses', 'customers', 'reports'],

@@ -25,6 +25,9 @@ class DashboardController extends Controller
             ->selectRaw('COALESCE(SUM((sales_items.selling_price - products.purchase_price) * sales_items.quantity), 0) as value')
             ->value('value');
         $overallExpenses = Expense::where('tenant_id', $user->tenant_id)->sum('amount');
+        $services = \App\Models\ServiceOrder::where('tenant_id', $user->tenant_id)->where('status', 'completed')->with('costs')->get();
+        $serviceRevenue = $services->sum('charge');
+        $serviceCosts = $services->sum('total_cost');
 
         $stats = [
             'products' => (clone $products)->count(),
@@ -44,8 +47,14 @@ class DashboardController extends Controller
             'outstanding' => SalesOrder::where('tenant_id', $user->tenant_id)->selectRaw('COALESCE(SUM(total_amount - paid_amount), 0) as value')->value('value'),
             'gross_profit' => $grossProfit,
             'overall_expenses' => $overallExpenses,
-            'net_profit' => $grossProfit - $overallExpenses,
+            'net_profit' => $grossProfit - $overallExpenses + $serviceRevenue - $serviceCosts,
+            'service_revenue' => $serviceRevenue,
+            'service_costs' => $serviceCosts,
+            'service_profit' => $serviceRevenue - $serviceCosts,
+            'service_open' => \App\Models\ServiceOrder::where('tenant_id', $user->tenant_id)->where('status', '!=', 'completed')->count(),
         ];
+        $stats['monthly_revenue'] += $services->filter(fn ($order) => $order->completed_at && $order->completed_at->format('Y-m') === now()->format('Y-m'))->sum('charge');
+        $stats['outstanding'] += \App\Models\ServiceOrder::where('tenant_id', $user->tenant_id)->selectRaw('COALESCE(SUM(charge - paid_amount), 0) as total')->value('total');
 
         $recentProducts = (clone $products)
             ->latest()

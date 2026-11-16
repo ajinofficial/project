@@ -10329,3 +10329,78 @@ button.ghost-button {
         grid-template-columns: minmax(0, 1fr);
     }
 }
+
+/* Products overview: match the Services header and summary cards. */
+.product-overview .product-page-head {
+    padding: 24px;
+    background: #fff;
+    border: 1px solid #e4e7ec;
+    border-radius: 16px;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.product-overview .product-page-head > div:first-child { min-width: 0; }
+.product-overview .product-page-head .eyebrow {
+    margin: 0 0 8px;
+    color: #175cd3;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+.product-overview .product-page-head h1 { margin: 0; color: #101828; font-size: 30px; line-height: 1.25; }
+.product-overview .product-page-head > div > span { display: block; margin-top: 10px; color: #667085; font-size: 14px; line-height: 1.6; }
+.product-overview .product-head-actions { flex-shrink: 0; }
+.product-overview .product-head-actions a { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; box-sizing: border-box; white-space: nowrap; }
+.product-overview .product-stat-grid { margin-bottom: 24px; }
+.product-overview .product-stat {
+    min-width: 0;
+    min-height: 104px;
+    align-content: start;
+    padding: 20px;
+    border: 1px solid #e4e7ec;
+    border-top: 3px solid #dbeafe;
+    border-radius: 14px;
+    box-shadow: 0 2px 6px #10182805;
+}
+.product-overview .product-stat:nth-child(1) { border-top-color: #60a5fa; }
+.product-overview .product-stat:nth-child(2) { border-top-color: #34d399; }
+.product-overview .product-stat:nth-child(3) { border-top-color: #a78bfa; }
+.product-overview .product-stat:nth-child(4) { border-top-color: #fbbf24; }
+.product-overview .product-stat span { color: #667085; font-size: 13px; font-weight: 500; line-height: 1.5; }
+.product-overview .product-stat small { color: #667085; font-size: 12px; font-weight: 400; }
+.product-overview .product-stat strong { color: #101828; font-size: clamp(18px,2vw,26px); font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; line-height: 1.3; }
+.product-overview .product-stat:focus-visible { outline: 3px solid #84adff; outline-offset: 3px; }
+@media (max-width: 1000px) {
+    .product-overview .product-stat-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .product-overview .product-page-head { flex-wrap: wrap; }
+}
+@media (max-width: 600px) {
+    .product-overview .product-page-head { padding: 18px; gap: 18px; align-items: stretch; }
+    .product-overview .product-page-head h1 { font-size: 26px; }
+    .product-overview .product-stat-grid { gap: 10px; }
+    .product-overview .product-stat { padding: 14px; }
+    .product-overview .product-stat span { font-size: 12px; }
+    .product-overview .product-stat strong { font-size: 20px; }
+}
+@media (max-width: 360px) {
+    .product-overview .product-stat-grid { grid-template-columns: minmax(0,1fr); }
+}
+/* Expenses and Users share the Services overview presentation. */
+.users-page.product-overview .users-stat-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.users-page.product-overview .users-hero p:not(.eyebrow) { margin: 10px 0 0; color: #667085; font-size: 14px; line-height: 1.6; }
+.users-page.product-overview .users-plan-badge { padding: 14px 18px; border: 1px solid #b2ccff; border-radius: 12px; background: #eff6ff; color: #175cd3; }
+.users-page.product-overview .users-plan-badge span { margin: 0 0 5px; color: #175cd3; font-size: 12px; line-height: 1.4; }
+.users-page.product-overview .users-plan-badge strong { color: #1849a9; font-variant-numeric: tabular-nums; }
+.expense-overview .expense-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+#expense-entry { scroll-margin-top: 24px; }
+@media(max-width:600px) {
+    .users-page.product-overview .users-stat-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .users-page.product-overview .users-hero { flex-direction: column; align-items: stretch; }
+    .expense-overview .expense-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:360px) {
+    .users-page.product-overview .users-stat-grid,
+    .expense-overview .expense-stats { grid-template-columns: minmax(0,1fr); }
+}

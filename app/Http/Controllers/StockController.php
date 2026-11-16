@@ -43,7 +43,7 @@ class StockController extends Controller
             ->when($request->filled('type'), function ($query) use ($request) {
                 $type = (string) $request->string('type');
 
-                if (in_array($type, ['purchase', 'sale', 'sales_return', 'purchase_return', 'adjustment'], true)) {
+                if (in_array($type, ['purchase', 'sale', 'sales_return', 'purchase_return', 'adjustment', 'service'], true)) {
                     $query->where('type', $type);
                 }
             })

@@ -46,6 +46,9 @@
         </section>
 
         <section class="dashboard-quick-grid">
+            @if (\App\Support\RolePermission::canAccess(auth()->user(), 'services'))
+            <a href="{{ route('services.index') }}"><b>Services · {{ $stats['service_open'] }} open</b><span>Revenue &#8377;{{ number_format($stats['service_revenue'], 2) }} · Costs &#8377;{{ number_format($stats['service_costs'], 2) }} · Profit &#8377;{{ number_format($stats['service_profit'], 2) }}</span></a>
+            @endif
             <a href="{{ route('sales.index') }}"><b>Billing</b><span>Search SKU, create invoice, collect payment</span></a>
             <a href="{{ route('purchases.index') }}"><b>Stock In</b><span>Receive purchase orders and update cost</span></a>
             <a href="{{ route('returns.index') }}"><b>Returns</b><span>Process sales or supplier returns</span></a>
