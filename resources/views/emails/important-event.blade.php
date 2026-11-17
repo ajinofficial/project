@@ -11,7 +11,7 @@
         <h1 style="margin:0 0 16px;font-size:24px;">{{ $eventTitle }}</h1>
         <p style="margin:0;line-height:1.6;color:#4b554d;">{{ $eventMessage }}</p>
         <p style="margin:24px 0 0;padding-top:16px;border-top:1px solid #dfe6db;color:#7a847c;font-size:12px;">
-            This is an automatic security and activity notification from Investrivo.
+            This is an automatic security and activity notification from Zyloah.
         </p>
     </div>
 </body>

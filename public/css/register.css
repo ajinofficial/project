@@ -94,7 +94,7 @@ textarea {
     height: 40px;
     border-radius: 10px;
     background-color: #12376d;
-    background-image: url('../images/investrivo-logo.png');
+    background-image: url('../images/Zyloah-logo.png');
     background-position: center 48%;
     background-repeat: no-repeat;
     background-size: 160%;
@@ -10328,6 +10328,110 @@ button.ghost-button {
     .clients-drawer-list {
         grid-template-columns: minmax(0, 1fr);
     }
+}
+
+/* Login branding follows the cyan, blue, and violet Zyloah mark. */
+.auth-ui.login-page {
+    --auth-primary: #3457e8;
+    --auth-primary-dark: #263fbc;
+    --auth-green: #7944e9;
+    background: #f5f7ff;
+}
+.login-page .inventory-login-shell { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.auth-ui.login-page .login-visual-panel {
+    background: radial-gradient(ellipse at 0% 15%, #00c8eb30, transparent 55%),
+        radial-gradient(ellipse at 90% 90%, #7935e64d, transparent 55%),
+        linear-gradient(145deg, #071528, #102453 65%, #24134e);
+}
+.auth-ui.login-page .login-visual-panel::after {
+    inset: auto -150px -250px auto;
+    width: 600px;
+    height: 600px;
+    border: 1px solid #61d6ff30;
+    background: transparent;
+    box-shadow: 0 0 0 60px #6187ff08, 0 0 0 120px #6187ff06;
+    filter: none;
+}
+.auth-ui.login-page .login-brand {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    backdrop-filter: none;
+    font-size: 26px;
+    letter-spacing: -.04em;
+}
+.login-page .login-brand .brand-logo,
+.login-page .login-welcome .brand-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background-size: cover;
+    box-shadow: 0 8px 24px #152c6c26;
+}
+.auth-ui.login-page .login-hero-copy { padding-block: 64px; }
+.auth-ui.login-page .login-hero-copy h1 {
+    font-size: clamp(40px, 5.2vw, 72px);
+    line-height: 1.08;
+    letter-spacing: -.045em;
+}
+.login-page .login-hero-copy h1 span { color: #68ddff; }
+.login-page .login-hero-copy .eyebrow { color: #9bcaff; letter-spacing: .14em; }
+.auth-ui.login-page .login-hero-copy p:not(.eyebrow) { max-width: 420px; color: #becce7; font-size: 16px; }
+.auth-ui.login-page .login-stat-grid div {
+    min-height: 96px;
+    border-color: #9cbdff26;
+    border-radius: 14px;
+    background: #91b7ff0a;
+    box-shadow: none;
+    padding: 18px 14px;
+}
+.login-page .login-stat-grid strong { color: #a9dfff; font-size: 24px; }
+.login-page .login-stat-grid span { color: #b7c5e1; font-size: 10px; letter-spacing: .08em; }
+.auth-ui.login-page .login-form-panel {
+    background: radial-gradient(ellipse at 100% 0%, #e9e6ff, transparent 60%), #f5f7ff;
+}
+.auth-ui.login-page .login-card {
+    max-width: 460px;
+    border: 1px solid #e1e6f4;
+    border-radius: 24px;
+    box-shadow: 0 24px 70px #2335700c;
+    gap: 28px;
+}
+.login-page .login-welcome { text-align: center; }
+.login-page .login-welcome .brand-logo { display: block; margin: 0 auto 18px; }
+.login-page .login-welcome .eyebrow { margin: 0 0 10px; color: #5265a1; font-size: 10px; letter-spacing: .13em; }
+.auth-ui.login-page .login-welcome h1 { margin: 0 0 10px; font-size: 30px; letter-spacing: -.035em; color: #18264a; }
+.login-page .login-intro { margin: 0; font-size: 14px; }
+.login-page .login-field input { border: 1px solid #d7deee; border-radius: 10px; background: #fcfdff; }
+.login-page .login-field input:focus {
+    border-color: #5573ef;
+    outline: none;
+    box-shadow: 0 0 0 3px #3457e81a;
+}
+.login-page .login-field input.is-invalid { border-color: #d92d20; }
+.login-page .login-field input.is-invalid:focus { box-shadow: 0 0 0 3px #d92d201a; }
+.login-page .login-form .check-row { border: 0; padding: 4px 0; background: transparent; }
+.login-page input[type="checkbox"] { accent-color: #3457e8; }
+.login-page .forgot-password-link { color: #3457cb; }
+.auth-ui.login-page .login-form button[type="submit"] {
+    min-height: 50px;
+    border-radius: 10px;
+    background: linear-gradient(110deg, #245bdf, #7040d9);
+    box-shadow: 0 8px 18px #3457e826;
+}
+.auth-ui.login-page .login-form button[type="submit"]:hover { background: linear-gradient(110deg, #1d49b9, #5c31bb); }
+.login-page button:focus-visible,
+.login-page a:focus-visible { outline: 3px solid #8aabff; outline-offset: 3px; }
+@media (max-width: 900px) {
+    .login-page .inventory-login-shell { grid-template-columns: minmax(0, 1fr); }
+    .auth-ui.login-page .login-visual-panel { min-height: auto; }
+    .auth-ui.login-page .login-hero-copy { padding-block: 36px; }
+}
+@media (max-width: 640px) {
+    .auth-ui.login-page .login-brand { font-size: 22px; }
+    .login-page .login-brand .brand-logo { width: 40px; height: 40px; border-radius: 10px; }
+    .auth-ui.login-page .login-card { margin-inline: auto; padding: 26px 22px; border-radius: 18px; }
+    .auth-ui.login-page .login-form-panel { padding: 24px 14px; }
 }
 
 /* Products overview: match the Services header and summary cards. */

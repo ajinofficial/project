@@ -13,6 +13,36 @@ class LoginTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_login_is_limited_to_five_requests_per_minute(): void
+    {
+        $this->freezeTime();
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->postJson(route('login.store'), [])->assertUnprocessable();
+        }
+
+        $this->postJson(route('login.store'), [])
+            ->assertStatus(429)
+            ->assertHeader('Retry-After', '60');
+
+        $this->travel(60)->seconds();
+
+        $this->postJson(route('login.store'), [])->assertUnprocessable();
+    }
+
+    public function test_login_rate_limit_is_separate_for_each_ip(): void
+    {
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->postJson(route('login.store'), [])->assertUnprocessable();
+        }
+
+        $this->postJson(route('login.store'), [])->assertStatus(429);
+
+        $this->withServerVariables(['REMOTE_ADDR' => '192.0.2.10'])
+            ->postJson(route('login.store'), [])
+            ->assertUnprocessable();
+    }
+
     public function test_login_page_shows_field_validation_errors(): void
     {
         $response = $this

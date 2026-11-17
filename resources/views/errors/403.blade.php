@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <title>Access denied — Investrivo</title>
+    <title>Access denied — Zyloah</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/Zyloah-logo.png') }}">
     @include('partials.app-base-url')
     <link rel="stylesheet" href="{{ asset('css/typography.css') }}?v={{ rawurlencode(config('app.asset_version')) }}">
     <style>
@@ -57,7 +58,7 @@
             width: 38px;
             height: 38px;
             border-radius: 10px;
-            background: #12376d url('{{ asset('images/investrivo-logo.png') }}') center 48% / 160% no-repeat;
+            background: #12376d url('{{ asset('images/Zyloah-logo.png') }}') center 48% / 160% no-repeat;
             box-shadow: 0 8px 18px rgba(8, 72, 156, .22);
         }
 
@@ -323,9 +324,9 @@
     @endphp
     <div class="page">
         <header>
-            <a class="brand" href="{{ $homeUrl }}" aria-label="Investrivo home">
+            <a class="brand" href="{{ $homeUrl }}" aria-label="Zyloah home">
                 <span class="brand-logo" aria-hidden="true"></span>
-                <span>Investrivo</span>
+                <span>Zyloah</span>
             </a>
         </header>
 
@@ -348,7 +349,7 @@
         </main>
 
         <footer>
-            <span>Investrivo inventory platform</span>
+            <span>Zyloah inventory platform</span>
             <span>Error code: 403 · Access forbidden</span>
         </footer>
     </div>

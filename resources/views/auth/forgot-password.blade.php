@@ -2,12 +2,13 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Forgot password - Investrivo</title>
+    <title>Forgot password - Zyloah</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/Zyloah-logo.png') }}">
     <link rel="stylesheet" href="{{ asset('css/register.css') }}?v={{ rawurlencode(config('app.asset_version')) }}">
 </head>
 <body class="auth-ui password-page">
     <main class="password-shell">
-        <a class="password-brand" href="{{ route('login') }}"><span class="brand-logo"></span><strong>Investrivo</strong></a>
+        <a class="password-brand" href="{{ route('login') }}"><span class="brand-logo"></span><strong>Zyloah</strong></a>
         <section class="password-card" aria-labelledby="password-title">
             <p class="eyebrow">Account recovery</p>
             <h1 id="password-title">Forgot your password?</h1>

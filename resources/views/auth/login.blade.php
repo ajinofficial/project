@@ -3,7 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login - Investrivo</title>
+    <title>Login - Zyloah</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/Zyloah-logo.png') }}">
     @include('partials.app-base-url')
     <link rel="stylesheet" href="{{ asset('css/register.css') }}?v={{ rawurlencode(config('app.asset_version')) }}">
 </head>
@@ -11,14 +12,14 @@
     <main class="inventory-login-shell">
         <section class="login-visual-panel" aria-label="Inventory workspace summary">
             <nav class="login-brand">
-                <span class="brand-logo" role="img" aria-label="InvestRivo logo"></span>
-                <strong>Investrivo</strong>
+                <span class="brand-logo" role="img" aria-label="Zyloah logo"></span>
+                <strong>Zyloah</strong>
             </nav>
 
             <div class="login-hero-copy">
-                <p class="eyebrow">Investrivo inventory platform</p>
-                <h1>Control stock, catalog status, and reorder alerts.</h1>
-                <p>Built for store teams that need fast SKU lookup, low-stock visibility, expense tracking, net profit insights, and reliable daily inventory operations.</p>
+                <p class="eyebrow">Zyloah inventory platform</p>
+                <h1>Your business.<br><span>In sync.</span></h1>
+                <p>Bring stock, sales, and everyday operations together. One clear view to keep your business moving.</p>
             </div>
 
             <div class="login-stat-grid">
@@ -39,9 +40,12 @@
 
         <section class="login-form-panel" aria-labelledby="login-title">
             <div class="login-card">
-                
-                        <h1 id="login-title" style="text-align: center;">Login</h1>
-                        
+                <div class="login-welcome">
+                    <span class="brand-logo" role="img" aria-label="Zyloah logo"></span>
+                    <p class="eyebrow">Your Zyloah workspace</p>
+                    <h1 id="login-title">Welcome back</h1>
+                    <p class="login-intro">Log in to manage your business.</p>
+                </div>
 
                 <form class="register-form login-form" method="POST" action="{{ route('login.store') }}" data-login-form novalidate>
                     @csrf
@@ -77,7 +81,7 @@
 
                     <label class="check-row">
                         <input type="checkbox" name="remember" value="1">
-                        <span>Keep this device login</span>
+                        <span>Keep me logged in</span>
                     </label>
 
                     <a class="forgot-password-link" href="{{ route('password.request') }}">Forgot password?</a>
@@ -187,6 +191,11 @@
                 });
 
                 const data = await response.json();
+
+                if (response.status === 429) {
+                    const seconds = response.headers.get('Retry-After') || 60;
+                    showLoginError(form, 'password', `Too many login attempts. Please try again in ${seconds} seconds.`);
+                }
 
                 if (response.ok && data.redirect) {
                     window.location.assign(data.redirect);

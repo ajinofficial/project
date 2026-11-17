@@ -3,7 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Business Sign-up - InvestRivo</title>
+    <title>Business Sign-up - Zyloah</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/Zyloah-logo.png') }}">
     @include('partials.app-base-url')
     <link rel="stylesheet" href="{{ asset('css/register.css') }}?v={{ rawurlencode(config('app.asset_version')) }}">
 </head>
@@ -11,7 +12,7 @@
     <main class="register-shell">
         <section class="brand-panel">
             <nav class="topbar">
-                <a class="brand-mark" href="{{ route('login') }}"><span class="brand-logo" role="img" aria-label="InvestRivo logo"></span> InvestRivo</a>
+                <a class="brand-mark" href="{{ route('login') }}"><span class="brand-logo" role="img" aria-label="Zyloah logo"></span> Zyloah</a>
                 <span class="status-pill">Multi-tenant SaaS</span>
             </nav>
             <div class="brand-copy">
