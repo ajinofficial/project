@@ -26,7 +26,8 @@ class StockNotifier
 
     private static function create(Product $product, string $type, string $title, string $message): void
     {
-        Notification::firstOrCreate(
+        $parameters = ['product' => $product->name, 'quantity' => $product->inventory];
+        $notification = Notification::firstOrCreate(
             [
                 'tenant_id' => $product->tenant_id,
                 'type' => $type,
@@ -36,8 +37,12 @@ class StockNotifier
             ],
             ['channel' => 'in_app', 'translation_data' => [
                 'key' => 'notifications.events.'.$type,
-                'parameters' => ['product' => $product->name, 'quantity' => $product->inventory],
+                'parameters' => $parameters,
             ]]
         );
+
+        if ($notification->wasRecentlyCreated) {
+            ActivityNotifier::sendOwnerEmail($product->tenant_id, $type, $title, $message, $parameters);
+        }
     }
 }

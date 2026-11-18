@@ -40,6 +40,18 @@ class ActivityNotifier
             return;
         }
 
+        self::sendOwnerEmail($tenantId, $type, $title, $message, $parameters);
+    }
+
+    public static function sendOwnerEmail(
+        int|string $tenantId,
+        string $type,
+        string $title,
+        string $message,
+        array $parameters = []
+    ): void {
+        $translationData = $parameters !== [] ? ['key' => 'notifications.events.'.$type] : null;
+
         $recipients = User::query()
             ->where('tenant_id', $tenantId)
             ->where('role', User::ROLE_OWNER)

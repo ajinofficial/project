@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Throwable;
 
@@ -37,9 +38,10 @@ class PasswordResetController extends Controller
         $email = strtolower($validated['email']);
         $user = User::query()->where('email', $email)->first();
 
-        // Do not disclose whether an address belongs to an account.
         if (! $user) {
-            return back()->with('status', __('auth.if_an_account_uses_that_email_address_a_verification_code_has_been_sen_3b0685'));
+            throw ValidationException::withMessages([
+                'email' => __('validation.we_could_not_find_an_account_with_this_email_7536fa'),
+            ]);
         }
 
         $otp = (string) random_int(100000, 999999);

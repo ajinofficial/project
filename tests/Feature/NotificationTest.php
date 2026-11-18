@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Mail\ImportantEventMail;
 use App\Models\Notification;
 use App\Support\ActivityNotifier;
+use App\Support\StockNotifier;
+use App\Models\Product;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Plan;
 use App\Models\Tenant;
@@ -234,6 +236,73 @@ class NotificationTest extends TestCase
                 && $mail->eventType === 'sale_billed'
                 && $mail->businessName === 'Demo Store';
         });
+    }
+
+    public function test_stock_alerts_send_owner_emails_and_keep_one_in_app_alert_per_unread_message(): void
+    {
+        Mail::fake();
+        [$owner, $tenant] = $this->tenantOwner();
+        $staff = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'staff']);
+        $outsider = User::factory()->create(['role' => User::ROLE_OWNER]);
+        $product = new Product(['tenant_id' => $tenant->id, 'name' => 'Test item', 'inventory' => 2,
+            'minimum_stock_level' => 5, 'status' => 'active']);
+
+        StockNotifier::sync($product);
+        StockNotifier::sync($product);
+
+        Mail::assertSent(ImportantEventMail::class, function ($mail) use ($owner, $staff, $outsider) {
+            return $mail->hasTo($owner->email) && ! $mail->hasTo($staff->email) && ! $mail->hasTo($outsider->email)
+                && $mail->eventType === 'stock_low' && $mail->eventTitle === 'Low stock alert'
+                && $mail->eventMessage === 'Test item is down to 2 units.';
+        });
+        Mail::assertSentCount(1);
+        $this->assertDatabaseCount('notifications', 1);
+
+        $product->inventory = 0;
+        StockNotifier::sync($product);
+        StockNotifier::sync($product);
+
+        Mail::assertSent(ImportantEventMail::class, fn ($mail) => $mail->hasTo($owner->email)
+            && $mail->eventType === 'stock_out' && $mail->eventTitle === 'Out of stock'
+            && $mail->eventMessage === 'Test item has no stock available.');
+        Mail::assertSentCount(2);
+        $this->assertDatabaseCount('notifications', 2);
+        $this->assertDatabaseHas('notifications', ['tenant_id' => $tenant->id, 'type' => 'stock_out', 'channel' => 'in_app']);
+    }
+
+    public function test_stock_emails_use_the_owners_malayalam_preference(): void
+    {
+        Mail::fake();
+        [$owner, $tenant] = $this->tenantOwner();
+        $owner->forceFill(['preferred_locale' => 'ml'])->save();
+        $product = new Product(['tenant_id' => $tenant->id, 'name' => 'Test item', 'inventory' => 2,
+            'minimum_stock_level' => 5, 'status' => 'active']);
+
+        StockNotifier::sync($product);
+        Mail::assertSent(ImportantEventMail::class, fn ($mail) => $mail->hasTo($owner->email)
+            && $mail->locale === 'ml' && $mail->eventTitle === 'കുറഞ്ഞ സ്റ്റോക്ക് അറിയിപ്പ്'
+            && $mail->eventMessage === 'Test item-ന്റെ സ്റ്റോക്ക് 2 യൂണിറ്റുകളായി കുറഞ്ഞു.');
+
+        $product->inventory = 0;
+        StockNotifier::sync($product);
+        Mail::assertSent(ImportantEventMail::class, fn ($mail) => $mail->hasTo($owner->email)
+            && $mail->locale === 'ml' && $mail->eventTitle === 'സ്റ്റോക്ക് ഇല്ല'
+            && $mail->eventMessage === 'Test item-ന് സ്റ്റോക്ക് ലഭ്യമല്ല.');
+    }
+
+    public function test_healthy_archived_and_unassigned_products_do_not_send_stock_alerts(): void
+    {
+        Mail::fake();
+        [$owner, $tenant] = $this->tenantOwner();
+        foreach ([
+            ['tenant_id' => $tenant->id, 'inventory' => 6, 'status' => 'active'],
+            ['tenant_id' => $tenant->id, 'inventory' => 0, 'status' => 'archived'],
+            ['tenant_id' => null, 'inventory' => 0, 'status' => 'active'],
+        ] as $attributes) {
+            StockNotifier::sync(new Product(array_merge(['name' => 'Test item', 'minimum_stock_level' => 5], $attributes)));
+        }
+        Mail::assertNothingSent();
+        $this->assertDatabaseCount('notifications', 0);
     }
 
     private function tenantOwner(): array

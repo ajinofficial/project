@@ -61,6 +61,35 @@ class PasswordResetOtpTest extends TestCase
         $this->get(route('password.request'))->assertOk()->assertSee('Send verification code');
     }
 
+    public function test_unregistered_email_is_rejected_without_sending_an_otp(): void
+    {
+        Mail::fake();
+        $this->from(route('password.request'))->post(route('password.email'), ['email' => 'unknown@example.com'])
+            ->assertRedirect(route('password.request'))
+            ->assertSessionHasErrors(['email' => 'We could not find an account with this email.'])
+            ->assertSessionHasInput('email', 'unknown@example.com')
+            ->assertSessionMissing('password_reset_email')
+            ->assertSessionMissing('password_reset_verified');
+        Mail::assertNothingSent();
+        $this->get(route('password.otp.form'))->assertRedirect(route('password.request'));
+    }
+
+    public function test_malformed_email_is_rejected_without_sending_an_otp(): void
+    {
+        Mail::fake();
+        $this->post(route('password.email'), ['email' => 'invalid-email'])->assertSessionHasErrors('email');
+        Mail::assertNothingSent();
+    }
+
+    public function test_registered_email_is_accepted_case_insensitively(): void
+    {
+        Mail::fake();
+        $user = $this->user();
+        $this->post(route('password.email'), ['email' => strtoupper($user->email)])
+            ->assertRedirect(route('password.otp.form'))->assertSessionHasNoErrors();
+        Mail::assertSent(PasswordResetOtpMail::class, fn ($mail) => $mail->hasTo($user->email));
+    }
+
     private function user(): User
     {
         $plan = Plan::where('name', 'starter')->firstOrFail();
