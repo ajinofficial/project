@@ -2,34 +2,36 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Verify code - Zyloah</title>
+    <title>{{ __('auth.verify_code_zyloah_a911d3') }}</title>
     <link rel="icon" type="image/png" href="{{ asset('images/Zyloah-logo.png') }}">
     <link rel="stylesheet" href="{{ asset('css/register.css') }}?v={{ rawurlencode(config('app.asset_version')) }}">
+    @include('partials.localization')
 </head>
 <body class="auth-ui password-page">
+    <header class="auth-language-header">@include('partials.language-selector')</header>
     <main class="password-shell">
         <a class="password-brand" href="{{ route('login') }}"><span class="brand-logo"></span><strong>Zyloah</strong></a>
         <section class="password-card" aria-labelledby="password-title">
-            <p class="eyebrow">Account recovery</p>
-            <h1 id="password-title">Check your email</h1>
-            <p>Enter the six-digit code sent to <strong>{{ $email }}</strong>. It expires in 10 minutes.</p>
+            <p class="eyebrow">{{ __('auth.account_recovery_a73c0b') }}</p>
+            <h1 id="password-title">{{ __('common.check_your_email_fab9f4') }}</h1>
+            <p>{{ __('validation.enter_the_six_digit_code_sent_to_9b9657') }} <strong>{{ $email }}</strong>{{ __('common.it_expires_in_10_minutes_4c8de8') }}</p>
             @if (session('status'))<p class="auth-status" role="status">{{ session('status') }}</p>@endif
             <form class="register-form" method="POST" action="{{ route('password.otp.verify') }}" data-verify-code-form novalidate>
                 @csrf
                 <label>
-                    <span>Verification code</span>
+                    <span>{{ __('auth.verification_code_80f2f2') }}</span>
                     <input class="otp-input @error('otp') is-invalid @enderror" type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required autofocus aria-describedby="verification-code-error">
                     <small id="verification-code-error" data-verification-code-error @if (! $errors->has('otp')) hidden @endif>{{ $errors->first('otp') }}</small>
                 </label>
                 <button type="submit" data-verify-code-submit>
-                    <span class="verify-code-submit__idle">Verify code</span>
+                    <span class="verify-code-submit__idle">{{ __('auth.verify_code_91a22c') }}</span>
                     <span class="verify-code-submit__loading" aria-hidden="true">
                         <span class="verify-code-submit__spinner"></span>
-                        Verifying...
+                        {{ __('auth.verifying_bf6ea5') }}
                     </span>
                 </button>
             </form>
-            <p class="auth-switch">Didn’t get a code? <a href="{{ route('password.request') }}">Send another</a></p>
+            <p class="auth-switch">{{ __('common.didn_t_get_a_code_edf900') }} <a href="{{ route('password.request') }}">{{ __('common.send_another_00e106') }}</a></p>
         </section>
     </main>
     <script>
@@ -55,9 +57,9 @@
 
                 let message = '';
                 if (!code.value.trim()) {
-                    message = 'Verification code is required.';
+                    message = window.t("auth.verification_code_is_required_93daff");
                 } else if (!/^\d{6}$/.test(code.value.trim())) {
-                    message = 'Enter a valid six-digit verification code.';
+                    message = window.t("auth.enter_a_valid_six_digit_verification_code_17f165");
                 }
 
                 if (message) {

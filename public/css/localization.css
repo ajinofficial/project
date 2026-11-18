@@ -1,0 +1,19 @@
+.language-menu { position:relative; flex-shrink:0; font-size:14px; }
+.language-menu__trigger { display:flex; align-items:center; justify-content:center; width:40px; height:40px; padding:0; list-style:none; cursor:pointer; border:1px solid #e4e7ec; border-radius:10px; background:#fff; color:#475467; transition:background .15s, border-color .15s; }
+.language-menu__trigger::-webkit-details-marker { display:none; }
+.language-menu__trigger:hover, .language-menu[open] > summary { color:#175cd3; border-color:#b2ccff; background:#eff6ff; }
+.language-menu__panel { position:absolute; top:calc(100% + 10px); right:0; z-index:1100; display:grid; width:190px; max-width:calc(100vw - 32px); margin:0; padding:6px; border:1px solid #e4e7ec; border-radius:12px; background:#fff; box-shadow:0 12px 32px #10182824; }
+.language-menu__heading { margin:0; padding:8px 10px; color:#667085; font-size:12px; font-weight:600; border-bottom:1px solid #f2f4f7; }
+.language-menu .language-menu__option { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:42px; margin:2px 0 0; padding:9px 10px; border:0; border-radius:7px; background:transparent; color:#344054; font:inherit; text-align:left; cursor:pointer; }
+.language-menu .language-menu__option:hover { background:#f9fafb; }
+.language-menu .language-menu__option.is-current { background:#eff6ff; color:#175cd3; font-weight:600; }
+.language-menu :focus-visible { outline:3px solid #84adff; outline-offset:2px; }
+.auth-language-header { display:flex; justify-content:flex-end; padding:12px 24px; background:#fff; }
+.login-page .login-brand { width:100%; box-sizing:border-box; }
+.login-page .login-brand .language-menu { margin-left:auto; }
+.product-translations { margin:16px 0; padding:16px; border:1px solid #e4e7ec; border-radius:12px; }
+.product-translations summary { cursor:pointer; font-weight:600; }
+.product-translations fieldset { margin-top:14px; border:1px solid #e4e7ec; padding:12px; border-radius:8px; }
+html[lang="ta"], html[lang="hi"], html[lang="ml"] { line-height:1.65; }
+html[lang="ta"] button, html[lang="hi"] button, html[lang="ml"] button { line-height:1.5; white-space:normal; }
+@media(max-width:700px) { .inapp-topbar { flex-wrap:wrap; gap:12px; } .inapp-top-actions { flex-wrap:wrap; } .language-selector label { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); } .auth-language-header { padding:10px 16px; } }

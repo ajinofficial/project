@@ -2,44 +2,46 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Choose a new password - Zyloah</title>
+    <title>{{ __('auth.choose_a_new_password_zyloah_eedf54') }}</title>
     <link rel="icon" type="image/png" href="{{ asset('images/Zyloah-logo.png') }}">
     <link rel="stylesheet" href="{{ asset('css/register.css') }}?v={{ rawurlencode(config('app.asset_version')) }}">
+    @include('partials.localization')
 </head>
 <body class="auth-ui password-page">
+    <header class="auth-language-header">@include('partials.language-selector')</header>
     <main class="password-shell">
         <a class="password-brand" href="{{ route('login') }}"><span class="brand-logo"></span><strong>Zyloah</strong></a>
         <section class="password-card" aria-labelledby="password-title">
-            <p class="eyebrow">Verified</p>
-            <h1 id="password-title">Choose a new password</h1>
-            <p>Use at least eight characters and keep it private.</p>
+            <p class="eyebrow">{{ __('common.verified_aed3b8') }}</p>
+            <h1 id="password-title">{{ __('auth.choose_a_new_password_3f657f') }}</h1>
+            <p>{{ __('common.use_at_least_eight_characters_and_keep_it_private_106a9a') }}</p>
             <form class="register-form" method="POST" action="{{ route('password.update') }}" data-reset-password-form novalidate>
                 @csrf
                 <label>
-                    <span>New password</span>
+                    <span>{{ __('auth.new_password_d850ee') }}</span>
                     <div class="password-field">
                         <input class="@error('password') is-invalid @enderror" type="password" name="password" autocomplete="new-password" minlength="8" required autofocus data-reset-field="password">
-                        <button type="button" class="password-toggle" data-toggle-password aria-label="Show new password" aria-pressed="false">
+                        <button type="button" class="password-toggle" data-toggle-password aria-label="{{ __('auth.show_new_password_9a5697') }}" aria-pressed="false">
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         </button>
                     </div>
                     <small data-reset-error="password" @if (! $errors->has('password')) hidden @endif>{{ $errors->first('password') }}</small>
                 </label>
                 <label>
-                    <span>Confirm new password</span>
+                    <span>{{ __('auth.confirm_new_password_f85039') }}</span>
                     <div class="password-field">
                         <input type="password" name="password_confirmation" autocomplete="new-password" minlength="8" required data-reset-field="password_confirmation">
-                        <button type="button" class="password-toggle" data-toggle-password aria-label="Show password confirmation" aria-pressed="false">
+                        <button type="button" class="password-toggle" data-toggle-password aria-label="{{ __('auth.show_password_confirmation_c4411f') }}" aria-pressed="false">
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         </button>
                     </div>
                     <small data-reset-error="password_confirmation" hidden></small>
                 </label>
                 <button type="submit" data-reset-password-submit>
-                    <span class="reset-password-submit__idle">Reset password</span>
+                    <span class="reset-password-submit__idle">{{ __('auth.reset_password_5c4bc9') }}</span>
                     <span class="reset-password-submit__loading" aria-hidden="true">
                         <span class="reset-password-submit__spinner"></span>
-                        Resetting...
+                        {{ __('common.resetting_ee41f7') }}
                     </span>
                 </button>
             </form>
@@ -54,7 +56,7 @@
                 const show = input.type === 'password';
                 input.type = show ? 'text' : 'password';
                 button.setAttribute('aria-pressed', show ? 'true' : 'false');
-                button.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                button.setAttribute('aria-label', show ? window.t("auth.hide_password_e40123") : window.t("auth.show_password_044b85"));
             });
         });
 
@@ -89,17 +91,17 @@
             };
 
             if (!password.value) {
-                showError('password', 'New password is required.');
+                showError('password', window.t("auth.new_password_is_required_d2eb9a"));
             } else if (password.value.length < 8) {
-                showError('password', 'New password must be at least 8 characters.');
+                showError('password', window.t("auth.new_password_must_be_at_least_8_characters_f36bc7"));
             } else if (!/[A-Za-z]/.test(password.value) || !/\d/.test(password.value)) {
-                showError('password', 'New password must include at least one letter and one number.');
+                showError('password', window.t("auth.new_password_must_include_at_least_one_letter_and_one_number_216242"));
             }
 
             if (!confirmation.value) {
-                showError('password_confirmation', 'Password confirmation is required.');
+                showError('password_confirmation', window.t("auth.password_confirmation_is_required_5a5b6d"));
             } else if (password.value !== confirmation.value) {
-                showError('password_confirmation', 'The password confirmation does not match.');
+                showError('password_confirmation', window.t("auth.the_password_confirmation_does_not_match_d54123"));
             }
 
             if (firstInvalid) {

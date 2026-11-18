@@ -17,12 +17,15 @@ class ActivityNotifier
         string $type,
         string $title,
         string $message,
-        bool $sendEmail = true
+        bool $sendEmail = true,
+        array $parameters = []
     ): void
     {
         if (! $tenantId) {
             return;
         }
+
+        $translationData = $parameters !== [] ? ['key' => 'notifications.events.'.$type, 'parameters' => $parameters] : null;
 
         Notification::create([
             'tenant_id' => $tenantId,
@@ -30,6 +33,7 @@ class ActivityNotifier
             'channel' => 'in_app',
             'title' => $title,
             'message' => $message,
+            'translation_data' => $translationData,
         ]);
 
         if (! $sendEmail) {
@@ -40,20 +44,29 @@ class ActivityNotifier
             ->where('tenant_id', $tenantId)
             ->where('role', User::ROLE_OWNER)
             ->whereNotNull('email')
-            ->pluck('email')
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
+            ->get(['email', 'preferred_locale']);
 
-        if ($recipients === []) {
+        if ($recipients->isEmpty()) {
             return;
         }
 
         $businessName = Tenant::query()->whereKey($tenantId)->value('business_name') ?: config('app.name');
 
         try {
-            Mail::to($recipients)->send(new ImportantEventMail($title, $message, $type, $businessName));
+            foreach ($recipients->unique('email') as $recipient) {
+                $locale = LocalePreference::supported($recipient->preferred_locale) ? $recipient->preferred_locale : 'en';
+                $recipientParameters = $parameters;
+                foreach (['role', 'kind'] as $field) {
+                    if (isset($recipientParameters[$field])) {
+                        $recipientParameters[$field] = app('translator')->get(ucfirst($recipientParameters[$field]), [], $locale);
+                    }
+                }
+                $translatedTitle = app('translator')->get($title, [], $locale);
+                $translatedMessage = $translationData
+                    ? app('translator')->get($translationData['key'], $recipientParameters, $locale)
+                    : app('translator')->get($message, [], $locale);
+                Mail::to($recipient->email)->locale($locale)->send(new ImportantEventMail($translatedTitle, $translatedMessage, $type, $businessName));
+            }
         } catch (Throwable $exception) {
             Log::error('Important event email notification could not be sent.', [
                 'tenant_id' => $tenantId,

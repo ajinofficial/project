@@ -53,13 +53,13 @@ class RegisterController extends Controller
             'password' => ['required', 'string', Password::min(8)->letters()->numbers(), 'confirmed'],
             'terms_accepted' => ['accepted'],
         ], [
-            'mobile.digits_between' => 'Mobile number must be 6 to 15 digits.',
-            'business_name.unique' => 'This business name is already registered.',
-            'email.unique' => 'This email address is already registered.',
-            'gst_number.regex' => 'Enter a valid 15-character GST number.',
-            'password.letters' => 'Password must include at least one letter.',
-            'password.numbers' => 'Password must include at least one number.',
-            'terms_accepted.accepted' => 'Confirm that you are authorized to create this workspace.',
+            'mobile.digits_between' => __('validation.mobile_number_must_be_6_to_15_digits_a58447'),
+            'business_name.unique' => __('auth.this_business_name_is_already_registered_8792a4'),
+            'email.unique' => __('auth.this_email_address_is_already_registered_8aba0f'),
+            'gst_number.regex' => __('common.enter_a_valid_15_character_gst_number_2f3e92'),
+            'password.letters' => __('auth.password_must_include_at_least_one_letter_2df943'),
+            'password.numbers' => __('auth.password_must_include_at_least_one_number_17fe5d'),
+            'terms_accepted.accepted' => __('common.confirm_that_you_are_authorized_to_create_this_workspace_9af9a3'),
         ]);
 
         $plan = Plan::findOrFail($data['plan']);
@@ -94,12 +94,14 @@ class RegisterController extends Controller
         });
 
         Auth::login($user);
+        $request->session()->regenerate();
+        \App\Support\LocalePreference::afterLogin($request);
 
         if ($request->expectsJson()) {
             return response()->json(['redirect' => route('setup.index')]);
         }
 
-        return redirect()->route('setup.index')->with('status', 'Business workspace created. Complete store setup.');
+        return redirect()->route('setup.index')->with('status', __('auth.business_workspace_created_complete_store_setup_6b0d01'));
     }
 
     public function availability(Request $request): JsonResponse
@@ -118,8 +120,8 @@ class RegisterController extends Controller
         return response()->json([
             'available' => (bool) $available,
             'message' => $available
-                ? ($data['field'] === 'email' ? 'Email address is available.' : 'Business name is available.')
-                : ($data['field'] === 'email' ? 'This email address is already registered.' : 'This business name is already registered.'),
+                ? ($data['field'] === 'email' ? __('auth.email_address_is_available_5bb409') : __('auth.business_name_is_available_ec5151'))
+                : ($data['field'] === 'email' ? __('auth.this_email_address_is_already_registered_8aba0f') : __('auth.this_business_name_is_already_registered_8792a4')),
         ]);
     }
 
@@ -133,11 +135,11 @@ class RegisterController extends Controller
     private function countryCodes(): array
     {
         return [
-            '+91' => 'India (+91)',
-            '+1' => 'USA/Canada (+1)',
-            '+44' => 'United Kingdom (+44)',
-            '+61' => 'Australia (+61)',
-            '+971' => 'United Arab Emirates (+971)',
+            '+91' => __('common.india_91_688380'),
+            '+1' => __('common.usa_canada_1_4e3f65'),
+            '+44' => __('common.united_kingdom_44_60072d'),
+            '+61' => __('common.australia_61_b92110'),
+            '+971' => __('common.united_arab_emirates_971_02ccf6'),
         ];
     }
 }

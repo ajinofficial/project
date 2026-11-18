@@ -47,7 +47,17 @@ class OperationsController extends Controller
             ->paginate($perPage)
             ->appends(array_merge($request->except('page'), ['per_page' => $perPage]));
 
+        $overview = Supplier::where('tenant_id', $request->user()->tenant_id)
+            ->selectRaw("COUNT(*) AS total, COALESCE(SUM(outstanding_balance), 0) AS balance, SUM(CASE WHEN outstanding_balance > 0 THEN 1 ELSE 0 END) AS unpaid, SUM(CASE WHEN gst_number IS NOT NULL AND gst_number != '' THEN 1 ELSE 0 END) AS registered")
+            ->first();
+
         return view('operations.suppliers', [
+            'overviewCards' => [
+                ['label' => __('orders.total_suppliers_58f0c1'), 'value' => $overview->total ?? 0, 'hint' => __('orders.all_supplier_accounts_6dc5ea'), 'currency' => false],
+                ['label' => __('common.outstanding_balance_bb9bc5'), 'value' => $overview->balance ?? 0, 'hint' => __('orders.total_payable_to_suppliers_35cb6b'), 'currency' => true],
+                ['label' => __('orders.suppliers_with_dues_6a2dd9'), 'value' => $overview->unpaid ?? 0, 'hint' => __('common.accounts_with_outstanding_balances_18b3fb'), 'currency' => false],
+                ['label' => __('auth.gst_registered_642c3a'), 'value' => $overview->registered ?? 0, 'hint' => __('orders.suppliers_with_a_gst_number_4c6d2d'), 'currency' => false],
+            ],
             'perPage' => $perPage,
             'perPageOptions' => $perPageOptions,
             'suppliers' => $suppliers,
@@ -63,25 +73,26 @@ class OperationsController extends Controller
             'payment_terms' => ['nullable', 'string', 'max:120'],
             'outstanding_balance' => ['required', 'numeric', 'min:0'],
         ], [
-            'name.required' => 'Enter the supplier name.',
-            'name.max' => 'Supplier name cannot exceed 255 characters.',
-            'contact_information.required' => 'Enter the contact information.',
-            'contact_information.max' => 'Contact information cannot exceed 255 characters.',
-            'gst_number.max' => 'GST number cannot exceed 30 characters.',
-            'payment_terms.max' => 'Payment terms cannot exceed 120 characters.',
-            'outstanding_balance.required' => 'Enter the outstanding balance.',
-            'outstanding_balance.numeric' => 'Outstanding balance must be a valid number.',
-            'outstanding_balance.min' => 'Outstanding balance cannot be negative.',
+            'name.required' => __('validation.enter_the_supplier_name_d4a68b'),
+            'name.max' => __('validation.supplier_name_cannot_exceed_255_characters_b96c98'),
+            'contact_information.required' => __('validation.enter_the_contact_information_d7a409'),
+            'contact_information.max' => __('validation.contact_information_cannot_exceed_255_characters_07f2f1'),
+            'gst_number.max' => __('validation.gst_number_cannot_exceed_30_characters_f0998e'),
+            'payment_terms.max' => __('validation.payment_terms_cannot_exceed_120_characters_66991a'),
+            'outstanding_balance.required' => __('validation.enter_the_outstanding_balance_9dda8f'),
+            'outstanding_balance.numeric' => __('validation.outstanding_balance_must_be_a_valid_number_9c52cf'),
+            'outstanding_balance.min' => __('validation.outstanding_balance_cannot_be_negative_53d653'),
         ]) + ['tenant_id' => $request->user()->tenant_id]);
 
         ActivityNotifier::notify(
             $request->user()->tenant_id,
             'supplier_created',
-            'Supplier saved',
-            $request->user()->name.' saved supplier '.$supplier->name.'.'
+            "Supplier saved",
+            $request->user()->name.' saved supplier '.$supplier->name.'.',
+            parameters: ['actor' => $request->user()->name, 'name' => $supplier->name]
         );
 
-        return back()->with('status', 'Supplier saved.');
+        return back()->with('status', __('orders.supplier_saved_a483ea'));
     }
 
     public function customers(Request $request): View
@@ -106,7 +117,17 @@ class OperationsController extends Controller
             ->paginate($perPage)
             ->appends(array_merge($request->except('page'), ['per_page' => $perPage]));
 
+        $overview = Customer::where('tenant_id', $request->user()->tenant_id)
+            ->selectRaw("COUNT(*) AS total, COALESCE(SUM(outstanding_balance), 0) AS balance, COALESCE(SUM(credit_limit), 0) AS credit, SUM(CASE WHEN outstanding_balance > 0 THEN 1 ELSE 0 END) AS unpaid")
+            ->first();
+
         return view('operations.customers', [
+            'overviewCards' => [
+                ['label' => __('orders.total_customers_21bc3e'), 'value' => $overview->total ?? 0, 'hint' => __('orders.all_customer_accounts_4ff772'), 'currency' => false],
+                ['label' => __('common.outstanding_balance_bb9bc5'), 'value' => $overview->balance ?? 0, 'hint' => __('orders.total_receivable_from_customers_7b1d68'), 'currency' => true],
+                ['label' => __('common.credit_limit_c2f130'), 'value' => $overview->credit ?? 0, 'hint' => __('orders.combined_customer_credit_limits_b98015'), 'currency' => true],
+                ['label' => __('orders.customers_with_dues_bb9823'), 'value' => $overview->unpaid ?? 0, 'hint' => __('common.accounts_with_outstanding_balances_18b3fb'), 'currency' => false],
+            ],
             'customers' => $customers,
             'perPage' => $perPage,
             'perPageOptions' => $perPageOptions,
@@ -121,26 +142,27 @@ class OperationsController extends Controller
             'credit_limit' => ['required', 'numeric', 'min:0'],
             'outstanding_balance' => ['required', 'numeric', 'min:0'],
         ], [
-            'name.required' => 'Enter the customer name.',
-            'name.max' => 'Customer name cannot exceed 255 characters.',
-            'mobile.required' => 'Enter the mobile number.',
-            'mobile.max' => 'Mobile number cannot exceed 30 characters.',
-            'credit_limit.required' => 'Enter the credit limit.',
-            'credit_limit.numeric' => 'Credit limit must be a valid number.',
-            'credit_limit.min' => 'Credit limit cannot be negative.',
-            'outstanding_balance.required' => 'Enter the outstanding balance.',
-            'outstanding_balance.numeric' => 'Outstanding balance must be a valid number.',
-            'outstanding_balance.min' => 'Outstanding balance cannot be negative.',
+            'name.required' => __('validation.enter_the_customer_name_2cbb8f'),
+            'name.max' => __('validation.customer_name_cannot_exceed_255_characters_5ed608'),
+            'mobile.required' => __('validation.enter_the_mobile_number_aa41c2'),
+            'mobile.max' => __('validation.mobile_number_cannot_exceed_30_characters_08a16a'),
+            'credit_limit.required' => __('validation.enter_the_credit_limit_beae15'),
+            'credit_limit.numeric' => __('validation.credit_limit_must_be_a_valid_number_15bb72'),
+            'credit_limit.min' => __('validation.credit_limit_cannot_be_negative_41f016'),
+            'outstanding_balance.required' => __('validation.enter_the_outstanding_balance_9dda8f'),
+            'outstanding_balance.numeric' => __('validation.outstanding_balance_must_be_a_valid_number_9c52cf'),
+            'outstanding_balance.min' => __('validation.outstanding_balance_cannot_be_negative_53d653'),
         ]) + ['tenant_id' => $request->user()->tenant_id]);
 
         ActivityNotifier::notify(
             $request->user()->tenant_id,
             'customer_created',
-            'Customer saved',
-            $request->user()->name.' saved customer '.$customer->name.'.'
+            "Customer saved",
+            $request->user()->name.' saved customer '.$customer->name.'.',
+            parameters: ['actor' => $request->user()->name, 'name' => $customer->name]
         );
 
-        return back()->with('status', 'Customer saved.');
+        return back()->with('status', __('orders.customer_saved_c5b1c9'));
     }
 
     public function purchases(Request $request): View
@@ -163,6 +185,7 @@ class OperationsController extends Controller
                         ->orWhereHas('supplier', fn ($query) => $query->where('name', 'like', "%{$search}%"))
                         ->orWhereHas('items.product', function ($query) use ($search) {
                             $query->where('name', 'like', "%{$search}%")
+                                ->orWhere('translations->'.app()->getLocale().'->name', 'like', "%{$search}%")
                                 ->orWhere('sku', 'like', "%{$search}%")
                                 ->orWhere('barcode', 'like', "%{$search}%");
                         });
@@ -172,7 +195,17 @@ class OperationsController extends Controller
             ->paginate($perPage)
             ->appends(array_merge($request->except('page'), ['per_page' => $perPage]));
 
+        $overview = PurchaseOrder::where('tenant_id', $request->user()->tenant_id)
+            ->selectRaw("COUNT(*) AS total, COALESCE(SUM(total_amount), 0) AS amount, COALESCE(SUM(tax_amount), 0) AS tax, COUNT(DISTINCT supplier_id) AS suppliers")
+            ->first();
+
         return view('operations.purchases', [
+            'overviewCards' => [
+                ['label' => __('orders.total_purchases_6231e5'), 'value' => $overview->total ?? 0, 'hint' => __('orders.all_recorded_purchase_bills_de5c19'), 'currency' => false],
+                ['label' => __('orders.purchase_value_c6c503'), 'value' => $overview->amount ?? 0, 'hint' => __('orders.total_value_of_purchase_bills_a9a871'), 'currency' => true],
+                ['label' => __('common.tax_amount_0f48af'), 'value' => $overview->tax ?? 0, 'hint' => __('orders.total_recorded_purchase_tax_dc34c7'), 'currency' => true],
+                ['label' => __('orders.suppliers_purchased_from_9bafec'), 'value' => $overview->suppliers ?? 0, 'hint' => __('orders.suppliers_linked_to_purchase_bills_57f1e9'), 'currency' => false],
+            ],
             'perPage' => $perPage,
             'perPageOptions' => $perPageOptions,
             'suppliers' => Supplier::where('tenant_id', $request->user()->tenant_id)->orderBy('name')->get(),
@@ -198,19 +231,19 @@ class OperationsController extends Controller
             'tax_amount' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'total_amount' => ['required', 'numeric', 'min:0.01', 'max:99999999.99'],
         ], [
-            'supplier_id.exists' => 'Select a supplier from your business.',
-            'supplier_invoice_number.required' => 'Enter the supplier invoice number.',
-            'supplier_invoice_number.max' => 'Supplier invoice number cannot exceed 120 characters.',
-            'supplier_invoice_number.unique' => 'This supplier invoice number is already recorded.',
-            'bill_date.required' => 'Select the bill date.',
-            'bill_date.date' => 'Bill date must be a valid date.',
-            'tax_amount.numeric' => 'Tax amount must be a valid number.',
-            'tax_amount.min' => 'Tax amount cannot be negative.',
-            'tax_amount.max' => 'Tax amount is too high.',
-            'total_amount.required' => 'Enter the total amount.',
-            'total_amount.numeric' => 'Total amount must be a valid number.',
-            'total_amount.min' => 'Total amount must be greater than zero.',
-            'total_amount.max' => 'Total amount is too high.',
+            'supplier_id.exists' => __('orders.select_a_supplier_from_your_business_cd5333'),
+            'supplier_invoice_number.required' => __('validation.enter_the_supplier_invoice_number_b170cf'),
+            'supplier_invoice_number.max' => __('validation.supplier_invoice_number_cannot_exceed_120_characters_dc821b'),
+            'supplier_invoice_number.unique' => __('orders.this_supplier_invoice_number_is_already_recorded_ec9f7f'),
+            'bill_date.required' => __('orders.select_the_bill_date_c739ca'),
+            'bill_date.date' => __('validation.bill_date_must_be_a_valid_date_a8ea61'),
+            'tax_amount.numeric' => __('validation.tax_amount_must_be_a_valid_number_4c4899'),
+            'tax_amount.min' => __('validation.tax_amount_cannot_be_negative_089199'),
+            'tax_amount.max' => __('validation.tax_amount_is_too_high_42a119'),
+            'total_amount.required' => __('validation.enter_the_total_amount_cb7fbc'),
+            'total_amount.numeric' => __('validation.total_amount_must_be_a_valid_number_8185e6'),
+            'total_amount.min' => __('validation.total_amount_must_be_greater_than_zero_f202cc'),
+            'total_amount.max' => __('validation.total_amount_is_too_high_7fba22'),
         ]);
 
         $order = PurchaseOrder::create([
@@ -227,11 +260,12 @@ class OperationsController extends Controller
         ActivityNotifier::notify(
             $tenantId,
             'purchase_received',
-            'Purchase bill recorded',
-            $request->user()->name.' recorded purchase bill '.$order->order_number.' for '.$order->total_amount.'.'
+            "Purchase bill recorded",
+            $request->user()->name.' recorded purchase bill '.$order->order_number.' for '.$order->total_amount.'.',
+            parameters: ['actor' => $request->user()->name, 'invoice' => $order->order_number, 'amount' => $order->total_amount]
         );
 
-        return back()->with('status', 'Purchase bill recorded.');
+        return back()->with('status', __('orders.purchase_bill_recorded_c7391a'));
     }
 
     public function sales(Request $request): View
@@ -246,6 +280,7 @@ class OperationsController extends Controller
                         ->orWhereHas('customer', fn ($query) => $query->where('name', 'like', "%{$search}%"))
                         ->orWhereHas('items.product', function ($query) use ($search) {
                             $query->where('name', 'like', "%{$search}%")
+                                ->orWhere('translations->'.app()->getLocale().'->name', 'like', "%{$search}%")
                                 ->orWhere('sku', 'like', "%{$search}%")
                                 ->orWhere('barcode', 'like', "%{$search}%");
                         });
@@ -289,6 +324,7 @@ class OperationsController extends Controller
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('translations->'.app()->getLocale().'->name', 'like', "%{$search}%")
                         ->orWhere('sku', 'like', "%{$search}%")
                         ->orWhere('barcode', 'like', "%{$search}%");
                 });
@@ -299,8 +335,8 @@ class OperationsController extends Controller
         return response()->json([
             'data' => $products->getCollection()->map(fn (Product $product) => [
                 'id' => $product->id,
-                'label' => $product->name.' - '.($product->sku ?: $product->barcode ?: 'No SKU').' - Stock '.$product->available_stock,
-                'name' => $product->name,
+                'label' => __('common.stock_label', ['name' => $product->localized('name'), 'sku' => $product->sku ?: $product->barcode ?: __('products.no_sku_1bc1c2'), 'stock' => $product->available_stock]),
+                'name' => $product->localized('name'),
                 'sku' => $product->sku ?: $product->barcode,
                 'stock' => $product->available_stock,
                 'price' => (float) $product->price,
@@ -334,27 +370,27 @@ class OperationsController extends Controller
             'paid_amount' => ['required', 'numeric', 'min:0.01'],
             'payment_method' => ['required', 'in:cash,upi,card,net_banking,credit'],
         ], [
-            'customer_id.exists' => 'Select a customer from your business.',
-            'new_customer_name.required' => 'Enter the new customer name.',
-            'new_customer_name.max' => 'Customer name cannot exceed 255 characters.',
-            'new_customer_mobile.required' => 'Enter the new customer mobile number.',
-            'new_customer_mobile.max' => 'Mobile number cannot exceed 30 characters.',
-            'new_customer_credit_limit.required' => 'Enter the customer credit limit.',
-            'new_customer_credit_limit.numeric' => 'Credit limit must be a valid number.',
-            'new_customer_credit_limit.min' => 'Credit limit cannot be negative.',
-            'new_customer_credit_limit.max' => 'Credit limit is too high.',
-            'items.required' => 'Add at least one product to the bill.',
-            'items.min' => 'Add at least one product to the bill.',
-            'items.*.product_id.required' => 'Select a product for every bill row.',
-            'items.*.product_id.exists' => 'Select valid products from your inventory.',
-            'items.*.quantity.required' => 'Enter quantity for every bill row.',
-            'items.*.quantity.integer' => 'Quantity must be a whole number.',
-            'items.*.quantity.min' => 'Quantity must be at least 1.',
-            'paid_amount.required' => 'Enter the paid amount.',
-            'paid_amount.numeric' => 'Paid amount must be a valid number.',
-            'paid_amount.min' => 'Paid amount must be greater than zero.',
-            'payment_method.required' => 'Select the payment method.',
-            'payment_method.in' => 'Select a valid payment method.',
+            'customer_id.exists' => __('orders.select_a_customer_from_your_business_0e7d59'),
+            'new_customer_name.required' => __('validation.enter_the_new_customer_name_463c11'),
+            'new_customer_name.max' => __('validation.customer_name_cannot_exceed_255_characters_5ed608'),
+            'new_customer_mobile.required' => __('validation.enter_the_new_customer_mobile_number_b261a6'),
+            'new_customer_mobile.max' => __('validation.mobile_number_cannot_exceed_30_characters_08a16a'),
+            'new_customer_credit_limit.required' => __('validation.enter_the_customer_credit_limit_f41a34'),
+            'new_customer_credit_limit.numeric' => __('validation.credit_limit_must_be_a_valid_number_15bb72'),
+            'new_customer_credit_limit.min' => __('validation.credit_limit_cannot_be_negative_41f016'),
+            'new_customer_credit_limit.max' => __('validation.credit_limit_is_too_high_adf7a3'),
+            'items.required' => __('products.add_at_least_one_product_to_the_bill_1a3783'),
+            'items.min' => __('products.add_at_least_one_product_to_the_bill_1a3783'),
+            'items.*.product_id.required' => __('products.select_a_product_for_every_bill_row_515a6a'),
+            'items.*.product_id.exists' => __('products.select_valid_products_from_your_inventory_9fb9e9'),
+            'items.*.quantity.required' => __('orders.enter_quantity_for_every_bill_row_d7944c'),
+            'items.*.quantity.integer' => __('validation.quantity_must_be_a_whole_number_6240f5'),
+            'items.*.quantity.min' => __('validation.quantity_must_be_at_least_1_fcbf59'),
+            'paid_amount.required' => __('validation.enter_the_paid_amount_a95908'),
+            'paid_amount.numeric' => __('validation.paid_amount_must_be_a_valid_number_31813e'),
+            'paid_amount.min' => __('validation.paid_amount_must_be_greater_than_zero_2001b7'),
+            'payment_method.required' => __('orders.select_the_payment_method_13fa28'),
+            'payment_method.in' => __('validation.select_a_valid_payment_method_d8e656'),
         ]);
 
         $data['items'] = collect($data['items'])
@@ -398,13 +434,13 @@ class OperationsController extends Controller
 
                 if (! $product) {
                     throw ValidationException::withMessages([
-                        'items' => 'Select valid products from your inventory.',
+                        'items' => __('products.select_valid_products_from_your_inventory_9fb9e9'),
                     ]);
                 }
 
                 if ($product->available_stock < $item['quantity']) {
                     throw ValidationException::withMessages([
-                        'items' => $product->name.' has only '.$product->available_stock.' units available.',
+                        'items' => __('validation.available_stock', ['product' => $product->localized('name'), 'quantity' => $product->available_stock]),
                     ]);
                 }
 
@@ -442,7 +478,7 @@ class OperationsController extends Controller
                 $product->save();
                 StockNotifier::sync($product);
 
-                $this->movement($request, $product, 'sale', -$item['quantity'], 'sales_orders', $order->id, 'Invoice generated.');
+                $this->movement($request, $product, 'sale', -$item['quantity'], 'sales_orders', $order->id, __('orders.invoice_generated_0477ce'));
             }
 
             if ($order->customer_id && $order->paid_amount < $order->total_amount) {
@@ -463,19 +499,21 @@ class OperationsController extends Controller
             ActivityNotifier::notify(
                 $tenantId,
                 'customer_created',
-                'Customer saved',
-                $request->user()->name.' saved customer '.$saleSummary['new_customer_name'].'.'
-            );
+                "Customer saved",
+                $request->user()->name.' saved customer '.$saleSummary['new_customer_name'].'.',
+            parameters: ['actor' => $request->user()->name, 'name' => $saleSummary['new_customer_name']]
+        );
         }
 
         ActivityNotifier::notify(
             $tenantId,
             'sale_billed',
-            'Sale billed',
-            $request->user()->name.' billed '.$saleSummary['invoice_number'].' for '.$saleSummary['quantity'].' units across '.$saleSummary['item_count'].' product(s).'
+            "Sale billed",
+            $request->user()->name.' billed '.$saleSummary['invoice_number'].' for '.$saleSummary['quantity'].' units across '.$saleSummary['item_count'].' product(s).',
+            parameters: ['actor' => $request->user()->name, 'invoice' => $saleSummary['invoice_number'], 'quantity' => $saleSummary['quantity'], 'count' => $saleSummary['item_count']]
         );
 
-        return back()->with('status', 'Sale billed and stock reduced.');
+        return back()->with('status', __('products.sale_billed_and_stock_reduced_494dd8'));
     }
 
     public function returns(Request $request): View
@@ -504,6 +542,7 @@ class OperationsController extends Controller
                     $query->where('notes', 'like', "%{$search}%")
                         ->orWhereHas('product', function ($query) use ($search) {
                             $query->where('name', 'like', "%{$search}%")
+                                ->orWhere('translations->'.app()->getLocale().'->name', 'like', "%{$search}%")
                                 ->orWhere('sku', 'like', "%{$search}%")
                                 ->orWhere('barcode', 'like', "%{$search}%");
                         });
@@ -513,7 +552,18 @@ class OperationsController extends Controller
             ->paginate($perPage)
             ->appends(array_merge($request->except('page'), ['per_page' => $perPage]));
 
+        $overview = StockMovement::where('tenant_id', $request->user()->tenant_id)
+            ->whereIn('type', ['sales_return', 'purchase_return', 'damaged_return', 'reserve_stock', 'release_reserved'])
+            ->selectRaw("COUNT(*) AS total, SUM(CASE WHEN type = 'sales_return' THEN ABS(quantity) ELSE 0 END) AS sales, SUM(CASE WHEN type = 'purchase_return' THEN ABS(quantity) ELSE 0 END) AS purchases, SUM(CASE WHEN type = 'damaged_return' THEN ABS(quantity) ELSE 0 END) AS damaged")
+            ->first();
+
         return view('operations.returns', [
+            'overviewCards' => [
+                ['label' => __('common.total_movements_a38b0e'), 'value' => $overview->total ?? 0, 'hint' => __('orders.returns_and_reservation_records_ac32ff'), 'currency' => false],
+                ['label' => __('orders.sales_returns_a7c863'), 'value' => $overview->sales ?? 0, 'hint' => __('orders.units_returned_by_customers_426f21'), 'currency' => false],
+                ['label' => __('orders.purchase_returns_d6b2b0'), 'value' => $overview->purchases ?? 0, 'hint' => __('orders.units_returned_to_suppliers_2e2df9'), 'currency' => false],
+                ['label' => __('orders.damaged_returns_b6e2a1'), 'value' => $overview->damaged ?? 0, 'hint' => __('common.damaged_units_recorded_6eb6ce'), 'currency' => false],
+            ],
             'products' => Product::where('tenant_id', $request->user()->tenant_id)->orderBy('name')->get(),
             'movements' => $movements,
             'perPage' => $perPage,
@@ -533,15 +583,15 @@ class OperationsController extends Controller
             'return_type' => ['required', 'in:sales_return,purchase_return,damaged_return,reserve_stock,release_reserved'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ], [
-            'product_id.required' => 'Select a product for the return.',
-            'product_id.exists' => 'Select a valid product from your inventory.',
-            'quantity.required' => 'Enter the return quantity.',
-            'quantity.integer' => 'Quantity must be a whole number.',
-            'quantity.min' => 'Quantity must be at least 1.',
-            'quantity.max' => 'Quantity cannot exceed 999999.',
-            'return_type.required' => 'Select the return type.',
-            'return_type.in' => 'Select a valid return type.',
-            'notes.max' => 'Notes cannot exceed 1000 characters.',
+            'product_id.required' => __('products.select_a_product_for_the_return_3cfc69'),
+            'product_id.exists' => __('validation.select_a_valid_product_from_your_inventory_fd8e3d'),
+            'quantity.required' => __('validation.enter_the_return_quantity_d6ae79'),
+            'quantity.integer' => __('validation.quantity_must_be_a_whole_number_6240f5'),
+            'quantity.min' => __('validation.quantity_must_be_at_least_1_fcbf59'),
+            'quantity.max' => __('validation.quantity_cannot_exceed_999999_0315b4'),
+            'return_type.required' => __('orders.select_the_return_type_767824'),
+            'return_type.in' => __('validation.select_a_valid_return_type_5d67f0'),
+            'notes.max' => __('validation.notes_cannot_exceed_1000_characters_d23ab7'),
         ]);
 
         $returnSummary = DB::transaction(function () use ($data, $request, $tenantId) {
@@ -554,19 +604,19 @@ class OperationsController extends Controller
 
             if ($product->inventory + $delta < 0) {
                 throw ValidationException::withMessages([
-                    'quantity' => 'Return quantity is greater than available stock.',
+                    'quantity' => __('validation.return_quantity_is_greater_than_available_stock_61b3b7'),
                 ]);
             }
 
             if ($data['return_type'] === 'reserve_stock' && $data['quantity'] > $product->available_stock) {
                 throw ValidationException::withMessages([
-                    'quantity' => 'Only '.$product->available_stock.' sellable units are available to reserve.',
+                    'quantity' => __('common.reserve_available', ['quantity' => $product->available_stock]),
                 ]);
             }
 
             if ($data['return_type'] === 'release_reserved' && $data['quantity'] > $product->reserved_stock) {
                 throw ValidationException::withMessages([
-                    'quantity' => 'Only '.$product->reserved_stock.' reserved units are available to release.',
+                    'quantity' => __('common.release_available', ['quantity' => $product->reserved_stock]),
                 ]);
             }
 
@@ -598,11 +648,12 @@ class OperationsController extends Controller
         ActivityNotifier::notify(
             $tenantId,
             'return_processed',
-            'Stock flow processed',
-            $request->user()->name.' processed a '.str_replace('_', ' ', $returnSummary['return_type']).' for '.$returnSummary['quantity'].' units of '.$returnSummary['product_name'].'.'
+            "Stock flow processed",
+            $request->user()->name.' processed a '.str_replace('_', ' ', $returnSummary['return_type']).' for '.$returnSummary['quantity'].' units of '.$returnSummary['product_name'].'.',
+            parameters: ['actor' => $request->user()->name, 'kind' => ucfirst(str_replace('_', ' ', $returnSummary['return_type'])), 'quantity' => $returnSummary['quantity'], 'product' => $returnSummary['product_name']]
         );
 
-        return back()->with('status', 'Stock flow processed.');
+        return back()->with('status', __('products.stock_flow_processed_21d4cb'));
     }
 
     public function reports(Request $request): View

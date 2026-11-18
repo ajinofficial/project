@@ -39,6 +39,9 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+Route::post('/language', [\App\Http\Controllers\LanguageController::class, 'update'])
+    ->middleware('throttle:30,1')->name('language.update');
+
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::get('/login/businesses', [LoginController::class, 'businesses'])->name('login.businesses');
@@ -67,22 +70,22 @@ Route::middleware('auth')->group(function () {
     Route::post('/plan/upgrade', [PlanUpgradeController::class, 'update'])->name('plan.upgrade');
     Route::post('/email/verification-notification', function (Request $request) {
         if ($request->user()->hasVerifiedEmail()) {
-            return response()->json(['message' => 'Your email is already verified.']);
+            return response()->json(['message' => __('common.your_email_is_already_verified_a7a7b8')]);
         }
 
         $otp = (string) random_int(100000, 999999);
         Cache::put('email-verification-otp:'.$request->user()->id, hash('sha256', $otp), now()->addMinutes(10));
         $request->user()->notify(new EmailVerificationOtp($otp));
 
-        return response()->json(['message' => 'Verification OTP sent. Check your inbox.']);
+        return response()->json(['message' => __('auth.verification_otp_sent_check_your_inbox_2da496')]);
     })->middleware('throttle:6,1')->name('verification.send');
 
     Route::post('/email/verify-otp', function (Request $request) {
         $data = $request->validate([
             'otp' => ['required', 'digits:6'],
         ], [
-            'otp.required' => 'Enter the verification OTP.',
-            'otp.digits' => 'Enter a valid six-digit OTP.',
+            'otp.required' => __('auth.enter_the_verification_otp_adf72e'),
+            'otp.digits' => __('auth.enter_a_valid_six_digit_otp_62a578'),
         ]);
 
         $cacheKey = 'email-verification-otp:'.$request->user()->id;
@@ -90,8 +93,8 @@ Route::middleware('auth')->group(function () {
 
         if (! is_string($storedOtp) || ! hash_equals($storedOtp, hash('sha256', $data['otp']))) {
             return response()->json([
-                'message' => 'The OTP is incorrect or has expired.',
-                'errors' => ['otp' => ['The OTP is incorrect or has expired.']],
+                'message' => __('auth.the_otp_is_incorrect_or_has_expired_2e2c27'),
+                'errors' => ['otp' => [__('auth.the_otp_is_incorrect_or_has_expired_2e2c27')]],
             ], 422);
         }
 
@@ -101,7 +104,7 @@ Route::middleware('auth')->group(function () {
 
         Cache::forget($cacheKey);
 
-        return response()->json(['message' => 'Email address verified.']);
+        return response()->json(['message' => __('auth.email_address_verified_de1d9c')]);
     })->middleware('throttle:10,1')->name('verification.verify');
 
     Route::middleware('vendor.account')->prefix('email')->name('email.')->group(function () {

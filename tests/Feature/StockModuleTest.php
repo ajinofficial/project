@@ -75,7 +75,7 @@ class StockModuleTest extends TestCase
         $response->assertSee('data-searchable-select-input', false);
         $response->assertSee('data-searchable-select-menu', false);
         $response->assertSee('data-searchable-select-url="'.route('stock.products').'"', false);
-        $response->assertSee('Loading products');
+        $response->assertSee('window.t("products.loading_products_430714")', false);
         $response->assertSee('loadRemoteProducts');
         $response->assertSee('Search or select product');
         $response->assertSee('name="adjustment"', false);
@@ -86,7 +86,7 @@ class StockModuleTest extends TestCase
         $response->assertSee('name="profit_percentage" min="0" max="100"', false);
         $response->assertSee('Selling price after profit');
         $response->assertSee('novalidate', false);
-        $response->assertSee('is required.', false);
+        $response->assertSee("window.t('validation.required'", false);
     }
 
     public function test_stock_product_selector_is_tenant_scoped_and_paginated(): void

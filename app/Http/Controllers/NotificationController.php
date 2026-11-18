@@ -59,7 +59,7 @@ class NotificationController extends Controller
 
         return redirect()
             ->route('notifications.index', $request->only(['filter', 'search', 'type', 'redirect_url']))
-            ->with('status', 'Notification marked as read.');
+            ->with('status', __('notifications.notification_marked_as_read_ad4c89'));
     }
 
     public function markUnread(Request $request, Notification $notification): RedirectResponse
@@ -70,7 +70,7 @@ class NotificationController extends Controller
 
         return redirect()
             ->route('notifications.index', $request->only(['filter', 'search', 'type', 'redirect_url']))
-            ->with('status', 'Notification marked as unread.');
+            ->with('status', __('notifications.notification_marked_as_unread_5f1d5d'));
     }
 
     public function markAllRead(Request $request): RedirectResponse
@@ -81,6 +81,6 @@ class NotificationController extends Controller
 
         return redirect()
             ->route('notifications.index', $request->only(['filter', 'search', 'type', 'redirect_url']))
-            ->with('status', 'All notifications marked as read.');
+            ->with('status', __('notifications.all_notifications_marked_as_read_0aaede'));
     }
 }

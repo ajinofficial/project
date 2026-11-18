@@ -77,21 +77,21 @@ class DashboardController extends Controller
         $stockHealthTotal = max(1, $stats['products']);
         $statusBreakdown = [
             [
-                'label' => 'Sellable',
+                'label' => __('products.sellable_23760f'),
                 'value' => $stats['active_products'],
                 'route' => route('products.index', ['status' => 'active']),
                 'class' => 'is-green',
                 'share' => round(($stats['active_products'] / $stockHealthTotal) * 100),
             ],
             [
-                'label' => 'Receiving',
+                'label' => __('common.receiving_2f8f37'),
                 'value' => $stats['drafts'],
                 'route' => route('products.index', ['status' => 'draft']),
                 'class' => 'is-amber',
                 'share' => round(($stats['drafts'] / $stockHealthTotal) * 100),
             ],
             [
-                'label' => 'Discontinued',
+                'label' => __('common.discontinued_210aad'),
                 'value' => $stats['archived'],
                 'route' => route('products.index', ['status' => 'archived']),
                 'class' => 'is-gray',

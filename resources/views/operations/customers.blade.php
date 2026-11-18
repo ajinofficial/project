@@ -1,4 +1,4 @@
-@extends('layouts.admin', ['title' => 'Customers'])
+@extends('layouts.admin', ['title' => __('orders.customers_035eae')])
 
 @section('content')
     <style>
@@ -78,78 +78,85 @@
         
     </style>
 
+    @include('operations.partials.overview', [
+        'title' => __('orders.customers_035eae'),
+        'description' => __('orders.manage_customer_details_credit_limits_and_outstanding_balances_5120f8'),
+        'action' => __('orders.add_customer_2e23cb'),
+        'formId' => 'customer-entry',
+    ])
+
     <section class="ops-grid">
-        <article class="admin-section">
-            <div class="section-title"><div><p class="eyebrow">Customer management</p><h2>Add customer</h2></div></div>
+        <article class="admin-section" id="customer-entry">
+            <div class="section-title"><div><p class="eyebrow">{{ __('orders.customer_management_00aed7') }}</p><h2>{{ __('orders.add_customer_2e23cb') }}</h2></div></div>
             <form class="product-form customer-form" method="POST" action="{{ route('customers.store') }}" data-customer-form>
                 @csrf
 
                 @if ($errors->any())
                     <div class="error-summary" role="alert">
-                        <strong>Check the customer details</strong>
+                        <strong>{{ __('orders.check_the_customer_details_9bd0ee') }}</strong>
                         <span>{{ $errors->first() }}</span>
                     </div>
                 @endif
 
                 <label class="customer-field">
-                    <span>Customer name</span>
-                    <input class="customer-form-control" name="name" value="{{ old('name') }}" placeholder="Customer name" required>
+                    <span>{{ __('orders.customer_name_309c69') }}</span>
+                    <input class="customer-form-control" name="name" value="{{ old('name') }}" placeholder="{{ __('orders.customer_name_309c69') }}" required>
                     @error('name') <small>{{ $message }}</small> @enderror
                 </label>
 
                 <label class="customer-field">
-                    <span>Mobile number</span>
-                    <input class="customer-form-control" type="tel" name="mobile" value="{{ old('mobile') }}" placeholder="Phone number" autocomplete="tel" required @if ($errors->has('mobile')) aria-invalid="true" @endif>
+                    <span>{{ __('common.mobile_number_8e5c12') }}</span>
+                    <input class="customer-form-control" type="tel" name="mobile" value="{{ old('mobile') }}" placeholder="{{ __('common.phone_number_8961d3') }}" autocomplete="tel" required @if ($errors->has('mobile')) aria-invalid="true" @endif>
                     @error('mobile') <small>{{ $message }}</small> @enderror
                 </label>
 
                 <div class="field-grid customer-field-grid">
                     <label class="customer-field">
-                        <span>Credit limit</span>
+                        <span>{{ __('common.credit_limit_8240d4') }}</span>
                         <input class="customer-form-control" type="number" name="credit_limit" min="0" step="0.01" value="{{ old('credit_limit', 0) }}" required data-replace-on-focus>
                         @error('credit_limit') <small>{{ $message }}</small> @enderror
                     </label>
 
                     <label class="customer-field">
-                        <span>Outstanding balance</span>
+                        <span>{{ __('common.outstanding_balance_e9fd5b') }}</span>
                         <input class="customer-form-control" type="number" name="outstanding_balance" min="0" step="0.01" value="{{ old('outstanding_balance', 0) }}" required data-replace-on-focus>
                         @error('outstanding_balance') <small>{{ $message }}</small> @enderror
                     </label>
                 </div>
 
                 <button class="product-save-button" type="submit" data-customer-submit>
-                    <span class="product-save-button__idle">Save customer</span>
+                    <span class="product-save-button__idle">{{ __('orders.save_customer_2e8b84') }}</span>
                     <span class="product-save-button__loading" aria-hidden="true">
                         <i></i>
-                        Saving
+                        {{ __('common.saving_369c53') }}
                     </span>
                 </button>
             </form>
         </article>
 
         <article class="admin-section customer-listing-panel" data-customer-listing>
-            <div class="section-title"><div><p class="eyebrow">Sales accounts</p><h2>Customers</h2></div></div>
+            <div class="section-title"><div><p class="eyebrow">{{ __('orders.sales_accounts_6f7fcb') }}</p><h2>{{ __('orders.customers_035eae') }}</h2></div></div>
             <div class="product-toolbar">
                 <form class="product-filter-form billing-search-form customer-filter-form" method="GET" action="{{ route('customers.index') }}" data-customer-search-form>
-                    <input type="search" name="search" value="{{ request('search') }}" placeholder="Search customer or mobile" data-customer-search>
-                    <select name="per_page" aria-label="Customers per page" data-customer-search>
+                    <input type="search" name="search" value="{{ request('search') }}" placeholder="{{ __('orders.search_customer_or_mobile_7d30b9') }}" data-customer-search>
+                    <select name="per_page" aria-label="{{ __('orders.customers_per_page_5175ed') }}" data-customer-search>
                         @foreach ($perPageOptions as $option)
-                            <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }} / page</option>
+                            <option value="{{ $option }}" @selected($perPage === $option)>{{ __('common.per_page', ['count' => $option]) }}</option>
                         @endforeach
                     </select>
-                    <a class="product-clear-filter" href="{{ route('customers.index') }}" data-customer-listing-link>Clear</a>
+                    <a class="product-clear-filter" href="{{ route('customers.index') }}" data-customer-listing-link>{{ __('common.clear_719ea3') }}</a>
                 </form>
             </div>
 
             <div class="customer-listing-results" data-customer-listing-results>
-                <div class="product-listing-loader" data-customer-listing-loader aria-live="polite" aria-hidden="true"><span aria-hidden="true"></span><strong>Loading customers</strong></div>
+                <div class="product-listing-loader" data-customer-listing-loader aria-live="polite" aria-hidden="true"><span aria-hidden="true"></span><strong>{{ __('orders.loading_customers_a02004') }}</strong></div>
                 <div class="table-wrap"><table class="admin-table customer-table">
-                    <thead><tr><th>Name</th><th>Mobile</th><th>Credit limit</th><th>Outstanding</th></tr></thead>
+                    <thead><tr><th>{{ __('common.name_709a23') }}</th><th>{{ __('common.mobile_b1d702') }}</th><th>{{ __('common.credit_limit_8240d4') }}</th><th>{{ __('common.outstanding_f8ee57') }}</th></tr></thead>
                     <tbody>
                     @forelse ($customers as $customer)
                         <tr><td><strong>{{ $customer->name }}</strong></td><td>{{ $customer->mobile ?: '-' }}</td><td>&#8377;{{ number_format($customer->credit_limit, 2) }}</td><td>&#8377;{{ number_format($customer->outstanding_balance, 2) }}</td></tr>
                     @empty
-                        <tr><td colspan="4">{{ request()->filled('search') ? 'No customers match the current search.' : 'No customers yet.' }}</td></tr>
+                        <tr><td colspan="4">{{ request()->filled('search') ? __('orders.no_customers_match_the_current_search_769a0e') : __('orders.no_customers_yet_5999a9') }}</td></tr>
                     @endforelse
                     </tbody>
                 </table></div>
@@ -179,11 +186,11 @@
                 listing.querySelector('[data-customer-listing-loader]')?.setAttribute('aria-hidden', 'false');
 
                 fetch(url, { headers: { 'Accept': 'text/html', 'X-Requested-With': 'XMLHttpRequest' }, signal: controller.signal })
-                    .then(function (response) { if (!response.ok) throw new Error('Unable to load customers.'); return response.text(); })
+                    .then(function (response) { if (!response.ok) throw new Error(window.t("validation.unable_to_load_customers_ede8a1")); return response.text(); })
                     .then(function (html) {
                         var page = new DOMParser().parseFromString(html, 'text/html');
                         var next = page.querySelector('[data-customer-listing]');
-                        if (!next) throw new Error('Customer listing was not found.');
+                        if (!next) throw new Error(window.t("validation.customer_listing_was_not_found_41b31b"));
                         listing.replaceWith(next);
                         document.title = page.title || document.title;
                         if (pushState !== false) window.history.pushState({ customerListing: true }, '', url);
@@ -223,7 +230,7 @@
                     var label = field.closest('label');
                     var labelText = label ? label.querySelector('span') : null;
 
-                    return labelText ? labelText.textContent.trim() : 'This field';
+                    return labelText ? labelText.textContent.trim() : window.t("common.this_field_f89fd4");
                 }
 
                 function existingErrorElement(field) {
@@ -269,8 +276,8 @@
 
                     error = errorElement(field);
                     error.textContent = field.validity.valueMissing
-                        ? fieldLabel(field) + ' is required.'
-                        : field.validationMessage;
+                        ? window.t('validation.required', {attribute: fieldLabel(field)})
+                        : window.localizedValidationMessage(field);
                     error.hidden = false;
                     field.setAttribute('aria-invalid', 'true');
 

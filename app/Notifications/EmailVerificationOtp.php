@@ -26,10 +26,10 @@ class EmailVerificationOtp extends Notification
             ?: config('app.name');
 
         return (new MailMessage)
-            ->subject($businessName.' - Verify your email address')
-            ->greeting('Hello '.$notifiable->name.',')
-            ->line('Use this six-digit OTP to verify your email address:')
+            ->subject($businessName.' - '.__('auth.verify_email_subject'))
+            ->greeting(__('auth.greeting', ['name' => $notifiable->name]))
+            ->line(__('auth.verify_email_instructions'))
             ->line($this->otp)
-            ->line('This OTP expires in 10 minutes. Do not share it with anyone.');
+            ->line(__('auth.this_otp_expires_in_10_minutes_do_not_share_it_with_anyone_6f2220'));
     }
 }

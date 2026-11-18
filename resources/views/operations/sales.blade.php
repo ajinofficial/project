@@ -1,4 +1,4 @@
-@extends('layouts.admin', ['title' => 'Sales'])
+@extends('layouts.admin', ['title' => __('orders.sales_d0edfb')])
 
 @php
     $oldItems = old('items');
@@ -12,7 +12,7 @@
 
     $productPayload = $products->map(fn ($product) => [
         'id' => $product->id,
-        'name' => $product->name,
+        'name' => $product->localized('name'),
         'sku' => $product->sku ?: $product->barcode,
         'stock' => $product->available_stock,
         'price' => (float) $product->price,
@@ -865,25 +865,25 @@
 
     <section class="ops-grid billing-page">
         <article class="admin-section">
-            <div class="section-title"><div><p class="eyebrow">Billing</p><h2>Create invoice</h2></div></div>
+            <div class="section-title"><div><p class="eyebrow">{{ __('orders.billing_abaec4') }}</p><h2>{{ __('orders.create_invoice_a0567c') }}</h2></div></div>
             <form class="product-form" method="POST" action="{{ route('sales.store') }}" data-billing-form>
                 @csrf
 
                 @if ($errors->any())
                     <div class="error-summary" role="alert">
-                        <strong>Check the billing details</strong>
+                        <strong>{{ __('orders.check_the_billing_details_e23f48') }}</strong>
                         <span>{{ $errors->first() }}</span>
                     </div>
                 @endif
 
                 <label>
-                    <span>Customer</span>
+                    <span>{{ __('orders.customer_0e8574') }}</span>
                     <select name="customer_id" data-customer-select>
-                        <option value="">Walk-in customer</option>
+                        <option value="">{{ __('orders.walk_in_customer_543765') }}</option>
                         @foreach ($customers as $customer)
                             <option value="{{ $customer->id }}" @selected((string) old('customer_id') === (string) $customer->id)>{{ $customer->name }}</option>
                         @endforeach
-                        <option value="new" @selected(old('customer_id') === 'new')>Other / Add new customer</option>
+                        <option value="new" @selected(old('customer_id') === 'new')>{{ __('orders.other_add_new_customer_d008ba') }}</option>
                     </select>
                     @error('customer_id') <small>{{ $message }}</small> @enderror
                 </label>
@@ -892,22 +892,22 @@
                     <div class="billing-new-customer__head">
                         <span class="billing-new-customer__icon" aria-hidden="true">+</span>
                         <div>
-                            <strong>New customer details</strong>
-                            <small>The customer will be saved and selected for this invoice.</small>
+                            <strong>{{ __('orders.new_customer_details_c0d5c0') }}</strong>
+                            <small>{{ __('orders.the_customer_will_be_saved_and_selected_for_this_invoice_7b29e7') }}</small>
                         </div>
                     </div>
                     <label class="billing-new-customer__field">
-                        <span>Customer name</span>
-                        <input name="new_customer_name" value="{{ old('new_customer_name') }}" maxlength="255" placeholder="Enter customer name" autocomplete="name" @if (old('customer_id') !== 'new') disabled @else required @endif>
+                        <span>{{ __('orders.customer_name_309c69') }}</span>
+                        <input name="new_customer_name" value="{{ old('new_customer_name') }}" maxlength="255" placeholder="{{ __('orders.enter_customer_name_e5fee2') }}" autocomplete="name" @if (old('customer_id') !== 'new') disabled @else required @endif>
                         @error('new_customer_name') <small>{{ $message }}</small> @enderror
                     </label>
                     <label class="billing-new-customer__field">
-                        <span>Mobile number</span>
-                        <input type="tel" name="new_customer_mobile" value="{{ old('new_customer_mobile') }}" maxlength="30" placeholder="Enter mobile number" autocomplete="tel" @if (old('customer_id') !== 'new') disabled @else required @endif>
+                        <span>{{ __('common.mobile_number_8e5c12') }}</span>
+                        <input type="tel" name="new_customer_mobile" value="{{ old('new_customer_mobile') }}" maxlength="30" placeholder="{{ __('common.enter_mobile_number_ad0aef') }}" autocomplete="tel" @if (old('customer_id') !== 'new') disabled @else required @endif>
                         @error('new_customer_mobile') <small>{{ $message }}</small> @enderror
                     </label>
                     <label class="billing-new-customer__field">
-                        <span>Credit limit</span>
+                        <span>{{ __('common.credit_limit_8240d4') }}</span>
                         <input type="number" name="new_customer_credit_limit" value="{{ old('new_customer_credit_limit', 0) }}" min="0" step="0.01" @if (old('customer_id') !== 'new') disabled @else required @endif>
                         @error('new_customer_credit_limit') <small>{{ $message }}</small> @enderror
                     </label>
@@ -916,21 +916,21 @@
                 <div>
                     <div class="billing-items" data-billing-items>
                         <div class="billing-items-head">
-                            <span>Product</span>
-                            <span>Qty</span>
-                            <span>Rate</span>
-                            <span>Total</span>
+                            <span>{{ __('products.product_dd3b86') }}</span>
+                            <span>{{ __('common.qty_1e5ff9') }}</span>
+                            <span>{{ __('common.rate_3a9c73') }}</span>
+                            <span>{{ __('common.total_b25928') }}</span>
                             <span></span>
                         </div>
 
                         @foreach ($oldItems as $index => $item)
                             <div class="billing-item-row" data-billing-row>
                                 <label class="billing-product-search searchable-select" data-label="Product" data-billing-product-search data-product-url="{{ route('sales.products') }}">
-                                    <span class="sr-only">Product</span>
-                                    <input type="search" placeholder="Search or select product" autocomplete="off" role="combobox" aria-label="Search products" aria-expanded="false" data-billing-product-search-input>
+                                    <span class="sr-only">{{ __('products.product_dd3b86') }}</span>
+                                    <input type="search" placeholder="{{ __('products.search_or_select_product_8ab7d7') }}" autocomplete="off" role="combobox" aria-label="{{ __('products.search_products_4412bf') }}" aria-expanded="false" data-billing-product-search-input>
                                     <div class="searchable-select__menu" role="listbox" data-billing-product-search-menu hidden></div>
                                     <select class="searchable-select__native" name="items[{{ $index }}][product_id]" required data-product-select tabindex="-1" aria-hidden="true">
-                                        <option value="">Select product</option>
+                                        <option value="">{{ __('products.select_product_596d90') }}</option>
                                         @foreach ($products as $product)
                                             <option
                                                 value="{{ $product->id }}"
@@ -939,7 +939,7 @@
                                                 data-stock="{{ $product->available_stock }}"
                                                 @selected((string) ($item['product_id'] ?? '') === (string) $product->id)
                                             >
-                                                {{ $product->name }} - {{ $product->sku ?: $product->barcode ?: 'No SKU' }} - Stock {{ $product->available_stock }}
+                                                {{ __('common.stock_label', ['name' => $product->localized('name'), 'sku' => $product->sku ?: $product->barcode ?: __('products.no_sku_1bc1c2'), 'stock' => $product->available_stock]) }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -947,73 +947,73 @@
                                 </label>
 
                                 <label data-label="Qty">
-                                    <span class="sr-only">Quantity</span>
+                                    <span class="sr-only">{{ __('common.quantity_44f6af') }}</span>
                                     <input type="number" name="items[{{ $index }}][quantity]" min="1" value="{{ $item['quantity'] ?? 1 }}" required data-quantity-input>
                                 </label>
 
                                 <span class="billing-line-price" data-label="Rate" data-line-price>&#8377;0.00</span>
                                 <span class="billing-cell-total" data-label="Total" data-line-total>&#8377;0.00</span>
-                                <button class="billing-row-remove" type="button" aria-label="Remove product" data-remove-row>&times;</button>
+                                <button class="billing-row-remove" type="button" aria-label="{{ __('products.remove_product_5d2d45') }}" data-remove-row>&times;</button>
                             </div>
                         @endforeach
                     </div>
                     @error('items') <div class="billing-items-error">{{ $message }}</div> @enderror
                     @error('items.*.product_id') <div class="billing-items-error">{{ $message }}</div> @enderror
                     @error('items.*.quantity') <div class="billing-items-error">{{ $message }}</div> @enderror
-                    <button class="billing-add-row" type="button" data-add-row>+ Add product</button>
+                    <button class="billing-add-row" type="button" data-add-row>{{ __('products.add_product_656630') }}</button>
                 </div>
 
                 <div class="billing-summary" aria-live="polite">
-                    <div><span>Subtotal</span><b data-billing-subtotal>&#8377;0.00</b></div>
-                    <div><span>Tax</span><b data-billing-tax>&#8377;0.00</b></div>
-                    <div><span>Total</span><strong data-billing-total>&#8377;0.00</strong></div>
+                    <div><span>{{ __('common.subtotal_97f735') }}</span><b data-billing-subtotal>&#8377;0.00</b></div>
+                    <div><span>{{ __('common.tax_9be70f') }}</span><b data-billing-tax>&#8377;0.00</b></div>
+                    <div><span>{{ __('common.total_b25928') }}</span><strong data-billing-total>&#8377;0.00</strong></div>
                 </div>
 
                 <div class="field-grid">
                     <label>
-                        <span>Paid amount</span>
+                        <span>{{ __('common.paid_amount_e59cf1') }}</span>
                         <input type="number" name="paid_amount" min="0.01" step="0.01" value="{{ old('paid_amount', 0) }}" required data-replace-on-focus>
                         @error('paid_amount') <small>{{ $message }}</small> @enderror
                     </label>
 
                     <label>
-                        <span>Payment method</span>
+                        <span>{{ __('orders.payment_method_0e55fb') }}</span>
                         <select name="payment_method" required>
-                            <option value="">Select payment method</option>
-                            <option value="cash" @selected(old('payment_method', 'cash') === 'cash')>Cash</option>
+                            <option value="">{{ __('orders.select_payment_method_2f31dd') }}</option>
+                            <option value="cash" @selected(old('payment_method', 'cash') === 'cash')>{{ __('common.cash_758ec5') }}</option>
                             <option value="upi" @selected(old('payment_method') === 'upi')>UPI</option>
-                            <option value="card" @selected(old('payment_method') === 'card')>Credit/Debit card</option>
-                            <option value="net_banking" @selected(old('payment_method') === 'net_banking')>Net banking</option>
-                            <option value="credit" @selected(old('payment_method') === 'credit')>Customer credit</option>
+                            <option value="card" @selected(old('payment_method') === 'card')>{{ __('common.credit_debit_card_57b57c') }}</option>
+                            <option value="net_banking" @selected(old('payment_method') === 'net_banking')>{{ __('common.net_banking_a98d43') }}</option>
+                            <option value="credit" @selected(old('payment_method') === 'credit')>{{ __('orders.customer_credit_913685') }}</option>
                         </select>
                         @error('payment_method') <small>{{ $message }}</small> @enderror
                     </label>
                 </div>
 
                 <button class="product-save-button" type="submit" data-billing-submit>
-                    <span class="product-save-button__idle">Generate invoice</span>
+                    <span class="product-save-button__idle">{{ __('orders.generate_invoice_4baae5') }}</span>
                     <span class="product-save-button__loading" aria-hidden="true">
                         <i></i>
-                        Generating
+                        {{ __('common.generating_8d6873') }}
                     </span>
                 </button>
             </form>
         </article>
         <article class="admin-section billing-invoice-panel" data-billing-listing>
-            <div class="section-title"><div><p class="eyebrow">Invoices</p><h2>Recent invoices</h2></div></div>
+            <div class="section-title"><div><p class="eyebrow">{{ __('orders.invoices_35f8f3') }}</p><h2>{{ __('orders.recent_invoices_11b72a') }}</h2></div></div>
             <div class="product-toolbar">
                 <form class="product-filter-form billing-search-form" method="GET" action="{{ route('sales.index') }}" data-billing-search-form>
-                    <input type="search" name="search" value="{{ request('search') }}" placeholder="Search invoice, customer, product" data-billing-search>
-                    <a class="product-clear-filter" href="{{ route('sales.index') }}" data-billing-listing-link>Clear</a>
+                    <input type="search" name="search" value="{{ request('search') }}" placeholder="{{ __('products.search_invoice_customer_product_4eeb7a') }}" data-billing-search>
+                    <a class="product-clear-filter" href="{{ route('sales.index') }}" data-billing-listing-link>{{ __('common.clear_719ea3') }}</a>
                 </form>
             </div>
             <div class="billing-invoice-results" data-billing-listing-results>
                 <div class="billing-listing-loader" data-billing-listing-loader aria-live="polite" aria-hidden="true">
                     <span aria-hidden="true"></span>
-                    <strong>Loading invoices</strong>
+                    <strong>{{ __('orders.loading_invoices_41b5e9') }}</strong>
                 </div>
                 <div class="table-wrap billing-invoice-listing">
-                    <table class="admin-table billing-invoice-table"><thead><tr><th>Invoice</th><th>Customer</th><th>Items</th><th>Total</th><th>Paid</th><th>Action</th></tr></thead><tbody>
+                    <table class="admin-table billing-invoice-table"><thead><tr><th>{{ __('orders.invoice_f9f388') }}</th><th>{{ __('orders.customer_0e8574') }}</th><th>{{ __('common.items_44d25b') }}</th><th>{{ __('common.total_b25928') }}</th><th>{{ __('common.paid_dc9d45') }}</th><th>{{ __('common.action_97c89a') }}</th></tr></thead><tbody>
                 @forelse ($orders as $order)
                     @php
                         $invoiceItems = $order->items->map(function ($item) {
@@ -1021,8 +1021,8 @@
                             $lineTotal = $lineSubtotal + ($lineSubtotal * ((float) $item->tax_percentage / 100));
 
                             return [
-                                'product' => $item->product->name ?? 'Product',
-                                'sku' => $item->product->sku ?: ($item->product->barcode ?? 'No SKU'),
+                                'product' => $item->product?->localized('name') ?? __('products.product_dd3b86'),
+                                'sku' => $item->product->sku ?: ($item->product->barcode ?? __('products.no_sku_1bc1c2')),
                                 'quantity' => (int) $item->quantity,
                                 'rate' => number_format((float) $item->selling_price, 2),
                                 'tax' => number_format((float) $item->tax_percentage, 2),
@@ -1032,11 +1032,11 @@
                     @endphp
                     <tr>
                         <td data-label="Invoice">{{ $order->invoice_number }}</td>
-                        <td data-label="Customer">{{ $order->customer->name ?? 'Walk-in' }}</td>
+                        <td data-label="Customer">{{ $order->customer->name ?? __('common.walk_in_801d86') }}</td>
                         <td data-label="Items">
                             <span class="invoice-item-list">
                                 @foreach ($order->items as $item)
-                                    <strong>{{ $item->product->name ?? 'Product' }} x {{ $item->quantity }}</strong>
+                                    <strong>{{ $item->product?->localized('name') ?? __('products.product_dd3b86') }} x {{ $item->quantity }}</strong>
                                 @endforeach
                             </span>
                         </td>
@@ -1048,7 +1048,7 @@
                                 class="invoice-view-button"
                                 data-invoice-view
                                 data-invoice-number="{{ $order->invoice_number }}"
-                                data-invoice-customer="{{ $order->customer->name ?? 'Walk-in' }}"
+                                data-invoice-customer="{{ $order->customer->name ?? __('common.walk_in_801d86') }}"
                                 data-invoice-customer-mobile="{{ $order->customer->mobile ?? '' }}"
                                 data-invoice-date="{{ $order->created_at->format('d M Y, h:i A') }}"
                                 data-invoice-subtotal="{{ number_format($order->subtotal, 2) }}"
@@ -1056,19 +1056,19 @@
                                 data-invoice-total="{{ number_format($order->total_amount, 2) }}"
                                 data-invoice-paid="{{ number_format($order->paid_amount, 2) }}"
                                 data-invoice-balance="{{ max(0, (float) $order->total_amount - (float) $order->paid_amount) }}"
-                                data-invoice-payment="{{ ucfirst(str_replace('_', ' ', $order->payment_method)) }}"
+                                data-invoice-payment="{{ __(ucfirst(str_replace('_', ' ', $order->payment_method))) }}"
                                 data-invoice-items="{{ base64_encode($invoiceItems->toJson()) }}"
                             >
                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
                                     <circle cx="12" cy="12" r="3" />
                                 </svg>
-                                <span>View</span>
+                                <span>{{ __('common.view_69bd4e') }}</span>
                             </button>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="6">No invoices yet.</td></tr>
+                    <tr><td colspan="6">{{ __('orders.no_invoices_yet_7da80f') }}</td></tr>
                 @endforelse
                     </tbody></table>
                 </div>
@@ -1081,11 +1081,11 @@
     <aside class="invoice-drawer" data-invoice-drawer aria-hidden="true">
         <div class="invoice-drawer-head">
             <div>
-                <p class="eyebrow">Invoice details</p>
-                <h2 data-invoice-drawer-number>Invoice</h2>
+                <p class="eyebrow">{{ __('orders.invoice_details_2325ca') }}</p>
+                <h2 data-invoice-drawer-number>{{ __('orders.invoice_f9f388') }}</h2>
                 <span data-invoice-drawer-date></span>
             </div>
-            <button type="button" class="invoice-drawer-close" data-close-invoice aria-label="Close invoice details">
+            <button type="button" class="invoice-drawer-close" data-close-invoice aria-label="{{ __('orders.close_invoice_details_fc5e1f') }}">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M18 6 6 18" />
                     <path d="m6 6 12 12" />
@@ -1099,27 +1099,27 @@
                 <span>{{ auth()->user()->tenant->mobile }} @if(auth()->user()->tenant->gst_number) · GSTIN {{ auth()->user()->tenant->gst_number }} @endif</span>
             </div>
             <div class="invoice-detail-grid">
-                <div><span>Customer</span><strong data-invoice-drawer-customer></strong></div>
-                <div><span>Payment</span><strong data-invoice-drawer-payment></strong></div>
-                <div><span>Mobile</span><strong data-invoice-drawer-mobile>-</strong></div>
-                <div><span>Status</span><strong class="invoice-payment-status" data-invoice-drawer-status></strong></div>
+                <div><span>{{ __('orders.customer_0e8574') }}</span><strong data-invoice-drawer-customer></strong></div>
+                <div><span>{{ __('orders.payment_b41a92') }}</span><strong data-invoice-drawer-payment></strong></div>
+                <div><span>{{ __('common.mobile_b1d702') }}</span><strong data-invoice-drawer-mobile>-</strong></div>
+                <div><span>{{ __('common.status_bae7d5') }}</span><strong class="invoice-payment-status" data-invoice-drawer-status></strong></div>
             </div>
             <div>
-                <p class="eyebrow">Products</p>
+                <p class="eyebrow">{{ __('products.products_fe0a09') }}</p>
                 <div class="invoice-drawer-items" data-invoice-drawer-items></div>
             </div>
             <div class="invoice-total-box">
-                <div><span>Subtotal</span><strong data-invoice-drawer-subtotal></strong></div>
-                <div><span>Tax</span><strong data-invoice-drawer-tax></strong></div>
-                <div><span>Paid</span><strong data-invoice-drawer-paid></strong></div>
-                <div><span>Balance</span><strong data-invoice-drawer-balance></strong></div>
-                <div class="invoice-grand-total"><span>Total</span><strong data-invoice-drawer-total></strong></div>
+                <div><span>{{ __('common.subtotal_97f735') }}</span><strong data-invoice-drawer-subtotal></strong></div>
+                <div><span>{{ __('common.tax_9be70f') }}</span><strong data-invoice-drawer-tax></strong></div>
+                <div><span>{{ __('common.paid_dc9d45') }}</span><strong data-invoice-drawer-paid></strong></div>
+                <div><span>{{ __('common.balance_90eef6') }}</span><strong data-invoice-drawer-balance></strong></div>
+                <div class="invoice-grand-total"><span>{{ __('common.total_b25928') }}</span><strong data-invoice-drawer-total></strong></div>
             </div>
         </div>
         <div class="invoice-drawer-actions">
             <button type="button" class="invoice-print-button" data-print-invoice>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z"/></svg>
-                Print invoice
+                {{ __('orders.print_invoice_517b9e') }}
             </button>
         </div>
     </aside>
@@ -1127,14 +1127,14 @@
     <template data-billing-row-template>
         <div class="billing-item-row" data-billing-row>
             <label class="billing-product-search searchable-select" data-label="Product" data-billing-product-search data-product-url="{{ route('sales.products') }}">
-                <span class="sr-only">Product</span>
-                <input type="search" placeholder="Search or select product" autocomplete="off" role="combobox" aria-label="Search products" aria-expanded="false" data-billing-product-search-input>
+                <span class="sr-only">{{ __('products.product_dd3b86') }}</span>
+                <input type="search" placeholder="{{ __('products.search_or_select_product_8ab7d7') }}" autocomplete="off" role="combobox" aria-label="{{ __('products.search_products_4412bf') }}" aria-expanded="false" data-billing-product-search-input>
                 <div class="searchable-select__menu" role="listbox" data-billing-product-search-menu hidden></div>
                 <select class="searchable-select__native" required data-product-select tabindex="-1" aria-hidden="true">
-                    <option value="">Select product</option>
+                    <option value="">{{ __('products.select_product_596d90') }}</option>
                     @foreach ($products as $product)
                         <option value="{{ $product->id }}" data-price="{{ $product->price }}" data-tax="{{ $product->tax_percentage }}" data-stock="{{ $product->available_stock }}">
-                            {{ $product->name }} - {{ $product->sku ?: $product->barcode ?: 'No SKU' }} - Stock {{ $product->available_stock }}
+                            {{ __('common.stock_label', ['name' => $product->localized('name'), 'sku' => $product->sku ?: $product->barcode ?: __('products.no_sku_1bc1c2'), 'stock' => $product->available_stock]) }}
                         </option>
                     @endforeach
                 </select>
@@ -1142,13 +1142,13 @@
             </label>
 
             <label data-label="Qty">
-                <span class="sr-only">Quantity</span>
+                <span class="sr-only">{{ __('common.quantity_44f6af') }}</span>
                 <input type="number" min="1" value="1" required data-quantity-input>
             </label>
 
             <span class="billing-line-price" data-label="Rate" data-line-price>&#8377;0.00</span>
             <span class="billing-cell-total" data-label="Total" data-line-total>&#8377;0.00</span>
-            <button class="billing-row-remove" type="button" aria-label="Remove product" data-remove-row>&times;</button>
+            <button class="billing-row-remove" type="button" aria-label="{{ __('products.remove_product_5d2d45') }}" data-remove-row>&times;</button>
         </div>
     </template>
 
@@ -1194,9 +1194,9 @@
                         items = [];
                     }
 
-                    document.querySelector('[data-invoice-drawer-number]').textContent = button.dataset.invoiceNumber || 'Invoice';
+                    document.querySelector('[data-invoice-drawer-number]').textContent = button.dataset.invoiceNumber || window.t("orders.invoice_f9f388");
                     document.querySelector('[data-invoice-drawer-date]').textContent = button.dataset.invoiceDate || '';
-                    document.querySelector('[data-invoice-drawer-customer]').textContent = button.dataset.invoiceCustomer || 'Walk-in';
+                    document.querySelector('[data-invoice-drawer-customer]').textContent = button.dataset.invoiceCustomer || window.t("common.walk_in_801d86");
                     document.querySelector('[data-invoice-drawer-mobile]').textContent = button.dataset.invoiceCustomerMobile || '-';
                     document.querySelector('[data-invoice-drawer-payment]').textContent = button.dataset.invoicePayment || '-';
                     document.querySelector('[data-invoice-drawer-subtotal]').textContent = money(button.dataset.invoiceSubtotal || '0.00');
@@ -1206,7 +1206,7 @@
                     var balance = Number(button.dataset.invoiceBalance || 0);
                     var status = document.querySelector('[data-invoice-drawer-status]');
                     document.querySelector('[data-invoice-drawer-balance]').textContent = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(balance);
-                    status.textContent = balance > 0 ? 'Partially paid' : 'Paid';
+                    status.textContent = balance > 0 ? window.t("common.partially_paid_bc9fe7") : window.t("common.paid_dc9d45");
                     status.classList.toggle('has-balance', balance > 0);
 
                     var list = document.querySelector('[data-invoice-drawer-items]');
@@ -1216,8 +1216,8 @@
                         var row = document.createElement('div');
                         row.className = 'invoice-drawer-item';
                         row.innerHTML = '<div><strong></strong><small></small></div><strong></strong>';
-                        row.querySelector('strong').textContent = item.product || 'Product';
-                        row.querySelector('small').textContent = (item.sku || 'No SKU') + ' - Qty ' + item.quantity + ' - Rate ' + money(item.rate || '0.00') + ' - Tax ' + (item.tax || '0.00') + '%';
+                        row.querySelector('strong').textContent = item.product || window.t("products.product_dd3b86");
+                        row.querySelector('small').textContent = window.t('common.invoice_line', {sku: item.sku || window.t('products.no_sku_1bc1c2'), quantity: item.quantity, rate: money(item.rate || '0.00'), tax: item.tax || '0.00'});
                         row.lastElementChild.textContent = money(item.total || '0.00');
                         list.appendChild(row);
                     });
@@ -1225,7 +1225,7 @@
                     if (items.length === 0) {
                         var empty = document.createElement('div');
                         empty.className = 'empty-state product-empty';
-                        empty.textContent = 'No invoice items found.';
+                        empty.textContent = window.t("orders.no_invoice_items_found_3f11d6");
                         list.appendChild(empty);
                     }
 
@@ -1286,7 +1286,7 @@
                     signal: requestController.signal
                 }).then(function (response) {
                     if (!response.ok) {
-                        throw new Error('Unable to load invoices.');
+                        throw new Error(window.t("validation.unable_to_load_invoices_a22d12"));
                     }
 
                     return response.text();
@@ -1295,7 +1295,7 @@
                     var nextListing = page.querySelector('[data-billing-listing]');
 
                     if (!nextListing) {
-                        throw new Error('Invoice listing was not found.');
+                        throw new Error(window.t("validation.invoice_listing_was_not_found_39b988"));
                     }
 
                     listing.replaceWith(nextListing);
@@ -1381,7 +1381,7 @@
                     var label = field.closest('label');
                     var labelText = label ? label.querySelector('span') : null;
 
-                    return labelText ? labelText.textContent.trim() : 'This field';
+                    return labelText ? labelText.textContent.trim() : window.t("common.this_field_f89fd4");
                 }
 
                 function existingErrorElement(field) {
@@ -1427,8 +1427,8 @@
 
                     error = errorElement(field);
                     error.textContent = field.validity.valueMissing
-                        ? fieldLabel(field) + ' is required.'
-                        : field.validationMessage;
+                        ? window.t('validation.required', {attribute: fieldLabel(field)})
+                        : window.localizedValidationMessage(field);
                     error.hidden = false;
                     field.setAttribute('aria-invalid', 'true');
 
@@ -1477,10 +1477,10 @@
 
                         linePrice.textContent = product ? currency.format(product.price) : currency.format(0);
                         lineTotal.textContent = currency.format(lineSubtotal + lineTax);
-                        note.textContent = product ? 'Available ' + product.stock + ' unit(s), tax ' + product.tax + '%' : '';
+                        note.textContent = product ? window.t('common.available_units', {quantity: product.stock, tax: product.tax}) : '';
 
                         if (product && quantity > product.stock) {
-                            quantityInput.setCustomValidity('Only ' + product.stock + ' unit(s) available.');
+                            quantityInput.setCustomValidity(window.t('common.available_only', {quantity: product.stock}));
                         } else {
                             quantityInput.setCustomValidity('');
                         }
@@ -1561,7 +1561,7 @@
                         loader.className = 'billing-product-loader';
                         loader.dataset.billingProductsLoader = '';
                         loader.setAttribute('role', 'status');
-                        loader.textContent = 'Loading products…';
+                        loader.textContent = window.t('common.loading_products');
                         menu.appendChild(loader);
                         menu.hidden = false;
                         search.setAttribute('aria-expanded', 'true');
@@ -1574,7 +1574,7 @@
                             var response = await fetch(url, {
                                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                             });
-                            if (!response.ok) throw new Error('Unable to load products.');
+                            if (!response.ok) throw new Error(window.t("validation.unable_to_load_products_051a4c"));
                             var payload = await response.json();
                             if (currentRequest !== requestNumber) return;
 
@@ -1586,12 +1586,12 @@
                             if (!menu.querySelector('.searchable-select__option')) {
                             var empty = document.createElement('span');
                             empty.className = 'searchable-select__empty';
-                            empty.textContent = 'No products found';
+                            empty.textContent = window.t("products.no_products_found_a46d76");
                             menu.appendChild(empty);
                             } else if (!hasMore) {
                                 var end = document.createElement('span');
                                 end.className = 'searchable-select__empty';
-                                end.textContent = 'All products loaded';
+                                end.textContent = window.t("products.all_products_loaded_1a8547");
                                 menu.appendChild(end);
                             }
                         } catch (error) {
@@ -1599,7 +1599,7 @@
                             var retry = document.createElement('button');
                             retry.type = 'button';
                             retry.className = 'searchable-select__empty';
-                            retry.textContent = 'Could not load products. Click to retry.';
+                            retry.textContent = window.t("validation.could_not_load_products_click_to_retry_7d8673");
                             retry.addEventListener('click', function () { loadProducts(reset, activeQuery); });
                             menu.appendChild(retry);
                         } finally {

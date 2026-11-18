@@ -76,14 +76,14 @@ class UserController extends Controller
         if (! is_null($userLimit) && $userCount >= $userLimit) {
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => 'Your current plan allows '.$userLimit.' users. Upgrade the plan or remove an account before creating another user.',
-                    'errors' => ['limit' => ['Your current plan allows '.$userLimit.' users. Upgrade the plan or remove an account before creating another user.']],
+                    'message' => __('settings.user_limit', ['count' => $userLimit]),
+                    'errors' => ['limit' => [__('settings.user_limit', ['count' => $userLimit])]],
                 ], 422);
             }
 
             return back()
                 ->withInput($request->except(['password', 'password_confirmation']))
-                ->withErrors(['limit' => 'Your current plan allows '.$userLimit.' users. Upgrade the plan or remove an account before creating another user.']);
+                ->withErrors(['limit' => __('settings.user_limit', ['count' => $userLimit])]);
         }
 
         $data = $request->validate([
@@ -99,7 +99,7 @@ class UserController extends Controller
             'role' => ['required', 'integer', Rule::in(array_keys($this->creatableRoles()))],
             'password' => ['required', 'string', Password::min(8)->letters()->numbers(), 'confirmed'],
         ], [
-            'phone.digits_between' => 'Phone number must be 6 to 15 digits.',
+            'phone.digits_between' => __('validation.phone_number_must_be_6_to_15_digits_5a2196'),
         ]);
 
         $createdUser = User::create([
@@ -118,18 +118,19 @@ class UserController extends Controller
         ActivityNotifier::notify(
             $tenant->id,
             'user_created',
-            'User account created',
-            $request->user()->name.' created '.$createdUser->name.' as '.$createdUser->role_label.'.'
+            "User account created",
+            $request->user()->name.' created '.$createdUser->name.' as '.$createdUser->role_label.'.',
+            parameters: ['actor' => $request->user()->name, 'name' => $createdUser->name, 'role' => $createdUser->role_label]
         );
 
         if ($request->expectsJson()) {
             return response()->json([
-                'message' => 'User account created.',
+                'message' => __('common.user_account_created_8b02fc'),
                 'redirect' => route('users.index'),
             ], 201);
         }
 
-        return redirect()->route('users.index')->with('status', 'User account created.');
+        return redirect()->route('users.index')->with('status', __('common.user_account_created_8b02fc'));
     }
 
     public function destroy(Request $request, User $user): RedirectResponse
@@ -137,7 +138,7 @@ class UserController extends Controller
         abort_unless((int) $user->tenant_id === (int) $request->user()->tenant_id, 404);
 
         if ((int) $user->role === User::ROLE_OWNER) {
-            return back()->withErrors(['delete' => 'Owner accounts cannot be deleted.']);
+            return back()->withErrors(['delete' => __('validation.owner_accounts_cannot_be_deleted_f16f81')]);
         }
 
         $deletedName = $user->name;
@@ -148,11 +149,12 @@ class UserController extends Controller
         ActivityNotifier::notify(
             $request->user()->tenant_id,
             'user_deleted',
-            'User account deleted',
-            $request->user()->name.' deleted '.$deletedName.' from '.$deletedRole.' access.'
+            "User account deleted",
+            $request->user()->name.' deleted '.$deletedName.' from '.$deletedRole.' access.',
+            parameters: ['actor' => $request->user()->name, 'name' => $deletedName, 'role' => $deletedRole]
         );
 
-        return redirect()->route('users.index')->with('status', 'User account deleted.');
+        return redirect()->route('users.index')->with('status', __('common.user_account_deleted_5b5a5c'));
     }
 
     private function creatableRoles(): array
@@ -165,11 +167,11 @@ class UserController extends Controller
     private function countryCodes(): array
     {
         return [
-            '+91' => 'India (+91)',
-            '+1' => 'USA/Canada (+1)',
-            '+44' => 'United Kingdom (+44)',
-            '+61' => 'Australia (+61)',
-            '+971' => 'United Arab Emirates (+971)',
+            '+91' => __('common.india_91_688380'),
+            '+1' => __('common.usa_canada_1_4e3f65'),
+            '+44' => __('common.united_kingdom_44_60072d'),
+            '+61' => __('common.australia_61_b92110'),
+            '+971' => __('common.united_arab_emirates_971_02ccf6'),
         ];
     }
 }

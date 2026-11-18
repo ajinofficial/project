@@ -1,4 +1,4 @@
-@extends('layouts.admin', ['title' => 'Store Setup'])
+@extends('layouts.admin', ['title' => __('settings.store_setup_755c06')])
 
 @section('content')
     @php
@@ -27,19 +27,19 @@
     <section class="setup-page">
         <header class="setup-hero">
             <div>
-                <p class="eyebrow">Store settings</p>
+                <p class="eyebrow">{{ __('settings.store_settings_62bebf') }}</p>
                 <h1>{{ $tenant->business_name }}</h1>
-                <p>Configure billing defaults, tax, low-stock alerts, and staff role permissions for this tenant.</p>
+                <p>{{ __('notifications.configure_billing_defaults_tax_low_stock_alerts_and_staff_role_permiss_43f87b') }}</p>
             </div>
             <div class="setup-hero-panel">
                 <div class="setup-progress-ring" style="--setup-progress: {{ $setupCompletionPercent }}%" aria-label="Setup completion {{ $setupCompletionPercent }} percent">
                     <strong>{{ $setupCompletionPercent }}%</strong>
-                    <span>Ready</span>
+                    <span>{{ __('common.ready_20c7c5') }}</span>
                 </div>
                 <div>
-                    <span>{{ $tenant->business_category_label }}</span>
+                    <span>{{ __($tenant->business_category_label) }}</span>
                     <strong data-prefix-preview>{{ $settings['invoice_prefix'] }}</strong>
-                    <small>Invoice prefix</small>
+                    <small>{{ __('orders.invoice_prefix_faa2b6') }}</small>
                 </div>
             </div>
         </header>
@@ -59,82 +59,82 @@
             <section class="setup-card setup-main-card">
                 <div class="section-title">
                     <div>
-                        <p class="eyebrow">Billing defaults</p>
-                        <h2>Invoice and tax setup</h2>
+                        <p class="eyebrow">{{ __('orders.billing_defaults_ddba22') }}</p>
+                        <h2>{{ __('orders.invoice_and_tax_setup_ef59e1') }}</h2>
                     </div>
-                    <a href="{{ route(\App\Support\RolePermission::firstAccessibleRoute(auth()->user())) }}">Skip for now</a>
+                    <a href="{{ route(\App\Support\RolePermission::firstAccessibleRoute(auth()->user())) }}">{{ __('common.skip_for_now_6fc096') }}</a>
                 </div>
 
                 <div class="setup-field-grid">
                     <label class="setup-field">
-                        <span>Currency</span>
+                        <span>{{ __('common.currency_e070de') }}</span>
                         <select name="currency" @class(['is-invalid' => $errors->has('currency')]) required>
                             <option value="INR" @selected($settings['currency'] === 'INR')>&#8377; INR</option>
                         </select>
-                        <small>Used across invoices and dashboard totals.</small>
+                        <small>{{ __('orders.used_across_invoices_and_dashboard_totals_e905ad') }}</small>
                         @error('currency')<small class="field-error">{{ $message }}</small>@enderror
                     </label>
 
                     <label class="setup-field">
-                        <span>Default tax percentage</span>
+                        <span>{{ __('common.default_tax_percentage_8ebbbd') }}</span>
                         <div class="setup-input-affix">
                             <input type="number" name="default_tax_percentage" min="0" max="99.99" step="0.01" value="{{ $settings['default_tax_percentage'] }}" @class(['is-invalid' => $errors->has('default_tax_percentage')]) data-tax-input required>
                             <span>%</span>
                         </div>
-                        <small>Applied to new products and purchase entries.</small>
+                        <small>{{ __('products.applied_to_new_products_and_purchase_entries_e2d878') }}</small>
                         @error('default_tax_percentage')<small class="field-error">{{ $message }}</small>@enderror
                     </label>
 
                     <label class="setup-field">
-                        <span>Low-stock alert threshold</span>
+                        <span>{{ __('notifications.low_stock_alert_threshold_7c69fa') }}</span>
                         <input type="number" name="low_stock_threshold" min="1" max="9999" value="{{ $settings['low_stock_threshold'] }}" @class(['is-invalid' => $errors->has('low_stock_threshold')]) data-stock-input required>
-                        <small>Default minimum stock level for new items.</small>
+                        <small>{{ __('products.default_minimum_stock_level_for_new_items_528ea9') }}</small>
                         @error('low_stock_threshold')<small class="field-error">{{ $message }}</small>@enderror
                     </label>
 
                     <label class="setup-field">
-                        <span>Invoice prefix</span>
+                        <span>{{ __('orders.invoice_prefix_faa2b6') }}</span>
                         <input type="text" name="invoice_prefix" value="{{ $settings['invoice_prefix'] }}" maxlength="12" pattern="[A-Za-z0-9-]+" autocomplete="off" @class(['is-invalid' => $errors->has('invoice_prefix')]) data-prefix-input required>
-                        <small>Use letters, numbers, or hyphens. Example: <span data-invoice-example>{{ $settings['invoice_prefix'] ?: 'INV' }}-{{ now()->format('Ymd') }}001</span></small>
+                        <small>{{ __('common.use_letters_numbers_or_hyphens_example_ffb2e6') }} <span data-invoice-example>{{ $settings['invoice_prefix'] ?: 'INV' }}-{{ now()->format('Ymd') }}001</span></small>
                         @error('invoice_prefix')<small class="field-error">{{ $message }}</small>@enderror
                     </label>
                 </div>
 
                 <div class="setup-preview-strip" aria-live="polite">
                     <div>
-                        <span>Invoice preview</span>
+                        <span>{{ __('orders.invoice_preview_e6cf1d') }}</span>
                         <strong data-invoice-preview>{{ $settings['invoice_prefix'] ?: 'INV' }}-{{ now()->format('Ymd') }}001</strong>
                     </div>
                     <div>
-                        <span>Product tax default</span>
+                        <span>{{ __('products.product_tax_default_3b68c6') }}</span>
                         <strong><b data-tax-preview>{{ $settings['default_tax_percentage'] }}</b>%</strong>
                     </div>
                     <div>
-                        <span>Low-stock alert</span>
-                        <strong><b data-stock-preview>{{ $settings['low_stock_threshold'] }}</b> units</strong>
+                        <span>{{ __('notifications.low_stock_alert_93aa7e') }}</span>
+                        <strong><b data-stock-preview>{{ $settings['low_stock_threshold'] }}</b> {{ __('common.units_917625') }}</strong>
                     </div>
                 </div>
             </section>
 
             <aside class="setup-card setup-summary-card">
                 <div class="setup-card-head">
-                    <p class="eyebrow">Store profile</p>
-                    <h2>Business details</h2>
+                    <p class="eyebrow">{{ __('common.store_profile_ba2ce6') }}</p>
+                    <h2>{{ __('common.business_details_edbf43') }}</h2>
                 </div>
                 <div class="setup-summary-item">
-                    <span>Owner</span>
+                    <span>{{ __('common.owner_89ff31') }}</span>
                     <strong>{{ $tenant->owner_name }}</strong>
                 </div>
                 <div class="setup-summary-item">
-                    <span>Mobile</span>
+                    <span>{{ __('common.mobile_b1d702') }}</span>
                     <strong>{{ $tenant->mobile }}</strong>
                 </div>
                 <div class="setup-summary-item">
-                    <span>Email</span>
+                    <span>{{ __('common.email_84add5') }}</span>
                     <strong>{{ $tenant->email }}</strong>
                 </div>
                 <div class="setup-summary-address">
-                    <span>Store address</span>
+                    <span>{{ __('common.store_address_934589') }}</span>
                     <p>{{ $tenant->store_address }}</p>
                 </div>
             </aside>
@@ -142,23 +142,23 @@
             <section class="setup-card setup-roles-card">
                 <div class="section-title">
                     <div>
-                        <p class="eyebrow">Access control</p>
-                        <h2>Role permissions</h2>
+                        <p class="eyebrow">{{ __('common.access_control_b3e3bb') }}</p>
+                        <h2>{{ __('settings.role_permissions_4b9cd8') }}</h2>
                     </div>
-                    <a href="{{ route('role-permissions.index') }}">Manage permissions</a>
+                    <a href="{{ route('role-permissions.index') }}">{{ __('settings.manage_permissions_3fcf22') }}</a>
                 </div>
 
                 <div class="setup-role-grid">
                     @foreach ($rolePermissions as $role => $permissions)
                         <article>
-                            <strong>{{ str_replace('_', ' ', $role) }}</strong>
-                            <small>{{ count($permissions) }} menu{{ count($permissions) === 1 ? '' : 's' }}</small>
+                            <strong>{{ __(ucfirst(str_replace('_', ' ', $role))) }}</strong>
+                            <small>{{ __('common.menus_count', ['count' => count($permissions)]) }}</small>
                             <div>
                                 @foreach (array_slice($permissions, 0, 4) as $permission)
-                                    <span>{{ $menus[$permission]['label'] ?? str_replace('_', ' ', $permission) }}</span>
+                                    <span>{{ __($menus[$permission]['label'] ?? ucfirst(str_replace('_', ' ', $permission))) }}</span>
                                 @endforeach
                                 @if (count($permissions) > 4)
-                                    <span>+{{ count($permissions) - 4 }} more</span>
+                                    <span>{{ __('common.more_count', ['count' => count($permissions) - 4]) }}</span>
                                 @endif
                             </div>
                         </article>
@@ -168,10 +168,10 @@
 
             <div class="setup-save-bar">
                 <div>
-                    <strong data-save-title>Store setup is current</strong>
-                    <span data-save-copy>Changes apply to future invoices, alerts, and product defaults.</span>
+                    <strong data-save-title>{{ __('settings.store_setup_is_current_dbf891') }}</strong>
+                    <span data-save-copy>{{ __('notifications.changes_apply_to_future_invoices_alerts_and_product_defaults_4b5675') }}</span>
                 </div>
-                <button type="submit" data-save-button disabled>Save setup</button>
+                <button type="submit" data-save-button disabled>{{ __('settings.save_setup_1a0067') }}</button>
             </div>
         </form>
     </section>
@@ -198,25 +198,25 @@
 
             function validationMessage(field) {
                 var label = field.closest('.setup-field');
-                var labelText = label?.querySelector(':scope > span')?.textContent.trim() || 'This field';
+                var labelText = label?.querySelector(':scope > span')?.textContent.trim() || window.t("common.this_field_f89fd4");
 
                 if (field.validity.valueMissing) {
-                    return labelText + ' is required.';
+                    return window.t('validation.required', {attribute: labelText});
                 }
 
                 if (field.validity.rangeUnderflow) {
-                    return labelText + ' must be at least ' + field.min + '.';
+                    return window.t('validation.min.numeric', {attribute: labelText, min: field.min});
                 }
 
                 if (field.validity.rangeOverflow) {
-                    return labelText + ' must not exceed ' + field.max + '.';
+                    return window.t('validation.max.numeric', {attribute: labelText, max: field.max});
                 }
 
                 if (field.validity.patternMismatch) {
-                    return 'Invoice prefix may only contain letters, numbers, and hyphens.';
+                    return window.t("orders.invoice_prefix_may_only_contain_letters_numbers_and_hyphens_bc7cac");
                 }
 
-                return field.validationMessage;
+                return window.localizedValidationMessage(field);
             }
 
             function validateField(field) {
@@ -296,8 +296,8 @@
                 var changed = hasChanges();
 
                 saveButton.disabled = ! changed;
-                saveTitle.textContent = changed ? 'Unsaved setup changes' : 'Store setup is current';
-                saveCopy.textContent = changed ? 'Review the previews and save when ready.' : 'Changes apply to future invoices, alerts, and product defaults.';
+                saveTitle.textContent = changed ? window.t("settings.unsaved_setup_changes_52f53c") : window.t("settings.store_setup_is_current_dbf891");
+                saveCopy.textContent = changed ? window.t("common.review_the_previews_and_save_when_ready_1bd2ff") : window.t("notifications.changes_apply_to_future_invoices_alerts_and_product_defaults_4b5675");
                 form.classList.toggle('has-unsaved-changes', changed);
             }
 
@@ -329,13 +329,13 @@
                 if (firstInvalid) {
                     event.preventDefault();
                     firstInvalid.focus();
-                    saveTitle.textContent = 'Please correct the highlighted fields';
-                    saveCopy.textContent = 'Required fields are marked with a red error message.';
+                    saveTitle.textContent = window.t("common.please_correct_the_highlighted_fields_b479ae");
+                    saveCopy.textContent = window.t("validation.required_fields_are_marked_with_a_red_error_message_e5c912");
                     return;
                 }
 
                 saveButton.disabled = true;
-                saveButton.textContent = 'Saving...';
+                saveButton.textContent = window.t("common.saving_ae7e88");
             });
 
             updatePreview();

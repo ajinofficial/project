@@ -3,20 +3,21 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ?? 'Dashboard' }} - Zyloah</title>
+    <title>{{ $title ?? __('dashboard.dashboard_d87f47') }} - Zyloah</title>
     <link rel="icon" type="image/png" href="{{ asset('images/Zyloah-logo.png') }}">
     @include('partials.app-base-url')
     <link rel="stylesheet" href="{{ asset('css/register.css') }}?v={{ rawurlencode(config('app.asset_version')) }}">
+    @include('partials.localization')
 </head>
 <body class="admin-body inapp-body">
     <div @class(['inapp-shell', 'inapp-shell-full' => $hideSidebar ?? false])>
         @unless ($hideSidebar ?? false)
-        <aside class="inapp-sidebar" aria-label="Admin navigation">
+        <aside class="inapp-sidebar" aria-label="{{ __('common.admin_navigation_8ce001') }}">
             <a class="inapp-brand" href="{{ route(\App\Support\RolePermission::firstAccessibleRoute(auth()->user())) }}">
-                <span class="inapp-brand-logo" role="img" aria-label="Zyloah logo"></span>
+                <span class="inapp-brand-logo" role="img" aria-label="{{ __('common.zyloah_logo_216929') }}"></span>
                 <span>
                     <b>{{ auth()->user()->tenant->business_name ?? 'Zyloah' }}</b>
-                    <small>{{ (int) auth()->user()->tenant?->tenant_type === \App\Models\Tenant::TYPE_VENDOR ? 'Vendor Console' : 'SaaS Inventory' }}</small>
+                    <small>{{ (int) auth()->user()->tenant?->tenant_type === \App\Models\Tenant::TYPE_VENDOR ? __('common.vendor_console_711c5f') : __('products.saas_inventory_073f7c') }}</small>
                 </span>
             </a>
 
@@ -46,14 +47,14 @@
                 };
             @endphp
             <nav class="inapp-nav">
-                <small>Main</small>
+                <small>{{ __('common.main_62bce9') }}</small>
                 @foreach ($sidebarMenus as $menuKey => $menu)
                     @if ($canOpenMenu($menuKey))
                         <a href="{{ route($menu['route']) }}" @class(['active' => request()->routeIs($menu['active'])])>
                             <span aria-hidden="true">
                                 <svg viewBox="0 0 24 24" role="img">{!! $sidebarIcon($menuKey) !!}</svg>
                             </span>
-                            {{ $menu['label'] }}
+                            {{ __($menu['label']) }}
                         </a>
                     @endif
                 @endforeach
@@ -69,7 +70,7 @@
                                 <path d="M8.5 8.5c.5 3 2 4.5 5 5" />
                             </svg>
                         </span>
-                        WhatsApp
+                        {{ __('common.whatsapp_b336fc') }}
                     </a>
                 @endif
 
@@ -81,19 +82,19 @@
                                 <path d="m3 7 9 6 9-6" />
                             </svg>
                         </span>
-                        Email
+                        {{ __('common.email_84add5') }}
                     </a>
                 @endif
 
-                <small>Account</small>
+                <small>{{ __('common.account_85dfa3') }}</small>
                 <form
                     method="POST"
                     action="{{ route('logout') }}"
                     class="inapp-nav-form"
                     data-confirm
-                    data-confirm-title="Logout"
-                    data-confirm-message="Are you sure you want to logout from this account?"
-                    data-confirm-button="Logout"
+                    data-confirm-title="{{ __('common.logout_e43d61') }}"
+                    data-confirm-message="{{ __('common.are_you_sure_you_want_to_logout_from_this_account_1f705e') }}"
+                    data-confirm-button="{{ __('common.logout_e43d61') }}"
                 >
                     @csrf
                     <button type="submit">
@@ -104,25 +105,26 @@
                                 <path d="M21 3v18h-8" />
                             </svg>
                         </span>
-                        Logout
+                        {{ __('common.logout_e43d61') }}
                     </button>
                 </form>
             </nav>
 
             <div class="inapp-store-card">
-                <small>Current plan</small>
-                <strong>{{ auth()->user()->plan_label }}</strong>
-                <span>{{ auth()->user()->role_label }}</span>
+                <small>{{ __('settings.current_plan_ec5cfb') }}</small>
+                <strong>{{ __(auth()->user()->plan_label) }}</strong>
+                <span>{{ __(auth()->user()->role_label) }}</span>
             </div>
         </aside>
         @endunless
 
         <main class="inapp-main">
             <header class="inapp-topbar">
-                <strong class="inapp-top-title">{{ $title ?? 'Dashboard' }}</strong>
+                <strong class="inapp-top-title">{{ $title ?? __('dashboard.dashboard_d87f47') }}</strong>
                 <div class="inapp-top-actions">
+                    @include('partials.language-selector')
                     <details class="inapp-notification-menu">
-                        <summary class="inapp-notification" aria-label="Notifications">
+                        <summary class="inapp-notification" aria-label="{{ __('notifications.notifications_753a22') }}">
                             <span class="notification-bell" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" role="img">
                                     <path d="M15 17H9m9-2V10a6 6 0 0 0-12 0v5l-2 2h16l-2-2Zm-7 5a2 2 0 0 0 2-2H9a2 2 0 0 0 2 2Z" />
@@ -134,12 +136,12 @@
                         </summary>
                         <div class="notification-panel">
                             <div class="notification-panel-head">
-                                <strong>Notifications</strong>
+                                <strong>{{ __('notifications.notifications_753a22') }}</strong>
                                 @if (($navUnreadNotificationCount ?? 0) > 0)
                                     <form method="POST" action="{{ route('notifications.readAll') }}">
                                         @csrf
                                         @method('PATCH')
-                                        <button type="submit">Mark all read</button>
+                                        <button type="submit">{{ __('notifications.mark_all_read_8958e2') }}</button>
                                     </form>
                                 @endif
                             </div>
@@ -155,15 +157,15 @@
                                             <form method="POST" action="{{ route('notifications.read', $notification) }}">
                                                 @csrf
                                                 @method('PATCH')
-                                                <button type="submit">Read</button>
+                                                <button type="submit">{{ __('notifications.read_852b43') }}</button>
                                             </form>
                                         @endunless
                                     </div>
                                 @empty
-                                    <div class="notification-empty">No notifications yet.</div>
+                                    <div class="notification-empty">{{ __('notifications.no_notifications_yet_5537c6') }}</div>
                                 @endforelse
                             </div>
-                            <a class="notification-view-all" href="{{ route('notifications.index', ['redirect_url' => \App\Support\RedirectUrl::encode(request()->fullUrl())]) }}">View all notifications</a>
+                            <a class="notification-view-all" href="{{ route('notifications.index', ['redirect_url' => \App\Support\RedirectUrl::encode(request()->fullUrl())]) }}">{{ __('notifications.view_all_notifications_61d4c4') }}</a>
                         </div>
                     </details>
                     <span class="inapp-user-avatar">{{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}</span>
@@ -194,9 +196,9 @@
         <div class="trial-upgrade-modal" data-trial-upgrade-modal role="dialog" aria-modal="true" aria-labelledby="trial-upgrade-title">
             <div class="trial-upgrade-modal__backdrop"></div>
             <section class="trial-upgrade-modal__dialog">
-                <p class="eyebrow">Free trial completed</p>
-                <h2 id="trial-upgrade-title">Choose a plan to continue</h2>
-                <p>Your 30-day trial ended on {{ $trialTenant->domain_expired_date->format('d M Y') }}. Upgrade {{ $trialTenant->business_name }} to restore continued access.</p>
+                <p class="eyebrow">{{ __('common.free_trial_completed_846c8d') }}</p>
+                <h2 id="trial-upgrade-title">{{ __('settings.choose_a_plan_to_continue_38e577') }}</h2>
+                <p>{{ __('common.trial_ended', ['date' => $trialTenant->domain_expired_date->translatedFormat('d M Y'), 'business' => $trialTenant->business_name]) }}</p>
 
                 @if ((int) auth()->user()->role === \App\Models\User::ROLE_OWNER)
                     <form method="POST" action="{{ route('plan.upgrade') }}" data-trial-upgrade-form>
@@ -207,19 +209,19 @@
                                     <input type="radio" name="plan_id" value="{{ $plan->id }}" required>
                                     <span>
                                         <strong>{{ \Illuminate\Support\Str::headline($plan->name) }}</strong>
-                                        <b>&#8377;{{ number_format($plan->monthly_price) }}<small>/month</small></b>
+                                        <b>&#8377;{{ number_format($plan->monthly_price) }}<small>{{ __('dashboard.month_ab0cc3') }}</small></b>
                                         <em>{{ $plan->features }}</em>
                                     </span>
                                 </label>
                             @endforeach
                         </div>
                         <small data-trial-upgrade-message aria-live="polite"></small>
-                        <button type="submit">Save and upgrade plan</button>
+                        <button type="submit">{{ __('settings.save_and_upgrade_plan_38d953') }}</button>
                     </form>
                 @else
                     <div class="trial-upgrade-contact">
-                        <strong>Owner action required</strong>
-                        <span>Ask the business owner to log in and choose a paid plan.</span>
+                        <strong>{{ __('validation.owner_action_required_385103') }}</strong>
+                        <span>{{ __('auth.ask_the_business_owner_to_log_in_and_choose_a_paid_plan_d5edb9') }}</span>
                     </div>
                 @endif
             </section>
@@ -227,16 +229,16 @@
     @endif
 
     @if (auth()->user() && ! auth()->user()->hasVerifiedEmail())
-        <aside class="email-verification-popup" data-email-verification-popup aria-label="Email verification reminder">
-            <button type="button" class="email-verification-popup__close" data-email-verification-close aria-label="Dismiss">&times;</button>
+        <aside class="email-verification-popup" data-email-verification-popup aria-label="{{ __('auth.email_verification_reminder_143db4') }}">
+            <button type="button" class="email-verification-popup__close" data-email-verification-close aria-label="{{ __('common.dismiss_70afe9') }}">&times;</button>
             <span class="email-verification-popup__icon" aria-hidden="true">&#9993;</span>
             <div>
-                <strong>Verify your email</strong>
+                <strong>{{ __('auth.verify_your_email_84fdc7') }}</strong>
                 <p>
-                    Send a six-digit OTP to
+                    {{ __('auth.send_a_six_digit_otp_to_922923') }}
                     <span class="email-verification-popup__address">
                         <b data-verification-email>{{ auth()->user()->email }}</b>
-                        <button type="button" class="email-verification-popup__edit" data-email-edit-open aria-label="Edit email" title="Edit email">
+                        <button type="button" class="email-verification-popup__edit" data-email-edit-open aria-label="{{ __('common.edit_email_00a5cb') }}" title="{{ __('common.edit_email_00a5cb') }}">
                             <svg viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M4 20h4l11-11-4-4L4 16v4Z"></path>
                                 <path d="m13.5 6.5 4 4"></path>
@@ -247,24 +249,24 @@
                 <form method="POST" action="{{ route('account.email.update') }}" data-email-edit-form hidden novalidate>
                     @csrf
                     @method('PATCH')
-                    <input type="email" name="email" value="{{ auth()->user()->email }}" autocomplete="email" required aria-label="New email address">
+                    <input type="email" name="email" value="{{ auth()->user()->email }}" autocomplete="email" required aria-label="{{ __('auth.new_email_address_321c2a') }}">
                     <div class="email-verification-popup__actions">
-                        <button type="submit">Save email</button>
-                        <button type="button" data-email-edit-cancel>Cancel</button>
+                        <button type="submit">{{ __('common.save_email_8fe6cb') }}</button>
+                        <button type="button" data-email-edit-cancel>{{ __('common.cancel_77dfd2') }}</button>
                     </div>
                     <small data-email-edit-message aria-live="polite"></small>
                 </form>
                 <form method="POST" action="{{ route('verification.send') }}" data-email-verification-form>
                     @csrf
-                    <button type="submit">Verify</button>
+                    <button type="submit">{{ __('auth.verify_dda6ac') }}</button>
                     <small data-email-verification-message aria-live="polite"></small>
                 </form>
                 <form method="POST" action="{{ route('verification.verify') }}" data-email-otp-form hidden novalidate>
                     @csrf
-                    <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="Enter 6-digit OTP" required>
+                    <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="{{ __('auth.enter_6_digit_otp_d269d8') }}" required>
                     <div class="email-verification-popup__actions">
-                        <button type="submit">Verify OTP</button>
-                        <button type="button" data-email-otp-resend hidden>Resend OTP</button>
+                        <button type="submit">{{ __('auth.verify_otp_603a2e') }}</button>
+                        <button type="button" data-email-otp-resend hidden>{{ __('auth.resend_otp_b707b6') }}</button>
                     </div>
                     <small data-email-otp-message aria-live="polite"></small>
                 </form>
@@ -275,7 +277,7 @@
     <div class="page-loader" data-page-loader aria-live="polite" aria-hidden="true">
         <div class="page-loader__panel">
             <span class="page-loader__spinner" aria-hidden="true"></span>
-            <strong>Loading</strong>
+            <strong>{{ __('common.loading_8f26c6') }}</strong>
         </div>
     </div>
 
@@ -297,13 +299,13 @@
                 var selectedPlan = upgradeForm.querySelector('input[name="plan_id"]:checked');
 
                 if (!selectedPlan) {
-                    message.textContent = 'Choose a plan to continue.';
+                    message.textContent = window.t("settings.choose_a_plan_to_continue_7f241f");
                     message.classList.add('is-error');
                     return;
                 }
 
                 button.disabled = true;
-                button.textContent = 'Upgrading...';
+                button.textContent = window.t("common.upgrading_e7a06d");
                 message.textContent = '';
 
                 fetch(upgradeForm.action, {
@@ -313,7 +315,7 @@
                 }).then(function (response) {
                     return response.json().then(function (payload) {
                         if (!response.ok) {
-                            throw new Error(payload.errors?.plan_id?.[0] || payload.message || 'Unable to upgrade the plan.');
+                            throw new Error(payload.errors?.plan_id?.[0] || payload.message || window.t("validation.unable_to_upgrade_the_plan_90d51a"));
                         }
                         return payload;
                     });
@@ -323,7 +325,7 @@
                     message.textContent = error.message;
                     message.classList.add('is-error');
                     button.disabled = false;
-                    button.textContent = 'Save and upgrade plan';
+                    button.textContent = window.t("settings.save_and_upgrade_plan_38d953");
                 });
             });
 
@@ -349,14 +351,14 @@
                 var emailInput = emailEditForm.querySelector('input[name="email"]');
 
                 if (!emailInput.value.trim() || !emailInput.checkValidity()) {
-                    message.textContent = 'Enter a valid email address.';
+                    message.textContent = window.t("auth.enter_a_valid_email_address_2e09ed");
                     message.classList.add('is-error');
                     emailInput.focus();
                     return;
                 }
 
                 button.disabled = true;
-                button.textContent = 'Saving...';
+                button.textContent = window.t("common.saving_ae7e88");
 
                 fetch(emailEditForm.action, {
                     method: 'POST',
@@ -365,7 +367,7 @@
                 }).then(function (response) {
                     return response.json().then(function (payload) {
                         if (!response.ok) {
-                            throw new Error(payload.errors?.email?.[0] || payload.message || 'Unable to update email.');
+                            throw new Error(payload.errors?.email?.[0] || payload.message || window.t("validation.unable_to_update_email_e5d2a0"));
                         }
                         return payload;
                     });
@@ -384,7 +386,7 @@
                     message.classList.add('is-error');
                 }).finally(function () {
                     button.disabled = false;
-                    button.textContent = 'Save email';
+                    button.textContent = window.t("common.save_email_8fe6cb");
                 });
             });
 
@@ -401,7 +403,7 @@
                     : otpForm.querySelector('[data-email-otp-message]');
                 button.disabled = true;
                 resendButton.disabled = true;
-                button.textContent = 'Sending...';
+                button.textContent = window.t("common.sending_c338c1");
 
                 fetch(verificationForm.action, {
                     method: 'POST',
@@ -409,7 +411,7 @@
                     body: new FormData(verificationForm)
                 }).then(function (response) {
                     return response.json().then(function (payload) {
-                        if (!response.ok) throw new Error(payload.message || 'Unable to send verification link.');
+                        if (!response.ok) throw new Error(payload.message || window.t("auth.unable_to_send_verification_link_4046fe"));
                         return payload;
                     });
                 }).then(function (payload) {
@@ -425,7 +427,7 @@
                 }).finally(function () {
                     button.disabled = false;
                     resendButton.disabled = false;
-                    button.textContent = 'Resend OTP';
+                    button.textContent = window.t("auth.resend_otp_b707b6");
                 });
             });
 
@@ -446,21 +448,21 @@
                 }
 
                 if (! otp) {
-                    message.textContent = 'Verification code is required.';
+                    message.textContent = window.t("auth.verification_code_is_required_93daff");
                     message.classList.add('is-error');
                     otpInput.focus();
                     return;
                 }
 
                 if (! /^\d{6}$/.test(otp)) {
-                    message.textContent = 'Enter a valid six-digit verification code.';
+                    message.textContent = window.t("auth.enter_a_valid_six_digit_verification_code_17f165");
                     message.classList.add('is-error');
                     otpInput.focus();
                     return;
                 }
 
                 button.disabled = true;
-                button.textContent = 'Verifying...';
+                button.textContent = window.t("auth.verifying_bf6ea5");
 
                 fetch(otpForm.action, {
                     method: 'POST',
@@ -468,7 +470,7 @@
                     body: new FormData(otpForm)
                 }).then(function (response) {
                     return response.json().then(function (payload) {
-                        if (!response.ok) throw new Error(payload.message || 'Unable to verify OTP.');
+                        if (!response.ok) throw new Error(payload.message || window.t("auth.unable_to_verify_otp_0df4b3"));
                         return payload;
                     });
                 }).then(function (payload) {
@@ -477,14 +479,14 @@
                     otpInput.hidden = true;
                     resendButton.hidden = true;
                     button.dataset.emailVerified = 'true';
-                    button.textContent = 'Done';
+                    button.textContent = window.t("common.done_e9b450");
                 }).catch(function (error) {
                     message.textContent = error.message;
                     message.classList.add('is-error');
                 }).finally(function () {
                     button.disabled = false;
                     if (button.dataset.emailVerified !== 'true') {
-                        button.textContent = 'Verify OTP';
+                        button.textContent = window.t("auth.verify_otp_603a2e");
                     }
                 });
             });
@@ -552,8 +554,8 @@
             });
 
             (function initialiseDatePickers() {
-                var monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-                var weekdayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+                var monthNames = [window.t("common.january_7a22d7"), window.t("common.february_5c3a35"), window.t("common.march_433632"), window.t("common.april_a03939"), window.t("common.may_c94f47"), window.t("common.june_a9db90"), window.t("common.july_df97a4"), window.t("common.august_69d97c"), window.t("common.september_1c542e"), window.t("common.october_87206a"), window.t("common.november_3c5bf7"), window.t("common.december_65640c")];
+                var weekdayNames = [window.t("common.sun_392a0d"), window.t("common.mon_f61d4e"), window.t("common.tue_b206a7"), window.t("common.wed_6c4b87"), window.t("common.thu_2c1631"), window.t("common.fri_4a31b5"), window.t("common.sat_d20602")];
                 var activePicker = null;
 
                 function pad(value) {
@@ -689,11 +691,11 @@
                     calendar.className = 'common-calendar';
                     calendar.id = 'common-calendar-' + pickerIndex;
                     calendar.setAttribute('role', 'dialog');
-                    calendar.setAttribute('aria-label', 'Choose a date');
+                    calendar.setAttribute('aria-label', window.t("common.choose_a_date_a8f6c4"));
                     calendar.hidden = true;
                     selectors.className = 'common-calendar__selectors';
-                    monthSelect.setAttribute('aria-label', 'Month');
-                    yearSelect.setAttribute('aria-label', 'Year');
+                    monthSelect.setAttribute('aria-label', window.t("dashboard.month_082bc3"));
+                    yearSelect.setAttribute('aria-label', window.t("dashboard.year_879e32"));
 
                     monthNames.forEach(function (month, index) {
                         var option = document.createElement('option');
@@ -819,9 +821,9 @@
                 activeForm = form;
                 activeTrigger = trigger || document.activeElement;
                 isBlockedAction = form.dataset.confirmBlocked === 'true';
-                title.textContent = form.dataset.confirmTitle || 'Confirm action';
-                message.textContent = form.dataset.confirmMessage || 'Are you sure you want to continue?';
-                submitButton.textContent = form.dataset.confirmButton || 'Confirm';
+                title.textContent = form.dataset.confirmTitle || window.t("common.confirm_action_50649c");
+                message.textContent = form.dataset.confirmMessage || window.t("common.are_you_sure_you_want_to_continue_8de6e7");
+                submitButton.textContent = form.dataset.confirmButton || window.t("common.confirm_04a212");
                 cancelButtons.forEach(function (button) {
                     button.hidden = isBlockedAction;
                 });

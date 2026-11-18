@@ -24,8 +24,8 @@ class PlanUpgradeController extends Controller
                 Rule::exists('plans', 'id')->where(fn ($query) => $query->where('monthly_price', '>', 0)),
             ],
         ], [
-            'plan_id.required' => 'Choose a plan to continue.',
-            'plan_id.exists' => 'Choose a valid paid plan.',
+            'plan_id.required' => __('settings.choose_a_plan_to_continue_7f241f'),
+            'plan_id.exists' => __('settings.choose_a_valid_paid_plan_c3a163'),
         ]);
 
         $plan = Plan::whereKey($data['plan_id'])->where('monthly_price', '>', 0)->firstOrFail();
@@ -36,7 +36,7 @@ class PlanUpgradeController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            abort_unless($tenant->plan?->name === 'free_trial' && $tenant->domain_expired_date?->endOfDay()->isPast(), 422, 'This account does not have an expired free trial.');
+            abort_unless($tenant->plan?->name === 'free_trial' && $tenant->domain_expired_date?->endOfDay()->isPast(), 422, __('common.this_account_does_not_have_an_expired_free_trial_baa795'));
 
             $renewsAt = now()->addMonth()->toDateString();
 
@@ -59,7 +59,7 @@ class PlanUpgradeController extends Controller
             );
         });
 
-        $message = 'Your account has been upgraded to '.str($plan->name)->headline().'.';
+        $message = __('settings.plan_upgraded', ['plan' => __((string) str($plan->name)->headline())]);
 
         if ($request->expectsJson()) {
             return response()->json([

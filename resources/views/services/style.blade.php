@@ -26,4 +26,4 @@
 @media(max-width:600px){.service-header{padding:18px;gap:18px}.service-header h1{font-size:26px}.service-stats{gap:10px}.service-stats article{padding:14px;font-size:12px}.service-stats strong{font-size:20px}}
 @media(max-width:360px){.service-stats{grid-template-columns:minmax(0,1fr)}}
 </style>
-@if ($errors->any())<div class="error-summary" role="alert"><strong>Please check the details</strong>@foreach ($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
+@if ($errors->any())<div class="error-summary" role="alert"><strong>{{ __('common.please_check_the_details_1ecd84') }}</strong>@foreach ($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif

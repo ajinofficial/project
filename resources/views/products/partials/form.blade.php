@@ -1,14 +1,16 @@
+@include('products.partials.translations')
+
 @if ($errors->any())
     <div class="error-summary" role="alert">
-        <strong>Check the product details</strong>
+        <strong>{{ __('products.check_the_product_details_6d07b2') }}</strong>
         <span>{{ $errors->first() }}</span>
     </div>
 @endif
 
 <div class="field-grid">
     <label>
-        <span>Item name</span>
-        <input type="text" name="name" value="{{ old('name', $product->name) }}" placeholder="Enter item name" required>
+        <span>{{ __('common.item_name_b56b71') }}</span>
+        <input type="text" name="name" value="{{ old('name', $product->name) }}" placeholder="{{ __('common.enter_item_name_dd5f39') }}" required>
         @error('name') <small>{{ $message }}</small> @enderror
     </label>
 
@@ -21,13 +23,13 @@
 
 <div class="field-grid">
     <label>
-        <span>Barcode</span>
-        <input type="text" name="barcode" value="{{ old('barcode', $product->barcode) }}" placeholder="Scan or enter barcode">
+        <span>{{ __('products.barcode_8e54dc') }}</span>
+        <input type="text" name="barcode" value="{{ old('barcode', $product->barcode) }}" placeholder="{{ __('products.scan_or_enter_barcode_3aa200') }}">
         @error('barcode') <small>{{ $message }}</small> @enderror
     </label>
 
     <label>
-        <span>Brand</span>
+        <span>{{ __('common.brand_62b4aa') }}</span>
         <input type="text" name="brand" value="{{ old('brand', $product->brand) }}" placeholder="Apple, Samsung, Cipla">
         @error('brand') <small>{{ $message }}</small> @enderror
     </label>
@@ -35,17 +37,17 @@
 
 <div class="field-grid">
     <label>
-        <span>Category</span>
-        <input type="text" name="category" value="{{ old('category', $product->category) }}" placeholder="Grocery, Apparel, Hardware">
+        <span>{{ __('products.category_a3c686') }}</span>
+        <input type="text" name="category" value="{{ old('category', $product->category) }}" placeholder="{{ __('common.grocery_apparel_hardware_3ed396') }}">
         @error('category') <small>{{ $message }}</small> @enderror
     </label>
 
     <label>
-        <span>Status</span>
+        <span>{{ __('common.status_bae7d5') }}</span>
         <select name="status" required>
-            <option value="draft" @selected(old('status', $product->status) === 'draft')>Draft / receiving</option>
-            <option value="active" @selected(old('status', $product->status) === 'active')>Active / sellable</option>
-            <option value="archived" @selected(old('status', $product->status) === 'archived')>Archived / discontinued</option>
+            <option value="draft" @selected(old('status', $product->status) === 'draft')>{{ __('common.draft_receiving_b212b9') }}</option>
+            <option value="active" @selected(old('status', $product->status) === 'active')>{{ __('products.active_sellable_ab6224') }}</option>
+            <option value="archived" @selected(old('status', $product->status) === 'archived')>{{ __('common.archived_discontinued_dae182') }}</option>
         </select>
         @error('status') <small>{{ $message }}</small> @enderror
     </label>
@@ -53,43 +55,43 @@
 
 <div class="field-grid">
     <label>
-        <span>Minimum stock level</span>
+        <span>{{ __('products.minimum_stock_level_d607a8') }}</span>
         <input type="number" name="minimum_stock_level" value="{{ old('minimum_stock_level', $product->minimum_stock_level ?? auth()->user()->tenant->low_stock_threshold) }}" min="0" step="1" required data-replace-on-focus>
         @error('minimum_stock_level') <small>{{ $message }}</small> @enderror
     </label>
 
     <label>
-        <span>Tax percentage (%)</span>
+        <span>{{ __('common.tax_percentage_7e4667') }}</span>
         <input type="number" name="tax_percentage" value="{{ old('tax_percentage', $product->tax_percentage ?? auth()->user()->tenant->default_tax_percentage ?? 0) }}" min="0" max="99.99" step="0.01" required aria-describedby="product-tax-help" data-replace-on-focus>
-        <small id="product-tax-help">Added automatically to the selling price during billing. Enter 0 for tax-free products.</small>
+        <small id="product-tax-help">{{ __('products.added_automatically_to_the_selling_price_during_billing_enter_0_for_ta_aee007') }}</small>
         @error('tax_percentage') <small>{{ $message }}</small> @enderror
     </label>
 </div>
 
 <section class="product-image-uploader" data-product-image-uploader>
     <div>
-        <span>Product image</span>
-        <p>Upload a product photo, then zoom and reposition it for the square crop used in lists and cards.</p>
+        <span>{{ __('products.product_image_74c459') }}</span>
+        <p>{{ __('products.upload_a_product_photo_then_zoom_and_reposition_it_for_the_square_crop_e1bbb3') }}</p>
     </div>
 
     <div class="image-crop-grid">
         <label class="image-upload-drop">
             <input type="file" name="product_image" accept="image/jpeg,image/png,image/webp" data-product-image-input>
-            <b>Choose image</b>
-            <small>JPG, PNG, or WebP up to 2 MB. The saved image will be cropped square.</small>
+            <b>{{ __('products.choose_image_6c406b') }}</b>
+            <small>{{ __('products.jpg_png_or_webp_up_to_2_mb_the_saved_image_will_be_cropped_square_8af2d0') }}</small>
         </label>
 
         <div class="crop-preview-card">
-            <div class="crop-preview-frame" tabindex="0" role="application" aria-label="Product image crop. Drag to reposition or use the arrow keys." data-product-crop-frame>
+            <div class="crop-preview-frame" tabindex="0" role="application" aria-label="{{ __('products.product_image_crop_drag_to_reposition_or_use_the_arrow_keys_f18f54') }}" data-product-crop-frame>
                 <img data-product-image-preview src="{{ old('image_url', $product->image_url) }}" alt="" @if (! old('image_url', $product->image_url)) hidden @endif>
                 <span data-product-image-placeholder @if (old('image_url', $product->image_url)) hidden @endif>{{ strtoupper(substr(old('name', $product->name ?: 'P'), 0, 1)) }}</span>
             </div>
-            <small class="crop-position-hint" data-product-crop-hint>Choose an image to adjust its crop.</small>
+            <small class="crop-position-hint" data-product-crop-hint>{{ __('products.choose_an_image_to_adjust_its_crop_9c86fc') }}</small>
             <label class="crop-zoom-control">
-                <span>Crop zoom <output data-product-zoom-value>100%</output></span>
-                <input type="range" min="1" max="3" step="0.05" value="1" aria-label="Crop zoom" data-product-image-zoom disabled>
+                <span>{{ __('products.crop_zoom_9f2768') }} <output data-product-zoom-value>100%</output></span>
+                <input type="range" min="1" max="3" step="0.05" value="1" aria-label="{{ __('products.crop_zoom_9f2768') }}" data-product-image-zoom disabled>
             </label>
-            <button class="crop-reset-button" type="button" data-product-crop-reset disabled>Reset crop</button>
+            <button class="crop-reset-button" type="button" data-product-crop-reset disabled>{{ __('products.reset_crop_444ee1') }}</button>
             <small class="crop-file-error" role="alert" data-product-image-error hidden></small>
         </div>
     </div>
@@ -100,8 +102,8 @@
 </section>
 
 <label>
-    <span>Description</span>
-    <textarea name="description" rows="5" placeholder="Shelf location, package contents, reorder notes, or selling details.">{{ old('description', $product->description) }}</textarea>
+    <span>{{ __('common.description_55f8eb') }}</span>
+    <textarea name="description" rows="5" placeholder="{{ __('products.shelf_location_package_contents_reorder_notes_or_selling_details_aaae1e') }}">{{ old('description', $product->description) }}</textarea>
     @error('description') <small>{{ $message }}</small> @enderror
 </label>
 
@@ -131,7 +133,7 @@
                     var label = field.closest('label');
                     var labelText = label ? label.querySelector('span') : null;
 
-                    return labelText ? labelText.textContent.trim() : 'This field';
+                    return labelText ? labelText.textContent.trim() : window.t("common.this_field_f89fd4");
                 }
 
                 function existingErrorElement(field) {
@@ -177,8 +179,8 @@
 
                     error = errorElement(field);
                     error.textContent = field.validity.valueMissing
-                        ? fieldLabel(field) + ' is required.'
-                        : field.validationMessage;
+                        ? window.t('validation.required', {attribute: fieldLabel(field)})
+                        : window.localizedValidationMessage(field);
                     error.hidden = false;
                     field.setAttribute('aria-invalid', 'true');
 
@@ -279,8 +281,8 @@
                     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 2 * 1024 * 1024) {
                         fileInput.value = '';
                         imageError.textContent = file.size > 2 * 1024 * 1024
-                            ? 'Choose an image no larger than 2 MB.'
-                            : 'Choose a JPG, PNG, or WebP image.';
+                            ? window.t('common.image_size')
+                            : window.t("products.choose_a_jpg_png_or_webp_image_715f2d");
                         imageError.hidden = false;
                         return;
                     }
@@ -299,7 +301,7 @@
                             panX = 0;
                             panY = 0;
                             cropFrame.classList.add('is-adjustable');
-                            cropHint.textContent = 'Drag the image to reposition it, or use the arrow keys.';
+                            cropHint.textContent = window.t("products.drag_the_image_to_reposition_it_or_use_the_arrow_keys_1d3ae0");
                             zoomInput.disabled = false;
                             resetButton.disabled = false;
                             updatePreview();

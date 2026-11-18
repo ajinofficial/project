@@ -52,7 +52,7 @@ class EmailIntegrationController extends Controller
             $data
         );
 
-        return back()->with('status', 'Email connection saved.');
+        return back()->with('status', __('settings.email_connection_saved_eca88e'));
     }
 
     public function send(Request $request, TenantEmailSender $sender): RedirectResponse
@@ -68,7 +68,7 @@ class EmailIntegrationController extends Controller
             ->first();
 
         if (! $integration) {
-            return back()->withErrors(['connection' => 'Configure and enable SMTP before sending email.'])->withInput();
+            return back()->withErrors(['connection' => __('settings.configure_and_enable_smtp_before_sending_email_83b673')])->withInput();
         }
 
         $businessName = $request->user()->tenant?->business_name ?: config('app.name');
@@ -88,15 +88,15 @@ class EmailIntegrationController extends Controller
             $log->update(['status' => 'sent']);
             $integration->update(['last_used_at' => now()]);
 
-            return back()->with('status', 'Email sent successfully.');
+            return back()->with('status', __('common.email_sent_successfully_65abf2'));
         } catch (Throwable $exception) {
             report($exception);
             $log->update([
                 'status' => 'failed',
-                'error_message' => 'The SMTP server could not send this email.',
+                'error_message' => __('validation.the_smtp_server_could_not_send_this_email_7a5c60'),
             ]);
 
-            return back()->withErrors(['send' => 'The SMTP server could not send this email. Check the connection settings.'])->withInput();
+            return back()->withErrors(['send' => __('validation.the_smtp_server_could_not_send_this_email_check_the_connection_setting_c5120b')])->withInput();
         }
     }
 }

@@ -3,7 +3,7 @@
 namespace Tests\Unit;
 
 use App\Rules\SafeEmail;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 class SafeEmailTest extends TestCase
 {

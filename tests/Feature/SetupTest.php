@@ -28,8 +28,8 @@ class SetupTest extends TestCase
         $response->assertSee('Role permissions');
         $response->assertSee('data-validation-error', false);
         $response->assertSee("form.noValidate = true", false);
-        $response->assertSee("labelText + ' is required.'", false);
-        $response->assertSee("button.textContent = 'Done'", false);
+        $response->assertSee("window.t('validation.required', {attribute: labelText})", false);
+        $response->assertSee('button.textContent = window.t("common.done_e9b450")', false);
         $response->assertSee("button.dataset.emailVerified === 'true'", false);
     }
 

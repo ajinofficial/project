@@ -55,6 +55,7 @@ class StockController extends Controller
                         ->orWhere('type', 'like', "%{$search}%")
                         ->orWhereHas('product', function ($query) use ($search) {
                             $query->where('name', 'like', "%{$search}%")
+                                ->orWhere('translations->'.app()->getLocale().'->name', 'like', "%{$search}%")
                                 ->orWhere('sku', 'like', "%{$search}%")
                                 ->orWhere('barcode', 'like', "%{$search}%");
                         });
@@ -100,6 +101,7 @@ class StockController extends Controller
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('translations->'.app()->getLocale().'->name', 'like', "%{$search}%")
                         ->orWhere('sku', 'like', "%{$search}%")
                         ->orWhere('barcode', 'like', "%{$search}%");
                 });
@@ -110,7 +112,7 @@ class StockController extends Controller
         return response()->json([
             'data' => $products->getCollection()->map(fn (Product $product) => [
                 'id' => $product->id,
-                'label' => $product->name.' - '.($product->sku ?: 'SKU-'.$product->id).' - Stock '.$product->inventory,
+                'label' => __('common.stock_label', ['name' => $product->localized('name'), 'sku' => $product->sku ?: 'SKU-'.$product->id, 'stock' => $product->inventory]),
                 'purchase_price' => $product->purchase_price,
                 'selling_price' => $product->price,
             ])->values(),
@@ -143,21 +145,21 @@ class StockController extends Controller
             'profit_amount' => ['required_if:profit_type,amount', 'prohibited_unless:profit_type,amount', 'nullable', 'numeric', 'min:0', 'max:99999999.99', 'decimal:0,2'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ], [
-            'product_id.required' => 'Select the product to adjust.',
-            'product_id.exists' => 'Select a valid product from your inventory.',
-            'adjustment.required' => 'Enter the stock adjustment.',
-            'adjustment.integer' => 'Stock adjustment must be a whole number.',
-            'adjustment.not_in' => 'Stock adjustment cannot be zero.',
-            'stock_date.required' => 'Select the stock date.',
-            'stock_date.date_format' => 'Select a valid stock date.',
-            'stock_date.before_or_equal' => 'Stock date cannot be in the future.',
-            'purchase_price.numeric' => 'Purchase price must be a valid number.',
-            'purchase_price.min' => 'Purchase price cannot be negative.',
-            'purchase_price.max' => 'Purchase price is too high.',
-            'profit_percentage.numeric' => 'Profit percentage must be a valid number.',
-            'profit_percentage.min' => 'Profit percentage cannot be negative.',
-            'profit_percentage.max' => 'Profit percentage is too high.',
-            'notes.max' => 'Notes cannot exceed 1000 characters.',
+            'product_id.required' => __('products.select_the_product_to_adjust_86a93c'),
+            'product_id.exists' => __('validation.select_a_valid_product_from_your_inventory_fd8e3d'),
+            'adjustment.required' => __('validation.enter_the_stock_adjustment_e9cefc'),
+            'adjustment.integer' => __('validation.stock_adjustment_must_be_a_whole_number_8b3f86'),
+            'adjustment.not_in' => __('validation.stock_adjustment_cannot_be_zero_380a46'),
+            'stock_date.required' => __('products.select_the_stock_date_4602fc'),
+            'stock_date.date_format' => __('validation.select_a_valid_stock_date_1739d7'),
+            'stock_date.before_or_equal' => __('validation.stock_date_cannot_be_in_the_future_1d00aa'),
+            'purchase_price.numeric' => __('validation.purchase_price_must_be_a_valid_number_a30e0c'),
+            'purchase_price.min' => __('validation.purchase_price_cannot_be_negative_fd96c2'),
+            'purchase_price.max' => __('validation.purchase_price_is_too_high_b14c73'),
+            'profit_percentage.numeric' => __('validation.profit_percentage_must_be_a_valid_number_3913a6'),
+            'profit_percentage.min' => __('validation.profit_percentage_cannot_be_negative_628e27'),
+            'profit_percentage.max' => __('validation.profit_percentage_is_too_high_f9decd'),
+            'notes.max' => __('validation.notes_cannot_exceed_1000_characters_d23ab7'),
         ]);
 
         $summary = DB::transaction(function () use ($data, $request, $tenantId) {
@@ -166,7 +168,7 @@ class StockController extends Controller
 
             if ($nextStock < 0) {
                 throw ValidationException::withMessages([
-                    'adjustment' => 'Adjustment would make stock negative. Current stock is '.$product->inventory.'.',
+                    'adjustment' => __('common.negative_adjustment', ['stock' => $product->inventory]),
                 ]);
             }
 
@@ -185,7 +187,7 @@ class StockController extends Controller
                     : $purchasePrice * ((float) $data['profit_percentage'] / 100);
                 $sellingPrice = round($purchasePrice + $profit, 2);
                 if ($sellingPrice > 99999999.99) {
-                    throw ValidationException::withMessages(['purchase_price' => 'Selling price after profit cannot exceed 99,999,999.99.']);
+                    throw ValidationException::withMessages(['purchase_price' => __('validation.selling_price_after_profit_cannot_exceed_99_999_999_99_bc0c10')]);
                 }
                 $product->price = $sellingPrice;
             }
@@ -230,8 +232,9 @@ class StockController extends Controller
         ActivityNotifier::notify(
             $tenantId,
             'stock_adjusted',
-            'Stock adjusted',
-            $request->user()->name.' adjusted '.$summary['product_name'].' by '.$summary['adjustment'].' units. Current stock: '.$summary['stock_after'].'.'
+            "Stock adjusted",
+            $request->user()->name.' adjusted '.$summary['product_name'].' by '.$summary['adjustment'].' units. Current stock: '.$summary['stock_after'].'.',
+            parameters: ['actor' => $request->user()->name, 'product' => $summary['product_name'], 'quantity' => $summary['adjustment'], 'stock' => $summary['stock_after']]
         );
 
         return redirect()

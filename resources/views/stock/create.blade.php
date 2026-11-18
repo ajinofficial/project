@@ -1,4 +1,4 @@
-@extends('layouts.admin', ['title' => 'Add Stock'])
+@extends('layouts.admin', ['title' => __('products.add_stock_492af0')])
 
 @section('content')
     <style>
@@ -58,34 +58,34 @@
     <section class="product-workspace stock-form-workspace">
         <header class="product-page-head">
             <div>
-                <p class="eyebrow">Stock</p>
-                <h1>Add stock</h1>
-                <span>Use this form for stock receiving, recount corrections, and manual stock changes.</span>
+                <p class="eyebrow">{{ __('products.stock_bcecf4') }}</p>
+                <h1>{{ __('products.add_stock_64db16') }}</h1>
+                <span>{{ __('products.use_this_form_for_stock_receiving_recount_corrections_and_manual_stock_b3bd04') }}</span>
             </div>
             <div class="product-head-actions">
-                <a class="ghost-button" href="{{ route('stock.index') }}">Back to stock</a>
-                <a class="ghost-button" href="{{ route('purchases.index') }}">Purchase entry</a>
+                <a class="ghost-button" href="{{ route('stock.index') }}">{{ __('products.back_to_stock_16922d') }}</a>
+                <a class="ghost-button" href="{{ route('purchases.index') }}">{{ __('orders.purchase_entry_523322') }}</a>
             </div>
         </header>
 
         <section class="v-panel product-management-panel stock-form-panel">
-            <div class="section-title"><div><p class="eyebrow">Stock control</p><h2>Stock add form</h2></div></div>
+            <div class="section-title"><div><p class="eyebrow">{{ __('products.stock_control_3a6cb5') }}</p><h2>{{ __('products.stock_add_form_7a1ca8') }}</h2></div></div>
             <form class="product-form" method="POST" action="{{ route('stock.adjust') }}" data-stock-adjust-form novalidate>
                 @csrf
 
                 @if ($errors->any())
                     <div class="error-summary" role="alert">
-                        <strong>Check the stock details</strong>
+                        <strong>{{ __('products.check_the_stock_details_6b84a4') }}</strong>
                         <span>{{ $errors->first() }}</span>
                     </div>
                 @endif
 
                 <label class="searchable-select" data-searchable-select data-searchable-select-url="{{ route('stock.products') }}">
-                    <span>Product</span>
-                    <input type="search" class="searchable-select__search" placeholder="Search or select product" autocomplete="off" role="combobox" aria-label="Search products" aria-expanded="false" data-searchable-select-input>
+                    <span>{{ __('products.product_dd3b86') }}</span>
+                    <input type="search" class="searchable-select__search" placeholder="{{ __('products.search_or_select_product_8ab7d7') }}" autocomplete="off" role="combobox" aria-label="{{ __('products.search_products_4412bf') }}" aria-expanded="false" data-searchable-select-input>
                     <div class="searchable-select__menu" role="listbox" data-searchable-select-menu hidden></div>
                     <select class="searchable-select__native" name="product_id" required data-stock-product tabindex="-1" aria-hidden="true">
-                        <option value="">Select product</option>
+                        <option value="">{{ __('products.select_product_596d90') }}</option>
                         @foreach ($products as $product)
                             <option
                                 value="{{ $product->id }}"
@@ -93,7 +93,7 @@
                                 data-selling-price="{{ $product->price }}"
                                 @selected((string) old('product_id') === (string) $product->id)
                             >
-                                {{ $product->name }} - {{ $product->sku ?: 'SKU-'.$product->id }} - Stock {{ $product->inventory }}
+                                {{ __('common.stock_label', ['name' => $product->localized('name'), 'sku' => $product->sku ?: 'SKU-'.$product->id, 'stock' => $product->inventory]) }}
                             </option>
                         @endforeach
                     </select>
@@ -103,31 +103,31 @@
 
                 <div class="field-grid">
                     <label>
-                        <span>Quantity</span>
+                        <span>{{ __('common.quantity_44f6af') }}</span>
                         <input type="number" name="adjustment" min="1" step="1" value="{{ old('adjustment', 1) }}" required data-replace-on-focus>
                         @error('adjustment') <small>{{ $message }}</small> @enderror
                     </label>
 
                     <label>
-                        <span>Stock date</span>
+                        <span>{{ __('products.stock_date_c91846') }}</span>
                         <input type="date" name="stock_date" value="{{ old('stock_date', now()->toDateString()) }}" max="{{ now()->toDateString() }}" required data-date-picker>
                         @error('stock_date') <small>{{ $message }}</small> @enderror
                     </label>
                 </div>
-                <p class="stock-adjust-hint">For reductions or corrections, use a negative value from the stock ledger workflow if needed.</p>
+                <p class="stock-adjust-hint">{{ __('products.for_reductions_or_corrections_use_a_negative_value_from_the_stock_ledg_134eca') }}</p>
 
                 <div class="field-grid">
                     <label>
-                        <span>Purchase price</span>
+                        <span>{{ __('orders.purchase_price_b21bc6') }}</span>
                         <input type="number" name="purchase_price" min="0" step="0.01" value="{{ old('purchase_price') }}" required data-stock-purchase-price data-replace-on-focus>
                         @error('purchase_price') <small>{{ $message }}</small> @enderror
                     </label>
 
                     <label>
-                        <span>Profit type</span>
+                        <span>{{ __('products.profit_type_90013b') }}</span>
                         <select name="profit_type" required data-stock-profit-type>
-                            <option value="percentage" @selected(old('profit_type', 'percentage') === 'percentage')>Percentage (%)</option>
-                            <option value="amount" @selected(old('profit_type') === 'amount')>Fixed amount per unit (₹)</option>
+                            <option value="percentage" @selected(old('profit_type', 'percentage') === 'percentage')>{{ __('common.percentage_a92697') }}</option>
+                            <option value="amount" @selected(old('profit_type') === 'amount')>{{ __('common.fixed_amount_per_unit_7df184') }}</option>
                         </select>
                         @error('profit_type') <small>{{ $message }}</small> @enderror
                     </label>
@@ -136,7 +136,7 @@
                 <div class="field-grid">
                     @php($profitIsAmount = old('profit_type', 'percentage') === 'amount')
                     <label>
-                        <span data-stock-profit-label>{{ $profitIsAmount ? 'Profit amount per unit (₹)' : 'Profit percentage' }}</span>
+                        <span data-stock-profit-label>{{ $profitIsAmount ? __('products.profit_amount_per_unit') : __('products.profit_percentage_5a009b') }}</span>
                         <input type="number" name="{{ $profitIsAmount ? 'profit_amount' : 'profit_percentage' }}" min="0" max="{{ $profitIsAmount ? '99999999.99' : '100' }}" step="0.01" value="{{ old($profitIsAmount ? 'profit_amount' : 'profit_percentage') }}" required data-stock-profit-value data-replace-on-focus>
                         @error('profit_percentage') <small>{{ $message }}</small> @enderror
                         @error('profit_amount') <small>{{ $message }}</small> @enderror
@@ -144,21 +144,21 @@
                 </div>
 
                 <div class="stock-price-preview" aria-live="polite">
-                    Selling price after profit
-                    <strong data-stock-selling-preview>Enter purchase price and profit</strong>
+                    {{ __('products.selling_price_after_profit_fcadc7') }}
+                    <strong data-stock-selling-preview>{{ __('products.enter_purchase_price_and_profit_018f5c') }}</strong>
                 </div>
 
                 <label>
-                    <span>Notes</span>
-                    <textarea name="notes" rows="4" placeholder="Supplier receipt, shelf recount, opening stock, or correction note">{{ old('notes') }}</textarea>
+                    <span>{{ __('common.notes_704400') }}</span>
+                    <textarea name="notes" rows="4" placeholder="{{ __('products.supplier_receipt_shelf_recount_opening_stock_or_correction_note_703602') }}">{{ old('notes') }}</textarea>
                     @error('notes') <small>{{ $message }}</small> @enderror
                 </label>
 
                 <button class="product-save-button" type="submit" data-stock-adjust-submit>
-                    <span class="product-save-button__idle">Add stock</span>
+                    <span class="product-save-button__idle">{{ __('products.add_stock_64db16') }}</span>
                     <span class="product-save-button__loading" aria-hidden="true">
                         <i></i>
-                        Adding
+                        {{ __('common.adding_48a693') }}
                     </span>
                 </button>
             </form>
@@ -203,13 +203,13 @@
                     var profit = numberValue(profitInput);
 
                     if (purchasePrice === null || profit === null || purchasePrice < 0 || profit < 0 || (!isAmount && profit > 100)) {
-                        sellingPreview.textContent = 'Enter purchase price and profit';
+                        sellingPreview.textContent = window.t("products.enter_purchase_price_and_profit_018f5c");
                         return;
                     }
 
                     var sellingPrice = purchasePrice + (isAmount ? profit : purchasePrice * profit / 100);
                     sellingPreview.textContent = sellingPrice > 99999999.99
-                        ? 'Selling price is too high'
+                        ? window.t("validation.selling_price_is_too_high_41d35e")
                         : currency.format(sellingPrice);
                 }
 
@@ -217,7 +217,7 @@
                     var isAmount = profitTypeInput.value === 'amount';
                     profitInput.name = isAmount ? 'profit_amount' : 'profit_percentage';
                     profitInput.max = isAmount ? '99999999.99' : '100';
-                    form.querySelector('[data-stock-profit-label]').textContent = isAmount ? 'Profit amount per unit (₹)' : 'Profit percentage';
+                    form.querySelector('[data-stock-profit-label]').textContent = isAmount ? window.t('products.profit_amount_per_unit') : window.t("products.profit_percentage_5a009b");
                     var error = existingErrorElement(profitInput);
                     if (error) {
                         error.textContent = '';
@@ -271,7 +271,7 @@
                     var label = field.closest('label');
                     var labelText = label ? label.querySelector('span') : null;
 
-                    return labelText ? labelText.textContent.trim() : 'This field';
+                    return labelText ? labelText.textContent.trim() : window.t("common.this_field_f89fd4");
                 }
 
                 function existingErrorElement(field) {
@@ -317,8 +317,8 @@
 
                     error = errorElement(field);
                     error.textContent = field.validity.valueMissing
-                        ? fieldLabel(field) + ' is required.'
-                        : field.validationMessage;
+                        ? window.t('validation.required', {attribute: fieldLabel(field)})
+                        : window.localizedValidationMessage(field);
                     error.hidden = false;
                     field.setAttribute('aria-invalid', 'true');
 

@@ -51,18 +51,18 @@
                 if (first) first.focus();
                 return;
             }
-            if (!response.ok) throw new Error('Request failed');
+            if (!response.ok) throw new Error(window.t("common.request_failed_9fcda3"));
             var data = await response.json();
             var page = new DOMParser().parseFromString(data.html, 'text/html');
             var panelSelector = form.dataset.serviceAction === 'payment' ? '[data-payment-panel]' : '[data-expense-panel]';
             var panel = page.querySelector(panelSelector);
             var stats = page.querySelector('.service-stats');
-            if (!panel || !stats) throw new Error('Missing order details');
+            if (!panel || !stats) throw new Error(window.t("orders.missing_order_details_3ab8eb"));
             document.querySelector(panelSelector).replaceWith(panel);
             document.querySelector('.service-stats').replaceWith(stats);
             status.textContent = data.message;
         } catch (error) {
-            summary.textContent = 'Unable to save. Please try again.';
+            summary.textContent = window.t("validation.unable_to_save_please_try_again_3c289d");
             summary.hidden = false;
         } finally {
             saving = false;

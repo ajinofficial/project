@@ -27,4 +27,22 @@ class Handler extends ExceptionHandler
             //
         });
     }
+
+    public function render($request, Throwable $e)
+    {
+        // Unmatched URLs never reach the web group. Give HTML error pages the
+        // same encrypted preferences and CSRF session without changing routing.
+        if (! $request->hasSession() && ! $request->expectsJson()
+            && $e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface
+            && in_array($e->getStatusCode(), [404, 405], true)) {
+            return app(\Illuminate\Pipeline\Pipeline::class)->send($request)->through([
+                \App\Http\Middleware\EncryptCookies::class,
+                \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+                \Illuminate\Session\Middleware\StartSession::class,
+                \App\Http\Middleware\SetLocale::class,
+            ])->then(fn ($request) => parent::render($request, $e));
+        }
+
+        return parent::render($request, $e);
+    }
 }

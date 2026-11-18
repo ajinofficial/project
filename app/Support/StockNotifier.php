@@ -34,7 +34,10 @@ class StockNotifier
                 'message' => $message,
                 'read_at' => null,
             ],
-            ['channel' => 'in_app']
+            ['channel' => 'in_app', 'translation_data' => [
+                'key' => 'notifications.events.'.$type,
+                'parameters' => ['product' => $product->name, 'quantity' => $product->inventory],
+            ]]
         );
     }
 }

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <title>Access denied — Zyloah</title>
+    <title>{{ __('common.access_denied_zyloah_626edf') }}</title>
     <link rel="icon" type="image/png" href="{{ asset('images/Zyloah-logo.png') }}">
     @include('partials.app-base-url')
     <link rel="stylesheet" href="{{ asset('css/typography.css') }}?v={{ rawurlencode(config('app.asset_version')) }}">
@@ -315,8 +315,10 @@
             }
         }
     </style>
+    @include('partials.localization')
 </head>
 <body>
+    <header class="auth-language-header">@include('partials.language-selector')</header>
     @php
         $homeUrl = auth()->check()
             ? route(\App\Support\RolePermission::firstAccessibleRoute(auth()->user()))
@@ -324,7 +326,7 @@
     @endphp
     <div class="page">
         <header>
-            <a class="brand" href="{{ $homeUrl }}" aria-label="Zyloah home">
+            <a class="brand" href="{{ $homeUrl }}" aria-label="{{ __('common.zyloah_home_96d2ce') }}">
                 <span class="brand-logo" aria-hidden="true"></span>
                 <span>Zyloah</span>
             </a>
@@ -340,17 +342,17 @@
             </div>
 
             <section aria-labelledby="error-title">
-                <p class="eyebrow">Restricted area</p>
-                <h1 id="error-title">You don’t have access to this page.</h1>
+                <p class="eyebrow">{{ __('common.restricted_area_4e8cc1') }}</p>
+                <h1 id="error-title">{{ __('common.you_don_t_have_access_to_this_page_cec647') }}</h1>
                 <p class="message">
-                    {{ $exception->getMessage() ?: 'Your account does not have permission to view this area. If you think this is a mistake, contact your administrator.' }}
+                    {{ $exception->getMessage() ?: __('settings.your_account_does_not_have_permission_to_view_this_area_if_you_think_t_6ea9c7') }}
                 </p>
             </section>
         </main>
 
         <footer>
-            <span>Zyloah inventory platform</span>
-            <span>Error code: 403 · Access forbidden</span>
+            <span>{{ __('products.zyloah_inventory_platform_731d7c') }}</span>
+            <span>{{ __('common.error_code_403_access_forbidden_f2d867') }}</span>
         </footer>
     </div>
 </body>

@@ -1,4 +1,4 @@
-@extends('layouts.admin', ['title' => 'Suppliers'])
+@extends('layouts.admin', ['title' => __('orders.suppliers_6f76bb')])
 
 @section('content')
     <style>
@@ -79,88 +79,95 @@
         }
     </style>
 
+    @include('operations.partials.overview', [
+        'title' => __('orders.suppliers_6f76bb'),
+        'description' => __('orders.manage_supplier_details_payment_terms_and_outstanding_balances_87430e'),
+        'action' => __('orders.add_supplier_41ea7f'),
+        'formId' => 'supplier-entry',
+    ])
+
     <section class="ops-grid">
-        <article class="admin-section">
-            <div class="section-title"><div><p class="eyebrow">Supplier management</p><h2>Add supplier</h2></div></div>
+        <article class="admin-section" id="supplier-entry">
+            <div class="section-title"><div><p class="eyebrow">{{ __('orders.supplier_management_efb0b6') }}</p><h2>{{ __('orders.add_supplier_41ea7f') }}</h2></div></div>
             <form class="product-form supplier-form" method="POST" action="{{ route('suppliers.store') }}" data-supplier-form>
                 @csrf
 
                 @if ($errors->any())
                     <div class="error-summary" role="alert">
-                        <strong>Check the supplier details</strong>
+                        <strong>{{ __('orders.check_the_supplier_details_cb1fb7') }}</strong>
                         <span>{{ $errors->first() }}</span>
                     </div>
                 @endif
 
                 <label class="supplier-field supplier-field-wide">
-                    <span>Supplier name</span>
-                    <input class="supplier-form-control" name="name" value="{{ old('name') }}" placeholder="Supplier or company name" required>
+                    <span>{{ __('orders.supplier_name_1b6428') }}</span>
+                    <input class="supplier-form-control" name="name" value="{{ old('name') }}" placeholder="{{ __('orders.supplier_or_company_name_a73727') }}" required>
                     @error('name') <small>{{ $message }}</small> @enderror
                 </label>
 
                 <label class="supplier-field supplier-field-wide">
-                    <span>Contact information</span>
-                    <input class="supplier-form-control" name="contact_information" value="{{ old('contact_information') }}" placeholder="Phone, email, or contact person" required @if ($errors->has('contact_information')) aria-invalid="true" @endif>
+                    <span>{{ __('common.contact_information_852a42') }}</span>
+                    <input class="supplier-form-control" name="contact_information" value="{{ old('contact_information') }}" placeholder="{{ __('common.phone_email_or_contact_person_ee917e') }}" required @if ($errors->has('contact_information')) aria-invalid="true" @endif>
                     @error('contact_information') <small>{{ $message }}</small> @enderror
                 </label>
 
                 <div class="field-grid supplier-field-grid">
                     <label class="supplier-field">
-                        <span>GST number</span>
+                        <span>{{ __('common.gst_number_c8482e') }}</span>
                         <input class="supplier-form-control" name="gst_number" value="{{ old('gst_number') }}" placeholder="GSTIN">
                         @error('gst_number') <small>{{ $message }}</small> @enderror
                     </label>
 
                     <label class="supplier-field">
-                        <span>Payment terms</span>
-                        <input class="supplier-form-control" name="payment_terms" value="{{ old('payment_terms') }}" placeholder="Net 15, COD">
+                        <span>{{ __('orders.payment_terms_8744d5') }}</span>
+                        <input class="supplier-form-control" name="payment_terms" value="{{ old('payment_terms') }}" placeholder="{{ __('common.net_15_cod_b5d9df') }}">
                         @error('payment_terms') <small>{{ $message }}</small> @enderror
                     </label>
                 </div>
 
                 <label class="supplier-field supplier-field-balance">
-                    <span>Outstanding balance</span>
+                    <span>{{ __('common.outstanding_balance_e9fd5b') }}</span>
                     <input class="supplier-form-control" type="number" name="outstanding_balance" min="0" step="0.01" value="{{ old('outstanding_balance', 0) }}" required data-replace-on-focus>
                     @error('outstanding_balance') <small>{{ $message }}</small> @enderror
                 </label>
 
                 <button class="product-save-button" type="submit" data-supplier-submit>
-                    <span class="product-save-button__idle">Save supplier</span>
+                    <span class="product-save-button__idle">{{ __('orders.save_supplier_75faee') }}</span>
                     <span class="product-save-button__loading" aria-hidden="true">
                         <i></i>
-                        Saving
+                        {{ __('common.saving_369c53') }}
                     </span>
                 </button>
             </form>
         </article>
 
         <article class="admin-section supplier-listing-panel" data-supplier-listing>
-            <div class="section-title"><div><p class="eyebrow">Purchase partners</p><h2>Suppliers</h2></div></div>
+            <div class="section-title"><div><p class="eyebrow">{{ __('orders.purchase_partners_83f972') }}</p><h2>{{ __('orders.suppliers_6f76bb') }}</h2></div></div>
             <div class="product-toolbar">
                 <form class="product-filter-form billing-search-form supplier-filter-form" method="GET" action="{{ route('suppliers.index') }}" data-supplier-search-form>
-                    <input type="search" name="search" value="{{ request('search') }}" placeholder="Search supplier, contact, GST, terms" data-supplier-search>
-                    <select name="per_page" aria-label="Suppliers per page" data-supplier-search>
+                    <input type="search" name="search" value="{{ request('search') }}" placeholder="{{ __('orders.search_supplier_contact_gst_terms_a28731') }}" data-supplier-search>
+                    <select name="per_page" aria-label="{{ __('orders.suppliers_per_page_717ff1') }}" data-supplier-search>
                         @foreach ($perPageOptions as $option)
-                            <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }} / page</option>
+                            <option value="{{ $option }}" @selected($perPage === $option)>{{ __('common.per_page', ['count' => $option]) }}</option>
                         @endforeach
                     </select>
-                    <a class="product-clear-filter" href="{{ route('suppliers.index') }}" data-supplier-listing-link>Clear</a>
+                    <a class="product-clear-filter" href="{{ route('suppliers.index') }}" data-supplier-listing-link>{{ __('common.clear_719ea3') }}</a>
                 </form>
             </div>
 
             <div class="supplier-listing-results" data-supplier-listing-results>
                 <div class="product-listing-loader" data-supplier-listing-loader aria-live="polite" aria-hidden="true">
                     <span aria-hidden="true"></span>
-                    <strong>Loading suppliers</strong>
+                    <strong>{{ __('orders.loading_suppliers_6a4dde') }}</strong>
                 </div>
                 <div class="table-wrap">
                     <table class="admin-table">
-                        <thead><tr><th>Name</th><th>GST</th><th>Terms</th><th>Outstanding</th></tr></thead>
+                        <thead><tr><th>{{ __('common.name_709a23') }}</th><th>GST</th><th>{{ __('common.terms_a55a27') }}</th><th>{{ __('common.outstanding_f8ee57') }}</th></tr></thead>
                         <tbody>
                         @forelse ($suppliers as $supplier)
                             <tr><td><strong>{{ $supplier->name }}</strong><span>{{ $supplier->contact_information }}</span></td><td>{{ $supplier->gst_number ?: '-' }}</td><td>{{ $supplier->payment_terms ?: '-' }}</td><td>&#8377;{{ number_format($supplier->outstanding_balance, 2) }}</td></tr>
                         @empty
-                            <tr><td colspan="4">{{ request()->filled('search') ? 'No suppliers match the current search.' : 'No suppliers yet.' }}</td></tr>
+                            <tr><td colspan="4">{{ request()->filled('search') ? __('orders.no_suppliers_match_the_current_search_18113e') : __('orders.no_suppliers_yet_834e57') }}</td></tr>
                         @endforelse
                         </tbody>
                     </table>
@@ -222,7 +229,7 @@
                     signal: requestController.signal
                 }).then(function (response) {
                     if (!response.ok) {
-                        throw new Error('Unable to load suppliers.');
+                        throw new Error(window.t("validation.unable_to_load_suppliers_8e3d66"));
                     }
 
                     return response.text();
@@ -231,7 +238,7 @@
                     var nextListing = page.querySelector('[data-supplier-listing]');
 
                     if (!nextListing) {
-                        throw new Error('Supplier listing was not found.');
+                        throw new Error(window.t("validation.supplier_listing_was_not_found_551468"));
                     }
 
                     listing.replaceWith(nextListing);
@@ -305,7 +312,7 @@
                     var label = field.closest('label');
                     var labelText = label ? label.querySelector('span') : null;
 
-                    return labelText ? labelText.textContent.trim() : 'This field';
+                    return labelText ? labelText.textContent.trim() : window.t("common.this_field_f89fd4");
                 }
 
                 function existingErrorElement(field) {
@@ -351,8 +358,8 @@
 
                     error = errorElement(field);
                     error.textContent = field.validity.valueMissing
-                        ? fieldLabel(field) + ' is required.'
-                        : field.validationMessage;
+                        ? window.t('validation.required', {attribute: fieldLabel(field)})
+                        : window.localizedValidationMessage(field);
                     error.hidden = false;
                     field.setAttribute('aria-invalid', 'true');
 

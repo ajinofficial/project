@@ -35,10 +35,10 @@ class ServiceOrderController extends Controller
         $data = $this->details($request);
         $order = ServiceOrder::create($data + ['tenant_id' => $request->user()->tenant_id]);
         if ($request->expectsJson()) {
-            $request->session()->flash('status', 'Service order created.');
-            return response()->json(['message' => 'Service order created.', 'redirect' => route('services.show', $order)], 201);
+            $request->session()->flash('status', __('orders.service_order_created_f3d02a'));
+            return response()->json(['message' => __('orders.service_order_created_f3d02a'), 'redirect' => route('services.show', $order)], 201);
         }
-        return redirect()->route('services.show', $order)->with('status', 'Service order created.');
+        return redirect()->route('services.show', $order)->with('status', __('orders.service_order_created_f3d02a'));
     }
 
     public function show(Request $request, int $service)
@@ -61,7 +61,7 @@ class ServiceOrderController extends Controller
             $order = $this->order($request, $service, true);
             $order->update($data + ['completed_at' => $data['status'] === 'completed' ? ($order->completed_at ?? now()) : null]);
         });
-        return back()->with('status', 'Service order updated.');
+        return back()->with('status', __('orders.service_order_updated_b40e2b'));
     }
 
     public function cost(Request $request, int $service)
@@ -73,20 +73,20 @@ class ServiceOrderController extends Controller
             'description' => ['required_if:kind,expense', 'nullable', 'string', 'max:255'],
             'unit_cost' => ['required_if:kind,expense', 'nullable', 'numeric', 'min:0', 'max:999999.99', 'decimal:0,2'],
         ], [
-            'description.required_if' => 'Please enter an expense description.',
-            'quantity.required' => 'Please enter a quantity.',
-            'unit_cost.required_if' => 'Please enter the unit cost.',
+            'description.required_if' => __('validation.please_enter_an_expense_description_c34cdb'),
+            'quantity.required' => __('validation.please_enter_a_quantity_05a2e6'),
+            'unit_cost.required_if' => __('validation.please_enter_the_unit_cost_a52196'),
         ]);
         DB::transaction(function () use ($request, $service, $data) {
             $order = $this->order($request, $service, true);
             if ($order->status === 'completed') {
-                throw ValidationException::withMessages(['kind' => 'Reopen this order before adding costs.']);
+                throw ValidationException::withMessages(['kind' => __('orders.reopen_this_order_before_adding_costs_97abd6')]);
             }
             $cost = ['description' => $data['description'] ?? '', 'quantity' => $data['quantity'], 'unit_cost' => $data['unit_cost'] ?? 0];
             if ($data['kind'] === 'part') {
                 $product = Product::where('tenant_id', $order->tenant_id)->where('status', 'active')->lockForUpdate()->findOrFail($data['product_id']);
                 if ($product->available_stock < $data['quantity']) {
-                    throw ValidationException::withMessages(['quantity' => 'Not enough available stock.']);
+                    throw ValidationException::withMessages(['quantity' => __('validation.not_enough_available_stock_d9b1db')]);
                 }
                 $product->decrement('inventory', $data['quantity']);
                 $cost = ['product_id' => $product->id, 'description' => $product->name, 'quantity' => $data['quantity'], 'unit_cost' => $product->purchase_price];
@@ -96,29 +96,29 @@ class ServiceOrderController extends Controller
             $order->costs()->create($cost);
         });
         if ($request->expectsJson()) {
-            return response()->json(['message' => 'Service cost recorded.', 'html' => $this->show($request, $service)->render()]);
+            return response()->json(['message' => __('orders.service_cost_recorded_8eeea7'), 'html' => $this->show($request, $service)->render()]);
         }
-        return back()->with('status', 'Service cost recorded.');
+        return back()->with('status', __('orders.service_cost_recorded_8eeea7'));
     }
 
     public function payment(Request $request, int $service)
     {
         $data = $request->validate(['amount' => ['required', 'numeric', 'min:0.01', 'max:99999999.99', 'decimal:0,2'], 'method' => ['required', 'in:cash,card,upi,bank_transfer']], [
-            'amount.required' => 'Please enter a payment amount.',
-            'method.required' => 'Please select a payment method.',
+            'amount.required' => __('validation.please_enter_a_payment_amount_98c6c3'),
+            'method.required' => __('validation.please_select_a_payment_method_0bef3f'),
         ]);
         DB::transaction(function () use ($request, $service, $data) {
             $order = $this->order($request, $service, true);
             if ((int) round($data['amount'] * 100) > (int) round(($order->charge - $order->paid_amount) * 100)) {
-                throw ValidationException::withMessages(['amount' => 'Payment exceeds the outstanding amount.']);
+                throw ValidationException::withMessages(['amount' => __('validation.payment_exceeds_the_outstanding_amount_ec8bd3')]);
             }
             DB::table('payments')->insert(['tenant_id' => $order->tenant_id, 'payable_type' => ServiceOrder::class, 'payable_id' => $order->id, 'amount' => $data['amount'], 'method' => $data['method'], 'status' => 'paid', 'created_at' => now(), 'updated_at' => now()]);
             $order->increment('paid_amount', $data['amount']);
         });
         if ($request->expectsJson()) {
-            return response()->json(['message' => 'Payment received.', 'html' => $this->show($request, $service)->render()]);
+            return response()->json(['message' => __('orders.payment_received_13884c'), 'html' => $this->show($request, $service)->render()]);
         }
-        return back()->with('status', 'Payment received.');
+        return back()->with('status', __('orders.payment_received_13884c'));
     }
 
     private function order(Request $request, int $id, bool $lock = false): ServiceOrder
@@ -137,15 +137,15 @@ class ServiceOrderController extends Controller
             'charge' => ['required', 'numeric', 'min:0', 'max:99999999.99', 'decimal:0,2'],
             'due_date' => ['nullable', 'date_format:Y-m-d'],
         ], [
-            'customer_id.required' => 'Please select a customer.',
-            'customer_id.exists' => 'Please select a valid customer.',
-            'service_type.required' => 'Please enter a service type.',
-            'charge.required' => 'Please enter the total customer charge.',
-            'charge.numeric' => 'The total customer charge must be a number.',
-            'charge.min' => 'The total customer charge cannot be negative.',
-            'charge.max' => 'The total customer charge cannot exceed 99,999,999.99.',
-            'charge.decimal' => 'The total customer charge must have at most two decimal places.',
-            'due_date.date_format' => 'Please enter a valid due date.',
+            'customer_id.required' => __('validation.please_select_a_customer_6c33a1'),
+            'customer_id.exists' => __('validation.please_select_a_valid_customer_f6842d'),
+            'service_type.required' => __('validation.please_enter_a_service_type_f46a57'),
+            'charge.required' => __('validation.please_enter_the_total_customer_charge_1d795e'),
+            'charge.numeric' => __('validation.the_total_customer_charge_must_be_a_number_c3e646'),
+            'charge.min' => __('validation.the_total_customer_charge_cannot_be_negative_ec125f'),
+            'charge.max' => __('validation.the_total_customer_charge_cannot_exceed_99_999_999_99_94554d'),
+            'charge.decimal' => __('orders.the_total_customer_charge_must_have_at_most_two_decimal_places_e0c2b8'),
+            'due_date.date_format' => __('validation.please_enter_a_valid_due_date_e40ab5'),
         ]);
     }
 }

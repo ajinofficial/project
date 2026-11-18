@@ -17,15 +17,37 @@ class Notification extends Model
         'title',
         'message',
         'read_at',
+        'translation_data',
     ];
 
     protected $casts = [
+        'translation_data' => 'array',
         'read_at' => 'datetime',
     ];
 
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function getTitleAttribute(string $value): string
+    {
+        return __($value);
+    }
+
+    public function getMessageAttribute(string $value): string
+    {
+        $data = $this->translation_data ?? \App\Support\NotificationText::historicalData($this->type, $value);
+        if (! is_array($data) || ! isset($data['key']) || ! str_starts_with($data['key'], 'notifications.events.')) {
+            return __($value);
+        }
+        $parameters = $data['parameters'] ?? [];
+        foreach (['role', 'kind'] as $field) {
+            if (isset($parameters[$field])) {
+                $parameters[$field] = __(ucfirst($parameters[$field]));
+            }
+        }
+        return app('translator')->has($data['key']) ? __($data['key'], $parameters) : $value;
     }
 
     public function scopeUnread($query)

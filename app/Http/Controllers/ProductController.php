@@ -52,6 +52,8 @@ class ProductController extends Controller
 
                 $query->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('translations->'.app()->getLocale().'->name', 'like', "%{$search}%")
+                        ->orWhere('translations->'.app()->getLocale().'->category', 'like', "%{$search}%")
                         ->orWhere('sku', 'like', "%{$search}%")
                         ->orWhere('brand', 'like', "%{$search}%")
                         ->orWhere('category', 'like', "%{$search}%");
@@ -103,13 +105,14 @@ class ProductController extends Controller
         ActivityNotifier::notify(
             $request->user()->tenant_id,
             'product_created',
-            'Product created',
-            $request->user()->name.' created product '.$product->name.'.'
+            "Product created",
+            $request->user()->name.' created product '.$product->name.'.',
+            parameters: ['actor' => $request->user()->name, 'product' => $product->name]
         );
 
         return redirect()
             ->route('products.index')
-            ->with('status', 'Product created.');
+            ->with('status', __('products.product_created_8a8a3c'));
     }
 
     public function edit(Request $request, Product $product): View
@@ -142,13 +145,14 @@ class ProductController extends Controller
         ActivityNotifier::notify(
             $request->user()->tenant_id,
             'product_updated',
-            'Product updated',
-            $request->user()->name.' updated product '.$product->name.'.'
+            "Product updated",
+            $request->user()->name.' updated product '.$product->name.'.',
+            parameters: ['actor' => $request->user()->name, 'product' => $product->name]
         );
 
         return redirect()
             ->route('products.index')
-            ->with('status', 'Product updated.');
+            ->with('status', __('products.product_updated_b12494'));
     }
 
     public function destroy(Request $request, Product $product): RedirectResponse
@@ -156,7 +160,7 @@ class ProductController extends Controller
         $this->authorizeProduct($request, $product);
 
         if ($product->status === 'active') {
-            return back()->with('status', 'Active products cannot be deleted. Archive the product first.');
+            return back()->with('status', __('validation.active_products_cannot_be_deleted_archive_the_product_first_446119'));
         }
 
         $product->update(['deleted_status' => 1]);
@@ -164,18 +168,24 @@ class ProductController extends Controller
         ActivityNotifier::notify(
             $request->user()->tenant_id,
             'product_deleted',
-            'Product deleted',
-            $request->user()->name.' deleted product '.$product->name.'.'
+            "Product deleted",
+            $request->user()->name.' deleted product '.$product->name.'.',
+            parameters: ['actor' => $request->user()->name, 'product' => $product->name]
         );
 
         return redirect()
             ->route('products.index')
-            ->with('status', 'Product deleted.');
+            ->with('status', __('products.product_deleted_7aef31'));
     }
 
     private function validated(Request $request, ?Product $product = null): array
     {
         $rules = [
+            'translations' => ['sometimes', 'array:'.implode(',', array_keys(config('localization.supported')))],
+            'translations.*' => ['array:name,category,description'],
+            'translations.*.name' => ['nullable', 'string', 'max:255'],
+            'translations.*.category' => ['nullable', 'string', 'max:120'],
+            'translations.*.description' => ['nullable', 'string', 'max:5000'],
             'name' => ['required', 'string', 'max:255'],
             'sku' => [
                 'nullable',

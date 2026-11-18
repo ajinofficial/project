@@ -62,7 +62,7 @@
                         var loader = document.createElement('span');
                         loader.className = 'searchable-select__loader';
                         loader.dataset.searchableSelectLoader = '';
-                        loader.textContent = 'Loading products';
+                        loader.textContent = window.t("products.loading_products_430714");
                         menu.appendChild(loader);
                     }
 
@@ -81,7 +81,7 @@
                         showRemoteLoader();
                         menu.hidden = false;
                         search.setAttribute('aria-expanded', 'true');
-                        status.textContent = 'Loading products…';
+                        status.textContent = window.t('common.loading_products');
 
                         var url = new URL(component.dataset.searchableSelectUrl, window.location.origin);
                         url.searchParams.set('page', String(remotePage + 1));
@@ -91,7 +91,7 @@
                             var response = await fetch(url, {
                                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                             });
-                            if (!response.ok) throw new Error('Unable to load products.');
+                            if (!response.ok) throw new Error(window.t("validation.unable_to_load_products_051a4c"));
                             var payload = await response.json();
                             if (request !== remoteRequest) return;
 
@@ -103,12 +103,12 @@
                             if (!menu.querySelector('.searchable-select__option')) {
                                 var empty = document.createElement('span');
                                 empty.className = 'searchable-select__empty';
-                                empty.textContent = 'No products found';
+                                empty.textContent = window.t("products.no_products_found_a46d76");
                                 menu.appendChild(empty);
                             } else if (!remoteHasMore) {
                                 var end = document.createElement('span');
                                 end.className = 'searchable-select__empty';
-                                end.textContent = 'All products loaded';
+                                end.textContent = window.t("products.all_products_loaded_1a8547");
                                 menu.appendChild(end);
                             }
                             status.textContent = payload.meta.total + (payload.meta.total === 1 ? ' product found' : ' products found');
@@ -117,10 +117,10 @@
                             var failed = document.createElement('button');
                             failed.type = 'button';
                             failed.className = 'searchable-select__empty';
-                            failed.textContent = 'Could not load products. Click to retry.';
+                            failed.textContent = window.t("validation.could_not_load_products_click_to_retry_7d8673");
                             failed.addEventListener('click', function () { loadRemoteProducts(reset); });
                             menu.appendChild(failed);
-                            status.textContent = 'Could not load products';
+                            status.textContent = window.t("validation.could_not_load_products_cf8454");
                         } finally {
                             if (request === remoteRequest) remoteLoading = false;
                         }
@@ -153,7 +153,7 @@
 
                     var remoteSelected = select.selectedOptions[0];
                     if (remoteSelected && remoteSelected.value) search.value = remoteSelected.textContent.trim();
-                    status.textContent = 'Scroll to load more products';
+                    status.textContent = window.t("products.scroll_to_load_more_products_83a0be");
                     return;
                 }
 
@@ -190,7 +190,7 @@
                     if (matches.length === 0) {
                         var empty = document.createElement('span');
                         empty.className = 'searchable-select__empty';
-                        empty.textContent = 'No products found';
+                        empty.textContent = window.t("products.no_products_found_a46d76");
                         menu.appendChild(empty);
                     }
 

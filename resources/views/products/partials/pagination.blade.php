@@ -1,19 +1,20 @@
 @php
     $itemLabel = $itemLabel ?? 'products';
+    $translatedItemLabel = app()->isLocale('en') ? $itemLabel : __(ucfirst($itemLabel));
     $currentPage = $paginator->currentPage();
     $lastPage = $paginator->lastPage();
     $startPage = max(1, $currentPage - 2);
     $endPage = min($lastPage, $currentPage + 2);
 @endphp
 
-<nav class="pagination-wrap product-pagination" aria-label="{{ ucfirst($itemLabel) }} pagination">
-    <p>Showing {{ number_format($paginator->firstItem()) }}-{{ number_format($paginator->lastItem()) }} of {{ number_format($paginator->total()) }} {{ $itemLabel }}</p>
+<nav class="pagination-wrap product-pagination" aria-label="{{ __('common.pagination', ['items' => __(ucfirst($itemLabel))]) }}">
+    <p>{{ __('common.showing_results', ['first' => number_format($paginator->firstItem()), 'last' => number_format($paginator->lastItem()), 'total' => number_format($paginator->total()), 'items' => $translatedItemLabel]) }}</p>
 
     <div class="product-page-links">
         @if ($paginator->onFirstPage())
-            <span class="product-page-link product-page-arrow is-disabled" aria-disabled="true" aria-label="Previous page">&lsaquo;</span>
+            <span class="product-page-link product-page-arrow is-disabled" aria-disabled="true" aria-label="{{ __('common.previous_page_81f547') }}">&lsaquo;</span>
         @else
-            <a class="product-page-link product-page-arrow" href="{{ $paginator->previousPageUrl() }}" rel="prev" aria-label="Previous page">&lsaquo;</a>
+            <a class="product-page-link product-page-arrow" href="{{ $paginator->previousPageUrl() }}" rel="prev" aria-label="{{ __('common.previous_page_81f547') }}">&lsaquo;</a>
         @endif
 
         @if ($startPage > 1)
@@ -39,9 +40,9 @@
         @endif
 
         @if ($paginator->hasMorePages())
-            <a class="product-page-link product-page-arrow" href="{{ $paginator->nextPageUrl() }}" rel="next" aria-label="Next page">&rsaquo;</a>
+            <a class="product-page-link product-page-arrow" href="{{ $paginator->nextPageUrl() }}" rel="next" aria-label="{{ __('common.next_page_4bfc19') }}">&rsaquo;</a>
         @else
-            <span class="product-page-link product-page-arrow is-disabled" aria-disabled="true" aria-label="Next page">&rsaquo;</span>
+            <span class="product-page-link product-page-arrow is-disabled" aria-disabled="true" aria-label="{{ __('common.next_page_4bfc19') }}">&rsaquo;</span>
         @endif
     </div>
 </nav>

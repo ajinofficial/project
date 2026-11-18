@@ -26,7 +26,7 @@ class AccountEmailController extends Controller
                 Rule::unique('users', 'email')->ignore($request->user()->id),
             ],
         ], [
-            'email.unique' => 'This email address is already registered.',
+            'email.unique' => __('auth.this_email_address_is_already_registered_8aba0f'),
         ]);
 
         DB::transaction(function () use ($request, $data) {
@@ -47,7 +47,7 @@ class AccountEmailController extends Controller
 
         return response()->json([
             'email' => $data['email'],
-            'message' => 'Email updated. Send a new OTP to verify it.',
+            'message' => __('auth.email_updated_send_a_new_otp_to_verify_it_236932'),
         ]);
     }
 }

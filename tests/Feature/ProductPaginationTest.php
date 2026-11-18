@@ -993,6 +993,7 @@ class ProductPaginationTest extends TestCase
 
     public function test_purchase_history_search_paginates_and_preserves_query_string(): void
     {
+        $this->freezeTime();
         [$owner, $tenant] = $this->tenantOwner();
         [, $otherTenant] = $this->tenantOwner('other-purchase@example.com');
 
@@ -1404,7 +1405,7 @@ class ProductPaginationTest extends TestCase
         $listing->assertSee('data-billing-product-search-input', false);
         $listing->assertSee('data-billing-product-search-menu', false);
         $listing->assertSee('Search or select product');
-        $listing->assertSee('No products found');
+        $listing->assertSee('window.t("products.no_products_found_a46d76")', false);
         $listing->assertSee('Loading invoices');
         $listing->assertSee('loadBillingListing', false);
         $listing->assertSee("'X-Requested-With': 'XMLHttpRequest'", false);

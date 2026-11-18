@@ -19,9 +19,9 @@
         customField.required = custom;
     }
     function updateTypes(selected) {
-        typeField.replaceChildren(new Option('Select service', ''));
+        typeField.replaceChildren(new Option(window.t("orders.select_service_f216b2"), ''));
         (categories[categoryField.value] || []).concat(categoryField.value ? ['Custom service'] : []).forEach(function (type) {
-            typeField.add(new Option(type, type));
+            typeField.add(new Option(window.t(type), type));
         });
         typeField.disabled = !categoryField.value;
         if (selected) {
@@ -43,7 +43,7 @@
         if (missingField) {
             var error = document.createElement('small');
             error.setAttribute('role', 'alert');
-            error.textContent = missingField === categoryField ? 'Please select a service category.' : 'Please enter a custom service.';
+            error.textContent = missingField === categoryField ? window.t("validation.please_select_a_service_category_931d4d") : window.t("validation.please_enter_a_custom_service_f7ce62");
             missingField.closest('label').appendChild(error);
             missingField.setAttribute('aria-invalid', 'true');
             missingField.focus();
@@ -77,12 +77,12 @@
                 if (firstInvalid) firstInvalid.focus();
                 return;
             }
-            if (!response.ok) throw new Error('Unable to create service order. Please try again.');
+            if (!response.ok) throw new Error(window.t("validation.unable_to_create_service_order_please_try_again_205b17"));
             var data = await response.json();
             window.location.assign(data.redirect);
             created = true;
         } catch (error) {
-            createError.textContent = 'Unable to create service order. Please try again.';
+            createError.textContent = window.t("validation.unable_to_create_service_order_please_try_again_205b17");
             createError.hidden = false;
         } finally {
             if (created) return;
@@ -122,10 +122,10 @@
                 headers: { 'Accept': 'text/html', 'X-Requested-With': 'XMLHttpRequest' },
                 signal: controller.signal
             });
-            if (!response.ok || response.redirected) throw new Error('Unable to load services');
+            if (!response.ok || response.redirected) throw new Error(window.t("validation.unable_to_load_services_f35132"));
             var page = new DOMParser().parseFromString(await response.text(), 'text/html');
             var nextResults = page.querySelector('[data-service-results]');
-            if (!nextResults) throw new Error('Service listing was not found');
+            if (!nextResults) throw new Error(window.t("validation.service_listing_was_not_found_f44148"));
             if (activeRequest !== controller) return;
             results.innerHTML = nextResults.innerHTML;
             var params = new URL(url).searchParams;

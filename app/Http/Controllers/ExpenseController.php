@@ -58,10 +58,12 @@ class ExpenseController extends Controller
             'created_by' => $request->user()->id,
         ]);
 
-        ActivityNotifier::notify($request->user()->tenant_id, 'expense_created', 'Expense recorded',
-            $request->user()->name.' recorded '.$expense->title.' for '.$expense->amount.'.');
+        ActivityNotifier::notify($request->user()->tenant_id, 'expense_created', "Expense recorded",
+            $request->user()->name.' recorded '.$expense->title.' for '.$expense->amount.'.',
+            parameters: ['actor' => $request->user()->name, 'title' => $expense->title, 'amount' => $expense->amount]
+        );
 
-        return back()->with('status', 'Expense recorded.');
+        return back()->with('status', __('orders.expense_recorded_2d913d'));
     }
 
     public function update(Request $request, Expense $expense): RedirectResponse
@@ -69,7 +71,7 @@ class ExpenseController extends Controller
         $this->authorizeTenant($request, $expense);
         $expense->update($this->validated($request));
 
-        return back()->with('status', 'Expense updated.');
+        return back()->with('status', __('orders.expense_updated_9fe9ff'));
     }
 
     public function destroy(Request $request, Expense $expense): RedirectResponse
@@ -77,7 +79,7 @@ class ExpenseController extends Controller
         $this->authorizeTenant($request, $expense);
         $expense->delete();
 
-        return back()->with('status', 'Expense deleted.');
+        return back()->with('status', __('orders.expense_deleted_b44fe3'));
     }
 
     private function validated(Request $request): array
@@ -91,12 +93,12 @@ class ExpenseController extends Controller
             'reference_number' => ['nullable', 'string', 'max:120'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ], [
-            'title.required' => 'Enter the expense title.',
-            'category.required' => 'Select an expense category.',
-            'amount.required' => 'Enter the expense amount.',
-            'amount.min' => 'Expense amount must be greater than zero.',
-            'expense_date.required' => 'Select the expense date.',
-            'payment_method.required' => 'Select a payment method.',
+            'title.required' => __('validation.enter_the_expense_title_a10dca'),
+            'category.required' => __('products.select_an_expense_category_056bc5'),
+            'amount.required' => __('validation.enter_the_expense_amount_f80e3f'),
+            'amount.min' => __('validation.expense_amount_must_be_greater_than_zero_37366b'),
+            'expense_date.required' => __('orders.select_the_expense_date_62906b'),
+            'payment_method.required' => __('orders.select_a_payment_method_f5e19f'),
         ]);
     }
 

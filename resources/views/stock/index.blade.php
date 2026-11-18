@@ -1,4 +1,4 @@
-@extends('layouts.admin', ['title' => 'Stock'])
+@extends('layouts.admin', ['title' => __('products.stock_bcecf4')])
 
 @section('content')
     <style>
@@ -58,107 +58,107 @@
     <section class="product-workspace stock-workspace product-overview">
         <header class="product-page-head">
             <div>
-                <p class="eyebrow">Stock</p>
-                <h1>Stock control</h1>
-                <span>Track stock on hand and audit purchase, billing, return, and adjustment movement.</span>
+                <p class="eyebrow">{{ __('products.stock_bcecf4') }}</p>
+                <h1>{{ __('products.stock_control_3a6cb5') }}</h1>
+                <span>{{ __('products.track_stock_on_hand_and_audit_purchase_billing_return_and_adjustment_m_d270fb') }}</span>
             </div>
             <div class="product-head-actions">
-                <a class="ghost-button" href="{{ route('products.index') }}">Inventory</a>
-                <a class="primary-link" href="{{ route('stock.create') }}">Add stock</a>
+                <a class="ghost-button" href="{{ route('products.index') }}">{{ __('products.inventory_300d29') }}</a>
+                <a class="primary-link" href="{{ route('stock.create') }}">{{ __('products.add_stock_64db16') }}</a>
             </div>
         </header>
 
-        <section class="product-stat-grid" aria-label="Stock summary">
-            <div class="product-stat"><span>On hand</span><strong>{{ number_format($stats['on_hand']) }}</strong><small>Total physical stock</small></div>
-            <div class="product-stat"><span>Available</span><strong>{{ number_format($stats['available']) }}</strong><small>Sellable after holds</small></div>
-            <div class="product-stat"><span>Reserved</span><strong>{{ number_format($stats['reserved']) }}</strong><small>Held units</small></div>
-            <div class="product-stat"><span>Damaged</span><strong>{{ number_format($stats['damaged']) }}</strong><small>Unsellable units</small></div>
-            <div class="product-stat"><span>Low stock</span><strong>{{ number_format($stats['low']) }}</strong><small>Needs reorder</small></div>
-            <div class="product-stat"><span>Out of stock</span><strong>{{ number_format($stats['out']) }}</strong><small>Unavailable items</small></div>
+        <section class="product-stat-grid" aria-label="{{ __('products.stock_summary_1e8eb6') }}">
+            <div class="product-stat"><span>{{ __('common.on_hand_d94c32') }}</span><strong>{{ number_format($stats['on_hand']) }}</strong><small>{{ __('products.total_physical_stock_f25c40') }}</small></div>
+            <div class="product-stat"><span>{{ __('common.available_7c62a1') }}</span><strong>{{ number_format($stats['available']) }}</strong><small>{{ __('products.sellable_after_holds_b24d1f') }}</small></div>
+            <div class="product-stat"><span>{{ __('common.reserved_67a6ff') }}</span><strong>{{ number_format($stats['reserved']) }}</strong><small>{{ __('common.held_units_92b017') }}</small></div>
+            <div class="product-stat"><span>{{ __('common.damaged_052fc7') }}</span><strong>{{ number_format($stats['damaged']) }}</strong><small>{{ __('products.unsellable_units_d9770d') }}</small></div>
+            <div class="product-stat"><span>{{ __('products.low_stock_a6e1fe') }}</span><strong>{{ number_format($stats['low']) }}</strong><small>{{ __('products.needs_reorder_6ab4bf') }}</small></div>
+            <div class="product-stat"><span>{{ __('products.out_of_stock_8b78c7') }}</span><strong>{{ number_format($stats['out']) }}</strong><small>{{ __('common.unavailable_items_2114ba') }}</small></div>
         </section>
 
         <section class="v-panel product-management-panel">
-            <div class="section-title"><div><p class="eyebrow">Alerts</p><h2>Low stock watchlist</h2></div></div>
+            <div class="section-title"><div><p class="eyebrow">{{ __('notifications.alerts_d0efe0') }}</p><h2>{{ __('products.low_stock_watchlist_6fa822') }}</h2></div></div>
             <div class="stock-watch-list">
                 @forelse ($lowStockProducts as $product)
                     <div class="stock-watch-row">
                         <div>
-                            <strong>{{ $product->name }}</strong>
-                            <span>{{ $product->sku ?: 'SKU-'.$product->id }} - Minimum {{ number_format($product->minimum_stock_level) }} - Available {{ number_format($product->available_stock) }}</span>
+                            <strong>{{ $product->localized('name') }}</strong>
+                            <span>{{ $product->sku ?: 'SKU-'.$product->id }} - {{ __('common.stock_min_available', ['minimum' => number_format($product->minimum_stock_level), 'available' => number_format($product->available_stock)]) }}</span>
                         </div>
                         <span class="stock-count-pill {{ $product->inventory === 0 ? 'is-out' : '' }}">{{ number_format($product->inventory) }}</span>
                     </div>
                 @empty
-                    <div class="empty-state product-empty">No low-stock items.</div>
+                    <div class="empty-state product-empty">{{ __('products.no_low_stock_items_ea95dc') }}</div>
                 @endforelse
             </div>
         </section>
 
         <section class="v-panel product-management-panel" data-stock-listing>
-            <div class="section-title"><div><p class="eyebrow">Connected flow</p><h2>Stock movement ledger</h2></div></div>
+            <div class="section-title"><div><p class="eyebrow">{{ __('common.connected_flow_ba0d93') }}</p><h2>{{ __('products.stock_movement_ledger_c56946') }}</h2></div></div>
             <div class="stock-flow-row">
                 <div>
-                    <strong>Purchases add stock. Billing reduces stock. Returns and adjustments update stock.</strong>
-                    <span>Every operation writes to this ledger with quantity, stock after, and reference notes.</span>
+                    <strong>{{ __('products.purchases_add_stock_billing_reduces_stock_returns_and_adjustments_upda_b85a3e') }}</strong>
+                    <span>{{ __('products.every_operation_writes_to_this_ledger_with_quantity_stock_after_and_re_c3eddd') }}</span>
                 </div>
             </div>
             <div class="product-toolbar">
                 <form class="product-filter-form stock-filter-form" method="GET" action="{{ route('stock.index') }}" data-stock-search-form>
-                    <input type="search" name="search" value="{{ request('search') }}" placeholder="Search product, SKU, notes" data-stock-search>
+                    <input type="search" name="search" value="{{ request('search') }}" placeholder="{{ __('products.search_product_sku_notes_eb334b') }}" data-stock-search>
                     <select name="type" data-stock-search>
-                        <option value="">All movement</option>
-                        <option value="purchase" @selected(request('type') === 'purchase')>Purchase</option>
-                        <option value="sale" @selected(request('type') === 'sale')>Sale</option>
-                        <option value="sales_return" @selected(request('type') === 'sales_return')>Sales return</option>
-                        <option value="purchase_return" @selected(request('type') === 'purchase_return')>Purchase return</option>
-                        <option value="adjustment" @selected(request('type') === 'adjustment')>Adjustment</option>
-                        <option value="service" @selected(request('type') === 'service')>Service parts</option>
+                        <option value="">{{ __('common.all_movement_eb0b65') }}</option>
+                        <option value="purchase" @selected(request('type') === 'purchase')>{{ __('orders.purchase_160f06') }}</option>
+                        <option value="sale" @selected(request('type') === 'sale')>{{ __('common.sale_0028d7') }}</option>
+                        <option value="sales_return" @selected(request('type') === 'sales_return')>{{ __('orders.sales_return_81894c') }}</option>
+                        <option value="purchase_return" @selected(request('type') === 'purchase_return')>{{ __('orders.purchase_return_1c337e') }}</option>
+                        <option value="adjustment" @selected(request('type') === 'adjustment')>{{ __('common.adjustment_7f0496') }}</option>
+                        <option value="service" @selected(request('type') === 'service')>{{ __('orders.service_parts_bc8506') }}</option>
                     </select>
-                    <select name="per_page" aria-label="Movements per page" data-stock-search>
+                    <select name="per_page" aria-label="{{ __('common.movements_per_page_e3dc47') }}" data-stock-search>
                         @foreach ($perPageOptions as $option)
-                            <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }} / page</option>
+                            <option value="{{ $option }}" @selected($perPage === $option)>{{ __('common.per_page', ['count' => $option]) }}</option>
                         @endforeach
                     </select>
-                    <a class="product-clear-filter" href="{{ route('stock.index') }}" data-stock-listing-link>Clear</a>
+                    <a class="product-clear-filter" href="{{ route('stock.index') }}" data-stock-listing-link>{{ __('common.clear_719ea3') }}</a>
                 </form>
             </div>
 
             <div class="stock-listing-results" data-stock-listing-results>
                 <div class="product-listing-loader" data-stock-listing-loader aria-live="polite" aria-hidden="true">
                     <span aria-hidden="true"></span>
-                    <strong>Loading movements</strong>
+                    <strong>{{ __('common.loading_movements_005cb9') }}</strong>
                 </div>
 
                 <div class="table-wrap">
                     <table class="inventory-table stock-movement-table">
-                        <thead><tr><th>Date</th><th>Product</th><th>Type</th><th>Quantity</th><th>Stock after</th><th>Notes</th></tr></thead>
+                        <thead><tr><th>{{ __('common.date_eb9a4b') }}</th><th>{{ __('products.product_dd3b86') }}</th><th>{{ __('common.type_3deb74') }}</th><th>{{ __('common.quantity_44f6af') }}</th><th>{{ __('products.stock_after_4b2cb3') }}</th><th>{{ __('common.notes_704400') }}</th></tr></thead>
                         <tbody>
                             @forelse ($movements as $movement)
                                 @php $typeClass = $movement->quantity > 0 ? 'is-in' : ($movement->quantity < 0 ? 'is-out' : 'is-neutral'); @endphp
                                 <tr>
-                                    <td>{{ $movement->created_at->format('d M Y') }}</td>
+                                    <td>{{ $movement->created_at->translatedFormat('d M Y') }}</td>
                                     <td>
                                         <div class="inventory-product-cell">
                                             <span class="item-thumb">
                                                 @if ($movement->product?->image_url)
                                                     <img src="{{ $movement->product->image_url }}" alt="">
                                                 @else
-                                                    {{ strtoupper(substr($movement->product->name ?? 'P', 0, 1)) }}
+                                                    {{ strtoupper(substr($movement->product?->localized('name') ?? 'P', 0, 1)) }}
                                                 @endif
                                             </span>
                                             <div>
-                                                <strong>{{ $movement->product->name ?? 'Product' }}</strong>
-                                                <small>{{ $movement->product->sku ?? 'No SKU' }}</small>
+                                                <strong>{{ $movement->product?->localized('name') ?? __('products.product_dd3b86') }}</strong>
+                                                <small>{{ $movement->product->sku ?? __('products.no_sku_1bc1c2') }}</small>
                                             </div>
                                         </div>
                                     </td>
-                                    <td><span class="stock-type-pill {{ $typeClass }}">{{ str_replace('_', ' ', ucfirst($movement->type)) }}</span></td>
+                                    <td><span class="stock-type-pill {{ $typeClass }}">{{ __(str_replace('_', ' ', ucfirst($movement->type))) }}</span></td>
                                     <td>{{ $movement->quantity > 0 ? '+' : '' }}{{ number_format($movement->quantity) }}</td>
                                     <td>{{ number_format($movement->stock_after) }}</td>
                                     <td>{{ $movement->notes ?: '-' }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="6">{{ request()->filled('search') || request()->filled('type') ? 'No stock movements match the current filters.' : 'No stock movements yet.' }}</td></tr>
+                                <tr><td colspan="6">{{ request()->filled('search') || request()->filled('type') ? __('products.no_stock_movements_match_the_current_filters_577eec') : __('products.no_stock_movements_yet_cde5e1') }}</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -228,7 +228,7 @@
                     signal: requestController.signal
                 }).then(function (response) {
                     if (! response.ok) {
-                        throw new Error('Unable to load stock movements.');
+                        throw new Error(window.t("validation.unable_to_load_stock_movements_b7a06e"));
                     }
 
                     return response.text();
@@ -237,7 +237,7 @@
                     var nextWorkspace = page.querySelector('.stock-workspace');
 
                     if (! nextWorkspace) {
-                        throw new Error('Stock listing was not found.');
+                        throw new Error(window.t("validation.stock_listing_was_not_found_5763fe"));
                     }
 
                     workspace.replaceWith(nextWorkspace);

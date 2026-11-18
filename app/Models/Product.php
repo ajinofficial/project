@@ -35,9 +35,11 @@ class Product extends Model
         'deleted_status',
         'image_url',
         'description',
+        'translations',
     ];
 
     protected $casts = [
+        'translations' => 'array',
         'price' => 'decimal:2',
         'compare_at_price' => 'decimal:2',
         'purchase_price' => 'decimal:2',
@@ -60,6 +62,25 @@ class Product extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** Display text is separate from canonical attributes used in forms and business logic. */
+    public function localized(string $field, ?string $locale = null): ?string
+    {
+        if (! in_array($field, ['name', 'category', 'description'], true)) {
+            throw new \InvalidArgumentException('Unsupported translatable product field.');
+        }
+        $locale ??= app()->getLocale();
+        if (! \App\Support\LocalePreference::supported($locale)) {
+            $locale = config('app.fallback_locale', 'en');
+        }
+        foreach (array_unique([$locale, config('app.fallback_locale', 'en')]) as $language) {
+            $value = $this->translations[$language][$field] ?? null;
+            if (is_string($value) && trim($value) !== '') {
+                return $value;
+            }
+        }
+        return $this->getAttribute($field);
     }
 
     public function tenant(): BelongsTo

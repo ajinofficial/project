@@ -1,4 +1,4 @@
-@extends('layouts.admin', ['title' => 'Notifications', 'hideSidebar' => true])
+@extends('layouts.admin', ['title' => __('notifications.notifications_753a22'), 'hideSidebar' => true])
 
 @section('content')
     @php
@@ -8,23 +8,23 @@
         <div class="section-title notification-page-head">
             <div>
                 <h2 class="notification-title">
-                    Notifications
+                    {{ __('notifications.notifications_753a22') }}
                 </h2>
-                <p>Stock and activity alerts for this tenant.</p>
+                <p>{{ __('notifications.stock_and_activity_alerts_for_this_tenant_3297d5') }}</p>
             </div>
             <div class="notification-page-actions">
                 <a class="notification-back-button" href="{{ $backUrl }}" data-notification-back>
-                    <span aria-hidden="true">&larr;</span> Back
+                    <span aria-hidden="true">&larr;</span> {{ __('common.back_b52b36') }}
                 </a>
-                <nav class="notification-filter-tabs" aria-label="Notification filters">
+                <nav class="notification-filter-tabs" aria-label="{{ __('notifications.notification_filters_fe96ef') }}">
                     <a href="{{ route('notifications.index', array_filter(['search' => $search, 'type' => $type, 'redirect_url' => $redirectUrl])) }}" @class(['active' => $filter === 'all'])>
-                        All <span>{{ $allCount }}</span>
+                        {{ __('common.all_6a7208') }} <span>{{ $allCount }}</span>
                     </a>
                     <a href="{{ route('notifications.index', array_filter(['filter' => 'unread', 'search' => $search, 'type' => $type, 'redirect_url' => $redirectUrl])) }}" @class(['active' => $filter === 'unread'])>
-                        Unread <span>{{ $unreadCount }}</span>
+                        {{ __('notifications.unread_07b032') }} <span>{{ $unreadCount }}</span>
                     </a>
                     <a href="{{ route('notifications.index', array_filter(['filter' => 'read', 'search' => $search, 'type' => $type, 'redirect_url' => $redirectUrl])) }}" @class(['active' => $filter === 'read'])>
-                        Read <span>{{ $readCount }}</span>
+                        {{ __('notifications.read_852b43') }} <span>{{ $readCount }}</span>
                     </a>
                 </nav>
                 @if ($unreadCount > 0)
@@ -32,9 +32,9 @@
                         method="POST"
                         action="{{ route('notifications.readAll', ['filter' => $filter]) }}"
                         data-confirm
-                        data-confirm-title="Mark all notifications as read?"
+                        data-confirm-title="{{ __('notifications.mark_all_notifications_as_read_b106d8') }}"
                         data-confirm-message="This will mark all {{ number_format($unreadCount) }} unread notifications as read."
-                        data-confirm-button="Mark all read"
+                        data-confirm-button="{{ __('notifications.mark_all_read_8958e2') }}"
                     >
                         @csrf
                         @method('PATCH')
@@ -46,15 +46,15 @@
                                 <svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path><path d="m13 12 3 3 5-6"></path></svg>
                             </span>
                             <span class="notification-read-all-copy">
-                                <strong>Mark all read</strong>
-                                <small>{{ number_format($unreadCount) }} {{ Str::plural('alert', $unreadCount) }} pending</small>
+                                <strong>{{ __('notifications.mark_all_read_8958e2') }}</strong>
+                                <small>{{ __('common.pending_alerts', ['count' => number_format($unreadCount)]) }}</small>
                             </span>
                         </button>
                     </form>
                 @else
                     <span class="notification-all-read-state">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg>
-                        All caught up
+                        {{ __('common.all_caught_up_47cbaf') }}
                     </span>
                 @endif
             </div>
@@ -62,23 +62,23 @@
 
         <div class="notification-summary-grid">
             <a href="{{ route('notifications.index', array_filter(['filter' => 'unread', 'redirect_url' => $redirectUrl])) }}">
-                <span>Unread</span>
+                <span>{{ __('notifications.unread_07b032') }}</span>
                 <strong>{{ $unreadCount }}</strong>
-                <small>Need attention</small>
+                <small>{{ __('common.need_attention_46d04d') }}</small>
             </a>
             <a href="{{ route('notifications.index', array_filter(['filter' => 'read', 'redirect_url' => $redirectUrl])) }}">
-                <span>Read</span>
+                <span>{{ __('notifications.read_852b43') }}</span>
                 <strong>{{ $readCount }}</strong>
-                <small>Already reviewed</small>
+                <small>{{ __('common.already_reviewed_497f0e') }}</small>
             </a>
             <a href="{{ route('notifications.index', array_filter(['redirect_url' => $redirectUrl])) }}">
-                <span>Total</span>
+                <span>{{ __('common.total_b25928') }}</span>
                 <strong>{{ $allCount }}</strong>
-                <small>All alerts</small>
+                <small>{{ __('notifications.all_alerts_aeae2d') }}</small>
             </a>
         </div>
 
-        <section class="notification-tools" aria-label="Find notifications">
+        <section class="notification-tools" aria-label="{{ __('notifications.find_notifications_971ae7') }}">
             <form method="GET" action="{{ route('notifications.index') }}" data-notification-filter-form>
                 @if ($redirectUrl !== '')
                     <input type="hidden" name="redirect_url" value="{{ $redirectUrl }}">
@@ -87,22 +87,22 @@
                     <input type="hidden" name="filter" value="{{ $filter }}">
                 @endif
                 <label class="notification-search-field">
-                    <span class="sr-only">Search notifications</span>
+                    <span class="sr-only">{{ __('notifications.search_notifications_e974fc') }}</span>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
-                    <input type="search" name="search" value="{{ $search }}" maxlength="100" placeholder="Search title, message, or type" data-notification-search>
+                    <input type="search" name="search" value="{{ $search }}" maxlength="100" placeholder="{{ __('common.search_title_message_or_type_d79910') }}" data-notification-search>
                 </label>
-                <select name="type" aria-label="Notification type" data-notification-type>
-                    <option value="">All types</option>
+                <select name="type" aria-label="{{ __('notifications.notification_type_628a30') }}" data-notification-type>
+                    <option value="">{{ __('common.all_types_30c8a0') }}</option>
                     @foreach ($types as $notificationType)
-                        <option value="{{ $notificationType }}" @selected($type === $notificationType)>{{ ucfirst(str_replace('_', ' ', $notificationType)) }}</option>
+                        <option value="{{ $notificationType }}" @selected($type === $notificationType)>{{ __(ucfirst(str_replace('_', ' ', $notificationType))) }}</option>
                     @endforeach
                 </select>
 
                 @if ($search !== '' || $type !== '')
-                    <a class="product-clear-filter" href="{{ route('notifications.index', array_filter(['filter' => $filter === 'all' ? '' : $filter, 'redirect_url' => $redirectUrl])) }}">Clear</a>
+                    <a class="product-clear-filter" href="{{ route('notifications.index', array_filter(['filter' => $filter === 'all' ? '' : $filter, 'redirect_url' => $redirectUrl])) }}">{{ __('common.clear_719ea3') }}</a>
                 @endif
             </form>
-            <span>{{ number_format($notifications->total()) }} matching {{ Str::plural('notification', $notifications->total()) }}</span>
+            <span>{{ __('common.matching_notifications', ['count' => number_format($notifications->total())]) }}</span>
         </section>
 
         <div class="notification-page-list" data-notification-list>
@@ -118,9 +118,9 @@
                         <div class="notification-page-meta">
                             <small>{{ strtoupper(str_replace('_', ' ', $notification->type)) }}</small>
                             @if ($notification->read_at)
-                                <span class="notification-state is-read">Read</span>
+                                <span class="notification-state is-read">{{ __('notifications.read_852b43') }}</span>
                             @else
-                                <span class="notification-state is-unread">Unread</span>
+                                <span class="notification-state is-unread">{{ __('notifications.unread_07b032') }}</span>
                             @endif
                         </div>
                         <h3>{{ $notification->title }}</h3>
@@ -137,7 +137,7 @@
                             @endforeach
                             <button type="submit">
                                 <span class="notification-action-spinner" aria-hidden="true"></span>
-                                <span>Mark read</span>
+                                <span>{{ __('notifications.mark_read_3bf98f') }}</span>
                             </button>
                         </form>
                         @else
@@ -149,7 +149,7 @@
                             @endforeach
                             <button class="is-secondary" type="submit">
                                 <span class="notification-action-spinner" aria-hidden="true"></span>
-                                <span>Mark unread</span>
+                                <span>{{ __('notifications.mark_unread_623bab') }}</span>
                             </button>
                         </form>
                         @endunless
@@ -173,9 +173,9 @@
         </div>
         <div class="notification-infinite-loader" data-notification-loader aria-live="polite" hidden>
             <span aria-hidden="true"></span>
-            <strong>Loading notifications</strong>
+            <strong>{{ __('notifications.loading_notifications_dc2585') }}</strong>
         </div>
-        <div class="notification-scroll-end" data-notification-scroll-end hidden>All notifications loaded.</div>
+        <div class="notification-scroll-end" data-notification-scroll-end hidden>{{ __('notifications.all_notifications_loaded_1d4317') }}</div>
         <div class="notification-scroll-sentinel" data-notification-scroll-sentinel aria-hidden="true"></div>
     </section>
 
@@ -274,11 +274,12 @@
                 loading = true;
                 loader.hidden = false;
                 loader.classList.remove('is-error');
-                loader.innerHTML = '<span aria-hidden="true"></span><strong>Loading notifications</strong>';
+                loader.innerHTML = '<span aria-hidden="true"></span><strong></strong>';
+                loader.querySelector('strong').textContent = window.t('Loading notifications');
 
                 fetch(nextPage, { headers: { 'Accept': 'text/html', 'X-Requested-With': 'XMLHttpRequest' } })
                     .then(function (response) {
-                        if (!response.ok) throw new Error('Unable to load notifications.');
+                        if (!response.ok) throw new Error(window.t("validation.unable_to_load_notifications_b75e78"));
                         return response.text();
                     })
                     .then(function (html) {
@@ -286,7 +287,7 @@
                         var nextList = documentPage.querySelector('[data-notification-list]');
                         var nextPagination = documentPage.querySelector('[data-notification-pagination]');
 
-                        if (!nextList || !nextPagination) throw new Error('Invalid notification response.');
+                        if (!nextList || !nextPagination) throw new Error(window.t("validation.invalid_notification_response_87f739"));
 
                         nextList.querySelectorAll('.notification-page-item').forEach(function (item) {
                             list.appendChild(item);
@@ -299,7 +300,9 @@
                     })
                     .catch(function () {
                         loader.classList.add('is-error');
-                        loader.innerHTML = '<strong>Could not load notifications.</strong><button type="button" data-notification-retry>Retry</button>';
+                        loader.innerHTML = '<strong></strong><button type="button" data-notification-retry></button>';
+                        loader.querySelector('strong').textContent = window.t('Unable to load notifications.');
+                        loader.querySelector('button').textContent = window.t('common.retry');
                     })
                     .finally(function () {
                         loading = false;

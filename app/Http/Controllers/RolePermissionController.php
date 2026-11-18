@@ -71,11 +71,12 @@ class RolePermissionController extends Controller
         ActivityNotifier::notify(
             $request->user()->tenant_id,
             'role_permissions_updated',
-            'Role permissions updated',
-            $request->user()->name.' '.$roleMessage
+            "Role permissions updated",
+            $request->user()->name.' '.$roleMessage,
+            parameters: ['actor' => $request->user()->name]
         );
 
-        return back()->with('status', 'Role permissions updated.');
+        return back()->with('status', __('settings.role_permissions_updated_5c0801'));
     }
 
     private function formatRoleList(array $roles): string

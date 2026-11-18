@@ -1,4 +1,4 @@
-@extends('layouts.admin', ['title' => 'Role Permissions'])
+@extends('layouts.admin', ['title' => __('settings.role_permissions_2dbfb2')])
 
 @section('content')
     @php
@@ -11,9 +11,9 @@
     <section class="permission-page">
         <header class="permission-hero">
             <div>
-                <p class="eyebrow">Access control</p>
-                <h1>Role permissions</h1>
-                <p>Configure sidebar access by role. Owner always keeps every menu enabled.</p>
+                <p class="eyebrow">{{ __('common.access_control_b3e3bb') }}</p>
+                <h1>{{ __('settings.role_permissions_4b9cd8') }}</h1>
+                <p>{{ __('settings.configure_sidebar_access_by_role_owner_always_keeps_every_menu_enabled_509ccd') }}</p>
             </div>
         </header>
 
@@ -43,7 +43,7 @@
                             <b data-summary-count="{{ $roleKey }}">{{ count($selectedMenus) }}</b>
                             <em>/ {{ count($menus) }}</em>
                         </strong>
-                        <small>{{ $roleLabel }}</small>
+                        <small>{{ __($roleLabel) }}</small>
                         <i style="--permission-progress: {{ count($menus) > 0 ? round((count($selectedMenus) / count($menus)) * 100) : 0 }}%" data-summary-meter="{{ $roleKey }}"></i>
                     </button>
                 @endforeach
@@ -52,8 +52,8 @@
             <section class="permission-card">
                 <div class="section-title">
                     <div>
-                        <p class="eyebrow">Role list</p>
-                        <h2>Manage menu access</h2>
+                        <p class="eyebrow">{{ __('settings.role_list_bfa681') }}</p>
+                        <h2>{{ __('common.manage_menu_access_37c321') }}</h2>
                     </div>
                 </div>
 
@@ -68,23 +68,23 @@
                         <article class="permission-role-card" data-role-card="{{ $roleKey }}">
                             <div class="permission-role-avatar">{{ strtoupper(substr($roleLabel, 0, 2)) }}</div>
                             <div>
-                                <strong>{{ $roleLabel }}</strong>
-                                <span data-role-count="{{ $roleKey }}">{{ $isOwner ? 'Full access' : count($selectedMenus).' menu permissions' }}</span>
+                                <strong>{{ __($roleLabel) }}</strong>
+                                <span data-role-count="{{ $roleKey }}">{{ $isOwner ? __('common.full_access_5e4017') : __('common.menu_permissions', ['count' => count($selectedMenus)]) }}</span>
                                 <div class="permission-chip-list" data-role-chips="{{ $roleKey }}">
                                     @foreach (array_slice($selectedMenus, 0, 4) as $menuKey)
-                                        <small>{{ $menus[$menuKey]['label'] ?? $menuKey }}</small>
+                                        <small>{{ __($menus[$menuKey]['label'] ?? $menuKey) }}</small>
                                     @endforeach
                                     @if (count($selectedMenus) > 4)
-                                        <small>+{{ count($selectedMenus) - 4 }} more</small>
+                                        <small>{{ __('common.more_count', ['count' => count($selectedMenus) - 4]) }}</small>
                                     @endif
                                 </div>
                             </div>
-                            <button type="button" class="permission-edit-button" data-open-permission="{{ $roleKey }}" aria-label="Edit {{ $roleLabel }} permissions">
+                            <button type="button" class="permission-edit-button" data-open-permission="{{ $roleKey }}" aria-label="Edit {{ __($roleLabel) }} permissions">
                                 <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
                                     <path d="M12 20h9" />
                                     <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" />
                                 </svg>
-                                <span>Edit</span>
+                                <span>{{ __('common.edit_530164') }}</span>
                             </button>
                         </article>
                     @endforeach
@@ -102,11 +102,11 @@
                 <aside class="permission-drawer" data-permission-drawer="{{ $roleKey }}" aria-hidden="true">
                     <div class="permission-drawer-head">
                         <div>
-                            <p class="eyebrow">Menu access</p>
-                            <h2>{{ $roleLabel }}</h2>
-                            <span>{{ $isOwner ? 'Owner access cannot be reduced.' : 'Choose sidebar menus for this role.' }}</span>
+                            <p class="eyebrow">{{ __('common.menu_access_cc2a70') }}</p>
+                            <h2>{{ __($roleLabel) }}</h2>
+                            <span>{{ $isOwner ? __('validation.owner_access_cannot_be_reduced_4bf092') : __('settings.choose_sidebar_menus_for_this_role_8165da') }}</span>
                         </div>
-                        <button type="button" data-close-permission aria-label="Close permissions panel">
+                        <button type="button" data-close-permission aria-label="{{ __('settings.close_permissions_panel_daafd6') }}">
                             <svg viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M18 6 6 18" />
                                 <path d="m6 6 12 12" />
@@ -115,20 +115,20 @@
                     </div>
 
                     <div class="permission-drawer-tools">
-                        <input type="search" placeholder="Search menus" data-permission-search="{{ $roleKey }}">
-                        <strong data-drawer-count="{{ $roleKey }}">{{ $isOwner ? count($menus) : count($permissions[$roleKey] ?? []) }} selected</strong>
+                        <input type="search" placeholder="{{ __('common.search_menus_fb675c') }}" data-permission-search="{{ $roleKey }}">
+                        <strong data-drawer-count="{{ $roleKey }}">{{ __('common.selected_count', ['count' => $isOwner ? count($menus) : count($permissions[$roleKey] ?? [])]) }}</strong>
                     </div>
 
                     @unless ($isOwner)
                         <div class="permission-bulk-actions">
-                            <button type="button" data-permission-select="{{ $roleKey }}" data-permission-action="all">Select all</button>
-                            <button type="button" data-permission-select="{{ $roleKey }}" data-permission-action="default">Use default</button>
-                            <button type="button" data-permission-select="{{ $roleKey }}" data-permission-action="none">Clear</button>
+                            <button type="button" data-permission-select="{{ $roleKey }}" data-permission-action="all">{{ __('common.select_all_913aff') }}</button>
+                            <button type="button" data-permission-select="{{ $roleKey }}" data-permission-action="default">{{ __('common.use_default_906d22') }}</button>
+                            <button type="button" data-permission-select="{{ $roleKey }}" data-permission-action="none">{{ __('common.clear_719ea3') }}</button>
                         </div>
                     @endunless
 
                     <div class="permission-empty-search" data-permission-empty="{{ $roleKey }}" hidden>
-                        No menus match your search.
+                        {{ __('common.no_menus_match_your_search_bdea49') }}
                     </div>
 
                     <div class="permission-drawer-list">
@@ -143,24 +143,24 @@
                                     value="{{ $menuKey }}"
                                     data-permission-checkbox="{{ $roleKey }}"
                                     data-menu-key="{{ $menuKey }}"
-                                    data-menu-name="{{ $menu['label'] }}"
+                                    data-menu-name="{{ __($menu['label']) }}"
                                     data-default-checked="{{ $defaultChecked ? 'true' : 'false' }}"
                                     @checked($isOwner || in_array($menuKey, $permissions[$roleKey] ?? [], true))
                                     @disabled($isOwner)
                                 >
                                 <span>{{ $menu['abbr'] }}</span>
                                 <div>
-                                    <strong>{{ $menu['label'] }}</strong>
+                                    <strong>{{ __($menu['label']) }}</strong>
                                 </div>
                             </label>
                         @endforeach
                     </div>
 
                     <div class="permission-drawer-actions">
-                        <button type="button" class="ghost-button" data-close-permission>Cancel</button>
+                        <button type="button" class="ghost-button" data-close-permission>{{ __('common.cancel_77dfd2') }}</button>
                         <button type="submit" data-permission-submit>
                             <span class="permission-save-spinner" aria-hidden="true"></span>
-                            <span>Save permissions</span>
+                            <span>{{ __('settings.save_permissions_f5f940') }}</span>
                         </button>
                     </div>
                 </aside>
@@ -218,11 +218,11 @@
                 }
 
                 if (drawerCount) {
-                    drawerCount.textContent = `${total} selected`;
+                    drawerCount.textContent = window.t('common.selected_count', {count: total});
                 }
 
                 if (roleCount) {
-                    roleCount.textContent = role === 'owner' ? 'Full access' : `${total} menu${total === 1 ? '' : 's'} selected`;
+                    roleCount.textContent = role === 'owner' ? window.t('Full access') : window.t('common.menus_selected', {count: total});
                 }
 
                 if (chips) {
@@ -236,13 +236,13 @@
 
                     if (selected.length > 4) {
                         const overflow = document.createElement('small');
-                        overflow.textContent = `+${selected.length - 4} more`;
+                        overflow.textContent = window.t('common.more_count', {count: selected.length - 4});
                         chips.appendChild(overflow);
                     }
 
                     if (selected.length === 0) {
                         const empty = document.createElement('small');
-                        empty.textContent = 'No access';
+                        empty.textContent = window.t("common.no_access_63bde5");
                         empty.className = 'is-empty';
                         chips.appendChild(empty);
                     }

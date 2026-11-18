@@ -1,4 +1,4 @@
-@extends('layouts.admin', ['title' => 'Expenses'])
+@extends('layouts.admin', ['title' => __('orders.expenses_8d437d')])
 
 @section('content')
     <style>
@@ -32,67 +32,67 @@
 
     <div class="product-overview expense-overview">
     <header class="product-page-head">
-        <div><p class="eyebrow">Expense management</p><h1>Expenses</h1><span>Record business costs and track your spending in one place.</span></div>
-        <div class="product-head-actions"><a class="primary-link" href="#expense-entry">Record expense</a></div>
+        <div><p class="eyebrow">{{ __('orders.expense_management_7ff516') }}</p><h1>{{ __('orders.expenses_8d437d') }}</h1><span>{{ __('common.record_business_costs_and_track_your_spending_in_one_place_7c7927') }}</span></div>
+        <div class="product-head-actions"><a class="primary-link" href="#expense-entry">{{ __('orders.record_expense_7db0e7') }}</a></div>
     </header>
     <div class="expense-stats product-stat-grid" data-expense-stats>
-        <div class="expense-stat product-stat"><span>This month's expenses</span><strong>&#8377;{{ number_format($monthTotal, 2) }}</strong></div>
-        <div class="expense-stat product-stat"><span>Filtered total</span><strong>&#8377;{{ number_format($filteredTotal, 2) }}</strong></div>
+        <div class="expense-stat product-stat"><span>{{ __('orders.this_month_s_expenses_b2fad1') }}</span><strong>&#8377;{{ number_format($monthTotal, 2) }}</strong></div>
+        <div class="expense-stat product-stat"><span>{{ __('common.filtered_total_8ffe87') }}</span><strong>&#8377;{{ number_format($filteredTotal, 2) }}</strong></div>
     </div>
 
     <section class="ops-grid">
         <article class="admin-section" id="expense-entry">
-            <div class="section-title"><div><p class="eyebrow">Money out</p><h2 data-expense-form-title>{{ $editingExpense ? 'Edit expense' : 'Record expense' }}</h2></div></div>
+            <div class="section-title"><div><p class="eyebrow">{{ __('common.money_out_cad056') }}</p><h2 data-expense-form-title>{{ $editingExpense ? __('orders.edit_expense_5b77ee') : __('orders.record_expense_7db0e7') }}</h2></div></div>
             <form class="product-form" method="POST" action="{{ $editingExpense ? route('expenses.update', $editingExpense) : route('expenses.store') }}" data-expense-form data-store-action="{{ route('expenses.store') }}" data-update-action-template="{{ route('expenses.update', ['expense' => '__ID__']) }}" data-default-date="{{ now()->toDateString() }}">
                 @csrf
                 <input type="hidden" name="_method" value="PUT" data-expense-method @disabled(! $editingExpense)>
                 <input type="hidden" name="expense_id" value="{{ old('expense_id', $editingExpense?->id) }}" data-expense-id>
                 @if ($errors->any())
-                    <div class="error-summary" role="alert"><strong>Check the expense details</strong><span>{{ $errors->first() }}</span></div>
+                    <div class="error-summary" role="alert"><strong>{{ __('orders.check_the_expense_details_cbfd13') }}</strong><span>{{ $errors->first() }}</span></div>
                 @endif
                 <div class="expense-form-grid">
-                    <label class="wide"><span>Expense title</span><input type="text" name="title" value="{{ old('title', $editingExpense?->title) }}" maxlength="255" placeholder="e.g. Shop electricity bill" autocomplete="off" required>@error('title')<small>{{ $message }}</small>@enderror</label>
-                    <label><span>Category</span><select name="category" required><option value="">Select category</option>@foreach($categories as $category)<option value="{{ $category }}" @selected(old('category', $editingExpense?->category) === $category)>{{ $category }}</option>@endforeach</select>@error('category')<small>{{ $message }}</small>@enderror</label>
-                    <label><span>Amount</span><input type="number" name="amount" value="{{ old('amount', $editingExpense?->amount) }}" min="0.01" step="0.01" placeholder="0.00" required>@error('amount')<small>{{ $message }}</small>@enderror</label>
-                    <label><span>Expense date</span><input type="date" name="expense_date" value="{{ old('expense_date', $editingExpense?->expense_date?->toDateString() ?? now()->toDateString()) }}" required data-date-picker>@error('expense_date')<small>{{ $message }}</small>@enderror</label>
-                    <label><span>Payment method</span><select name="payment_method" required>@foreach($paymentMethods as $value => $label)<option value="{{ $value }}" @selected(old('payment_method', $editingExpense?->payment_method ?? 'cash') === $value)>{{ $label }}</option>@endforeach</select>@error('payment_method')<small>{{ $message }}</small>@enderror</label>
-                    <label class="wide"><span>Reference number </span><input type="text" name="reference_number" value="{{ old('reference_number', $editingExpense?->reference_number) }}" maxlength="120" placeholder="Receipt, transaction or cheque number" autocomplete="off"></label>
-                    <label class="wide"><span>Notes </span><textarea name="notes" rows="3" maxlength="2000" placeholder="Add any useful details">{{ old('notes', $editingExpense?->notes) }}</textarea></label>
+                    <label class="wide"><span>{{ __('orders.expense_title_751c7b') }}</span><input type="text" name="title" value="{{ old('title', $editingExpense?->title) }}" maxlength="255" placeholder="{{ __('orders.e_g_shop_electricity_bill_eec525') }}" autocomplete="off" required>@error('title')<small>{{ $message }}</small>@enderror</label>
+                    <label><span>{{ __('products.category_a3c686') }}</span><select name="category" required><option value="">{{ __('products.select_category_a2a5ca') }}</option>@foreach($categories as $category)<option value="{{ $category }}" @selected(old('category', $editingExpense?->category) === $category)>{{ __($category) }}</option>@endforeach</select>@error('category')<small>{{ $message }}</small>@enderror</label>
+                    <label><span>{{ __('common.amount_43dc85') }}</span><input type="number" name="amount" value="{{ old('amount', $editingExpense?->amount) }}" min="0.01" step="0.01" placeholder="0.00" required>@error('amount')<small>{{ $message }}</small>@enderror</label>
+                    <label><span>{{ __('orders.expense_date_cb2b17') }}</span><input type="date" name="expense_date" value="{{ old('expense_date', $editingExpense?->expense_date?->toDateString() ?? now()->toDateString()) }}" required data-date-picker>@error('expense_date')<small>{{ $message }}</small>@enderror</label>
+                    <label><span>{{ __('orders.payment_method_0e55fb') }}</span><select name="payment_method" required>@foreach($paymentMethods as $value => $label)<option value="{{ $value }}" @selected(old('payment_method', $editingExpense?->payment_method ?? 'cash') === $value)>{{ __($label) }}</option>@endforeach</select>@error('payment_method')<small>{{ $message }}</small>@enderror</label>
+                    <label class="wide"><span>{{ __('common.reference_number_ea10bb') }} </span><input type="text" name="reference_number" value="{{ old('reference_number', $editingExpense?->reference_number) }}" maxlength="120" placeholder="{{ __('common.receipt_transaction_or_cheque_number_214f27') }}" autocomplete="off"></label>
+                    <label class="wide"><span>{{ __('common.notes_704400') }} </span><textarea name="notes" rows="3" maxlength="2000" placeholder="{{ __('common.add_any_useful_details_f3f2dd') }}">{{ old('notes', $editingExpense?->notes) }}</textarea></label>
                 </div>
                 <div class="expense-actions">
-                    <button class="product-save-button" type="submit" data-expense-submit><span class="product-save-button__idle">{{ $editingExpense ? 'Update expense' : 'Save expense' }}</span><span class="product-save-button__loading" aria-hidden="true"><i></i>{{ $editingExpense ? 'Updating' : 'Saving' }}</span></button>
-                    <button class="expense-action-button" type="button" data-expense-cancel @hidden(! $editingExpense)>Cancel</button>
+                    <button class="product-save-button" type="submit" data-expense-submit><span class="product-save-button__idle">{{ $editingExpense ? __('orders.update_expense_6e69a5') : __('orders.save_expense_0402d1') }}</span><span class="product-save-button__loading" aria-hidden="true"><i></i>{{ $editingExpense ? __('common.updating_ec6952') : __('common.saving_369c53') }}</span></button>
+                    <button class="expense-action-button" type="button" data-expense-cancel @hidden(! $editingExpense)>{{ __('common.cancel_77dfd2') }}</button>
                 </div>
             </form>
         </article>
 
         <article class="admin-section" data-expense-history>
-            <div class="section-title"><div><p class="eyebrow">Expense history</p><h2>All expenses</h2></div></div>
+            <div class="section-title"><div><p class="eyebrow">{{ __('orders.expense_history_b0fe7d') }}</p><h2>{{ __('orders.all_expenses_4acca6') }}</h2></div></div>
             <div class="product-toolbar">
                 <form class="expense-filters" method="GET" action="{{ route('expenses.index') }}" data-expense-filter-form>
-                    <input type="search" name="search" value="{{ request('search') }}" placeholder="Search title or reference">
-                    <input type="date" name="from" value="{{ request('from') }}" aria-label="From date" title="From date">
-                    <input type="date" name="to" value="{{ request('to') }}" aria-label="To date" title="To date">
-                    <select name="per_page" aria-label="Expenses per page">@foreach($perPageOptions as $option)<option value="{{ $option }}" @selected($perPage === $option)>{{ $option }} / page</option>@endforeach</select>
-                    <a class="product-clear-filter" href="{{ route('expenses.index') }}">Clear</a>
+                    <input type="search" name="search" value="{{ request('search') }}" placeholder="{{ __('common.search_title_or_reference_58a791') }}">
+                    <input type="date" name="from" value="{{ request('from') }}" aria-label="{{ __('common.from_date_3b5d11') }}" title="{{ __('common.from_date_3b5d11') }}">
+                    <input type="date" name="to" value="{{ request('to') }}" aria-label="{{ __('common.to_date_af244d') }}" title="{{ __('common.to_date_af244d') }}">
+                    <select name="per_page" aria-label="{{ __('orders.expenses_per_page_b4fb1f') }}">@foreach($perPageOptions as $option)<option value="{{ $option }}" @selected($perPage === $option)>{{ __('common.per_page', ['count' => $option]) }}</option>@endforeach</select>
+                    <a class="product-clear-filter" href="{{ route('expenses.index') }}">{{ __('common.clear_719ea3') }}</a>
                 </form>
             </div>
 
             <div data-expense-results>
                 <div class="product-listing-loader" data-expense-listing-loader aria-live="polite" aria-hidden="true">
                     <span aria-hidden="true"></span>
-                    <strong>Loading expenses</strong>
+                    <strong>{{ __('orders.loading_expenses_09ad99') }}</strong>
                 </div>
-                <div class="table-wrap"><table class="admin-table"><thead><tr><th>Date</th><th>Expense</th><th>Category</th><th>Payment</th><th>Amount</th><th>Actions</th></tr></thead><tbody>
+                <div class="table-wrap"><table class="admin-table"><thead><tr><th>{{ __('common.date_eb9a4b') }}</th><th>{{ __('orders.expense_a0db8e') }}</th><th>{{ __('products.category_a3c686') }}</th><th>{{ __('orders.payment_b41a92') }}</th><th>{{ __('common.amount_43dc85') }}</th><th>{{ __('common.actions_c3cd63') }}</th></tr></thead><tbody>
                     @forelse($expenses as $expense)
                         <tr>
-                            <td>{{ $expense->expense_date->format('d M Y') }}</td>
-                            <td><strong>{{ $expense->title }}</strong>@if($expense->reference_number)<br><small>Ref: {{ $expense->reference_number }}</small>@endif</td>
-                            <td>{{ $expense->category }}</td><td>{{ $expense->payment_method_label }}</td><td>&#8377;{{ number_format($expense->amount, 2) }}</td>
-                            <td><div class="expense-actions"><button type="button" class="expense-action-button expense-edit-button" data-expense-edit="{{ $expense->id }}" data-title="{{ $expense->title }}" data-category="{{ $expense->category }}" data-amount="{{ $expense->amount }}" data-date="{{ $expense->expense_date->toDateString() }}" data-payment="{{ $expense->payment_method }}" data-reference="{{ $expense->reference_number }}" data-notes="{{ $expense->notes }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>Edit</button><form method="POST" action="{{ route('expenses.destroy', $expense) }}" data-confirm data-confirm-title="Delete expense" data-confirm-message="Are you sure you want to delete {{ $expense->title }}? This action cannot be undone." data-confirm-button="Delete expense">@csrf @method('DELETE')<button class="expense-action-button expense-delete-button" type="submit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>Delete</button></form></div></td>
+                            <td>{{ $expense->expense_date->translatedFormat('d M Y') }}</td>
+                            <td><strong>{{ $expense->title }}</strong>@if($expense->reference_number)<br><small>{{ __('common.reference_label', ['value' => $expense->reference_number]) }}</small>@endif</td>
+                            <td>{{ __($expense->category) }}</td><td>{{ __($expense->payment_method_label) }}</td><td>&#8377;{{ number_format($expense->amount, 2) }}</td>
+                            <td><div class="expense-actions"><button type="button" class="expense-action-button expense-edit-button" data-expense-edit="{{ $expense->id }}" data-title="{{ $expense->title }}" data-category="{{ __($expense->category) }}" data-amount="{{ $expense->amount }}" data-date="{{ $expense->expense_date->toDateString() }}" data-payment="{{ $expense->payment_method }}" data-reference="{{ $expense->reference_number }}" data-notes="{{ $expense->notes }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>{{ __('common.edit_530164') }}</button><form method="POST" action="{{ route('expenses.destroy', $expense) }}" data-confirm data-confirm-title="{{ __('orders.delete_expense_711c08') }}" data-confirm-message="Are you sure you want to delete {{ $expense->title }}? This action cannot be undone." data-confirm-button="{{ __('orders.delete_expense_711c08') }}">@csrf @method('DELETE')<button class="expense-action-button expense-delete-button" type="submit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>{{ __('common.delete_f6fdbe') }}</button></form></div></td>
                         </tr>
                     @empty
-                        <tr><td colspan="6">{{ request()->hasAny(['search','from','to']) ? 'No expenses match the current filters.' : 'No expenses recorded yet.' }}</td></tr>
+                        <tr><td colspan="6">{{ request()->hasAny(['search','from','to']) ? __('orders.no_expenses_match_the_current_filters_57b303') : __('orders.no_expenses_recorded_yet_dc82b9') }}</td></tr>
                     @endforelse
                 </tbody></table></div>
                 @include('products.partials.pagination', ['paginator' => $expenses, 'itemLabel' => 'expenses'])
@@ -122,9 +122,9 @@
                         form.elements.payment_method.value = button.dataset.payment || 'cash';
                         form.elements.reference_number.value = button.dataset.reference || '';
                         form.elements.notes.value = button.dataset.notes || '';
-                        document.querySelector('[data-expense-form-title]').textContent = 'Edit expense';
-                        form.querySelector('.product-save-button__idle').textContent = 'Update expense';
-                        form.querySelector('.product-save-button__loading').lastChild.textContent = 'Updating';
+                        document.querySelector('[data-expense-form-title]').textContent = window.t("orders.edit_expense_5b77ee");
+                        form.querySelector('.product-save-button__idle').textContent = window.t("orders.update_expense_6e69a5");
+                        form.querySelector('.product-save-button__loading').lastChild.textContent = window.t("common.updating_ec6952");
                         form.querySelector('[data-expense-cancel]').hidden = false;
                         form.querySelectorAll('[data-validation-error]').forEach(function (error) { error.remove(); });
                         form.querySelectorAll('[aria-invalid]').forEach(function (field) { field.removeAttribute('aria-invalid'); });
@@ -149,9 +149,9 @@
                     form.elements.payment_method.value = 'cash';
                     form.elements.reference_number.value = '';
                     form.elements.notes.value = '';
-                    document.querySelector('[data-expense-form-title]').textContent = 'Record expense';
-                    form.querySelector('.product-save-button__idle').textContent = 'Save expense';
-                    form.querySelector('.product-save-button__loading').lastChild.textContent = 'Saving';
+                    document.querySelector('[data-expense-form-title]').textContent = window.t("orders.record_expense_7db0e7");
+                    form.querySelector('.product-save-button__idle').textContent = window.t("orders.save_expense_0402d1");
+                    form.querySelector('.product-save-button__loading').lastChild.textContent = window.t("common.saving_369c53");
                     expenseCancel.hidden = true;
                     form.querySelectorAll('[data-validation-error]').forEach(function (error) { error.remove(); });
                     form.querySelectorAll('[aria-invalid]').forEach(function (field) { field.removeAttribute('aria-invalid'); });
@@ -185,8 +185,8 @@
                         var label = field.closest('label');
                         var labelText = label && label.querySelector('span');
                         error.textContent = field.validity.valueMissing
-                            ? (labelText ? labelText.textContent.trim() : 'This field') + ' is required.'
-                            : field.validationMessage;
+                            ? window.t('validation.required', {attribute: labelText ? labelText.textContent.trim() : window.t("common.this_field_f89fd4")})
+                            : window.localizedValidationMessage(field);
                         field.setAttribute('aria-invalid', 'true');
                         return false;
                     }
@@ -266,11 +266,11 @@
                 if (loader) loader.setAttribute('aria-hidden', 'false');
 
                 fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, signal: requestController.signal })
-                    .then(function (response) { if (!response.ok) throw new Error('Request failed'); return response.text(); })
+                    .then(function (response) { if (!response.ok) throw new Error(window.t("common.request_failed_9fcda3")); return response.text(); })
                     .then(function (html) {
                         var page = new DOMParser().parseFromString(html, 'text/html');
                         var nextResults = page.querySelector('[data-expense-results]');
-                        if (!nextResults) throw new Error('Expense results missing');
+                        if (!nextResults) throw new Error(window.t("orders.expense_results_missing_94e2aa"));
                         document.querySelector('[data-expense-stats]').innerHTML = page.querySelector('[data-expense-stats]').innerHTML;
                         results.innerHTML = nextResults.innerHTML;
                         history.classList.remove('is-loading');

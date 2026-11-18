@@ -12,7 +12,7 @@ class SafeEmail implements ValidationRule
         if (! is_string($value)
             || preg_match('/[\r\n]/', $value)
             || filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
-            $fail('Enter a valid email address.');
+            $fail(__('auth.enter_a_valid_email_address_2e09ed'));
         }
     }
 }

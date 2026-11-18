@@ -1,4 +1,4 @@
-@extends('layouts.admin', ['title' => 'Purchases'])
+@extends('layouts.admin', ['title' => __('orders.purchases_6c4e94')])
 
 @section('content')
     <style>
@@ -51,24 +51,31 @@
         }
     </style>
 
+    @include('operations.partials.overview', [
+        'title' => __('orders.purchases_6c4e94'),
+        'description' => __('products.manage_supplier_bills_purchase_totals_and_incoming_stock_e2ebaa'),
+        'action' => __('orders.receive_purchase_42ecb7'),
+        'formId' => 'purchase-entry',
+    ])
+
     <section class="ops-grid">
-        <article class="admin-section">
-            <div class="section-title"><div><p class="eyebrow">Stock in</p><h2>Receive purchase</h2></div></div>
+        <article class="admin-section" id="purchase-entry">
+            <div class="section-title"><div><p class="eyebrow">{{ __('products.stock_in_93aed6') }}</p><h2>{{ __('orders.receive_purchase_42ecb7') }}</h2></div></div>
             <form class="product-form" method="POST" action="{{ route('purchases.store') }}" data-purchase-form>
                 @csrf
 
                 @if ($errors->any())
                     <div class="error-summary" role="alert">
-                        <strong>Check the purchase details</strong>
+                        <strong>{{ __('orders.check_the_purchase_details_88cfbb') }}</strong>
                         <span>{{ $errors->first() }}</span>
                     </div>
                 @endif
 
                 <div class="purchase-bill-grid">
                     <label>
-                        <span>Supplier</span>
+                        <span>{{ __('orders.supplier_55edd4') }}</span>
                         <select name="supplier_id">
-                            <option value="">No supplier</option>
+                            <option value="">{{ __('orders.no_supplier_d88131') }}</option>
                             @foreach ($suppliers as $supplier)
                                 <option value="{{ $supplier->id }}" @selected((string) old('supplier_id') === (string) $supplier->id)>{{ $supplier->name }}</option>
                             @endforeach
@@ -77,64 +84,64 @@
                     </label>
 
                     <label>
-                        <span>Bill date</span>
+                        <span>{{ __('orders.bill_date_7917c7') }}</span>
                         <input type="date" name="bill_date" value="{{ old('bill_date', now()->toDateString()) }}" required data-date-picker>
                         @error('bill_date') <small>{{ $message }}</small> @enderror
                     </label>
 
                     <label class="is-wide">
-                        <span>Supplier invoice no.</span>
-                        <input type="text" name="supplier_invoice_number" value="{{ old('supplier_invoice_number') }}" maxlength="120" placeholder="Bill / invoice number from supplier" required @if ($errors->has('supplier_invoice_number')) aria-invalid="true" @endif>
+                        <span>{{ __('orders.supplier_invoice_no_6232f2') }}</span>
+                        <input type="text" name="supplier_invoice_number" value="{{ old('supplier_invoice_number') }}" maxlength="120" placeholder="{{ __('orders.bill_invoice_number_from_supplier_b3e7cf') }}" required @if ($errors->has('supplier_invoice_number')) aria-invalid="true" @endif>
                         @error('supplier_invoice_number') <small>{{ $message }}</small> @enderror
                     </label>
 
                     <label>
-                        <span>Tax amount</span>
+                        <span>{{ __('common.tax_amount_422e90') }}</span>
                         <input type="number" name="tax_amount" min="0" step="0.01" value="{{ old('tax_amount', 0) }}" data-replace-on-focus>
                         @error('tax_amount') <small>{{ $message }}</small> @enderror
                     </label>
 
                     <label>
-                        <span>Total amount</span>
+                        <span>{{ __('common.total_amount_c1ed4a') }}</span>
                         <input type="number" name="total_amount" min="0.01" step="0.01" value="{{ old('total_amount', 0) }}" required data-replace-on-focus>
                         @error('total_amount') <small>{{ $message }}</small> @enderror
                     </label>
                 </div>
 
                 <button class="product-save-button" type="submit" data-purchase-submit>
-                    <span class="product-save-button__idle">Save bill</span>
+                    <span class="product-save-button__idle">{{ __('orders.save_bill_657e60') }}</span>
                     <span class="product-save-button__loading" aria-hidden="true">
                         <i></i>
-                        Saving
+                        {{ __('common.saving_369c53') }}
                     </span>
                 </button>
             </form>
         </article>
 
         <article class="admin-section purchase-listing-panel" data-purchase-listing>
-            <div class="section-title"><div><p class="eyebrow">Purchase history</p><h2>Recent purchase orders</h2></div></div>
+            <div class="section-title"><div><p class="eyebrow">{{ __('orders.purchase_history_575453') }}</p><h2>{{ __('orders.recent_purchase_orders_220243') }}</h2></div></div>
             <div class="product-toolbar">
                 <form class="product-filter-form billing-search-form purchase-filter-form" method="GET" action="{{ route('purchases.index') }}" data-purchase-search-form>
-                    <input type="search" name="search" value="{{ request('search') }}" placeholder="Search PO, invoice, supplier" data-purchase-search>
-                    <select name="per_page" aria-label="Purchase orders per page" data-purchase-search>
+                    <input type="search" name="search" value="{{ request('search') }}" placeholder="{{ __('orders.search_po_invoice_supplier_eda1e9') }}" data-purchase-search>
+                    <select name="per_page" aria-label="{{ __('orders.purchase_orders_per_page_9e6fc0') }}" data-purchase-search>
                         @foreach ($perPageOptions as $option)
-                            <option value="{{ $option }}" @selected($perPage === $option)>{{ $option }} / page</option>
+                            <option value="{{ $option }}" @selected($perPage === $option)>{{ __('common.per_page', ['count' => $option]) }}</option>
                         @endforeach
                     </select>
-                    <a class="product-clear-filter" href="{{ route('purchases.index') }}" data-purchase-listing-link>Clear</a>
+                    <a class="product-clear-filter" href="{{ route('purchases.index') }}" data-purchase-listing-link>{{ __('common.clear_719ea3') }}</a>
                 </form>
             </div>
 
             <div class="purchase-listing-results" data-purchase-listing-results>
                 <div class="product-listing-loader" data-purchase-listing-loader aria-live="polite" aria-hidden="true">
                     <span aria-hidden="true"></span>
-                    <strong>Loading purchase orders</strong>
+                    <strong>{{ __('orders.loading_purchase_orders_5bb19e') }}</strong>
                 </div>
-                <div class="table-wrap"><table class="admin-table"><thead><tr><th>PO</th><th>Bill date</th><th>Invoice No.</th><th>Supplier</th><th>Tax</th><th>Total</th></tr></thead><tbody>
+                <div class="table-wrap"><table class="admin-table"><thead><tr><th>PO</th><th>{{ __('orders.bill_date_7917c7') }}</th><th>{{ __('orders.invoice_no_ff0dda') }}</th><th>{{ __('orders.supplier_55edd4') }}</th><th>{{ __('common.tax_9be70f') }}</th><th>{{ __('common.total_b25928') }}</th></tr></thead><tbody>
                     @forelse ($orders as $order)
-                        <tr><td>{{ $order->order_number }}</td><td>{{ $order->received_at?->format('d M Y') ?? '-' }}</td><td>{{ $order->supplier_invoice_number ?: '-' }}</td><td>{{ $order->supplier->name ?? '-' }}</td><td>&#8377;{{ number_format($order->tax_amount, 2) }}</td><td>&#8377;{{ number_format($order->total_amount, 2) }}</td></tr>
+                        <tr><td>{{ $order->order_number }}</td><td>{{ $order->received_at?->translatedFormat('d M Y') ?? '-' }}</td><td>{{ $order->supplier_invoice_number ?: '-' }}</td><td>{{ $order->supplier->name ?? '-' }}</td><td>&#8377;{{ number_format($order->tax_amount, 2) }}</td><td>&#8377;{{ number_format($order->total_amount, 2) }}</td></tr>
                     @empty
-                        <tr><td colspan="6">{{ request()->filled('search') ? 'No purchase orders match the current search.' : 'No purchase orders yet.' }}</td></tr>
+                        <tr><td colspan="6">{{ request()->filled('search') ? __('orders.no_purchase_orders_match_the_current_search_2f10f4') : __('orders.no_purchase_orders_yet_a2aedb') }}</td></tr>
                     @endforelse
                 </tbody></table></div>
                 @include('products.partials.pagination', ['paginator' => $orders, 'itemLabel' => 'purchase orders'])
@@ -194,7 +201,7 @@
                     signal: requestController.signal
                 }).then(function (response) {
                     if (!response.ok) {
-                        throw new Error('Unable to load purchase orders.');
+                        throw new Error(window.t("validation.unable_to_load_purchase_orders_68a222"));
                     }
 
                     return response.text();
@@ -203,7 +210,7 @@
                     var nextListing = page.querySelector('[data-purchase-listing]');
 
                     if (!nextListing) {
-                        throw new Error('Purchase listing was not found.');
+                        throw new Error(window.t("validation.purchase_listing_was_not_found_f6ac12"));
                     }
 
                     listing.replaceWith(nextListing);
@@ -277,7 +284,7 @@
                     var label = field.closest('label');
                     var labelText = label ? label.querySelector('span') : null;
 
-                    return labelText ? labelText.textContent.trim() : 'This field';
+                    return labelText ? labelText.textContent.trim() : window.t("common.this_field_f89fd4");
                 }
 
                 function existingErrorElement(field) {
@@ -323,8 +330,8 @@
 
                     error = errorElement(field);
                     error.textContent = field.validity.valueMissing
-                        ? fieldLabel(field) + ' is required.'
-                        : field.validationMessage;
+                        ? window.t('validation.required', {attribute: fieldLabel(field)})
+                        : window.localizedValidationMessage(field);
                     error.hidden = false;
                     field.setAttribute('aria-invalid', 'true');
 

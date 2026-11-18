@@ -51,7 +51,7 @@ class WhatsAppController extends Controller
             $data
         );
 
-        return back()->with('status', 'WhatsApp connection saved.');
+        return back()->with('status', __('settings.whatsapp_connection_saved_24d83d'));
     }
 
     public function send(Request $request, WhatsAppCloudApi $api): RedirectResponse
@@ -60,7 +60,7 @@ class WhatsAppController extends Controller
             'recipient' => ['required', 'regex:/^[1-9][0-9]{7,14}$/'],
             'message' => ['required', 'string', 'max:4096'],
         ], [
-            'recipient.regex' => 'Enter the number with country code and digits only, for example 919876543210.',
+            'recipient.regex' => __('validation.enter_the_number_with_country_code_and_digits_only_for_example_9198765_9b4708'),
         ]);
 
         $integration = WhatsAppIntegration::where('tenant_id', $request->user()->tenant_id)
@@ -68,7 +68,7 @@ class WhatsAppController extends Controller
             ->first();
 
         if (! $integration) {
-            return back()->withErrors(['connection' => 'Connect and enable WhatsApp before sending a message.'])->withInput();
+            return back()->withErrors(['connection' => __('common.connect_and_enable_whatsapp_before_sending_a_message_1d2b01')])->withInput();
         }
 
         $message = WhatsAppMessage::create([
@@ -89,10 +89,10 @@ class WhatsAppController extends Controller
                 ]);
                 $integration->update(['last_used_at' => now()]);
 
-                return back()->with('status', 'WhatsApp message sent.');
+                return back()->with('status', __('common.whatsapp_message_sent_cb02de'));
             }
 
-            $error = $response->json('error.message') ?: 'WhatsApp rejected the message.';
+            $error = $response->json('error.message') ?: __('common.whatsapp_rejected_the_message_cebdba');
             $message->update(['status' => 'failed', 'error_message' => $error]);
 
             return back()->withErrors(['send' => $error])->withInput();
@@ -100,10 +100,10 @@ class WhatsAppController extends Controller
             report($exception);
             $message->update([
                 'status' => 'failed',
-                'error_message' => 'Unable to reach the WhatsApp service.',
+                'error_message' => __('validation.unable_to_reach_the_whatsapp_service_c701b7'),
             ]);
 
-            return back()->withErrors(['send' => 'Unable to reach the WhatsApp service. Try again.'])->withInput();
+            return back()->withErrors(['send' => __('validation.unable_to_reach_the_whatsapp_service_try_again_5fcd2f')])->withInput();
         }
     }
 }
